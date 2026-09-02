@@ -1,0 +1,41 @@
+# Gradle
+.gradle/
+**/build/
+!**/src/**/build/
+
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Local Android SDK configuration
+local.properties
+.tools/
+
+# Native builds
+.cxx/
+.externalNativeBuild/
+
+# Signing keys and credentials
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# Local databases and SQLite sidecar files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+captures/
