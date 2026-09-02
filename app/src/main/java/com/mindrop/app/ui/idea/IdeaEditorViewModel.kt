@@ -38,11 +38,14 @@ data class IdeaEditorUiState(
 
 class IdeaEditorViewModel(
     private val ideaId: Long?,
+    initialFolderId: Long?,
     private val folderRepository: FolderRepository,
     private val ideaRepository: IdeaRepository,
 ) : ViewModel() {
     private var storedIdea: IdeaEntity? = null
-    private val _uiState = MutableStateFlow(IdeaEditorUiState(ideaId = ideaId))
+    private val _uiState = MutableStateFlow(
+        IdeaEditorUiState(ideaId = ideaId, folderId = initialFolderId),
+    )
     val uiState: StateFlow<IdeaEditorUiState> = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<EditorEvent>(extraBufferCapacity = 1)
@@ -171,12 +174,14 @@ class IdeaEditorViewModel(
     companion object {
         fun factory(
             ideaId: Long?,
+            initialFolderId: Long? = null,
             folderRepository: FolderRepository,
             ideaRepository: IdeaRepository,
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 IdeaEditorViewModel(
                     ideaId = ideaId,
+                    initialFolderId = initialFolderId,
                     folderRepository = folderRepository,
                     ideaRepository = ideaRepository,
                 )

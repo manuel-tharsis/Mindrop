@@ -3,6 +3,7 @@ package com.mindrop.app.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
@@ -17,16 +18,26 @@ import com.mindrop.app.ui.home.HomeViewModel
 import com.mindrop.app.ui.idea.IdeaEditorRoute
 import com.mindrop.app.ui.idea.IdeaEditorViewModel
 
+private const val ROOT_FOLDER_ID = -1L
+
 private object Destination {
     const val HOME = "home"
-    const val NEW_IDEA = "ideas/new"
-    const val EDIT_IDEA = "ideas/{ideaId}"
-    const val NEW_FOLDER = "folders/new"
-    const val EDIT_FOLDER = "folders/{folderId}"
+    const val BROWSE_FOLDER = "browse/{folderId}"
+    const val NEW_IDEA = "ideas/new?folderId={folderId}"
+    const val EDIT_IDEA = "ideas/{ideaId}/edit"
+    const val NEW_FOLDER = "folders/new?parentFolderId={parentFolderId}"
+    const val EDIT_FOLDER = "folders/{folderId}/edit"
 
-    fun editIdea(ideaId: Long) = "ideas/$ideaId"
+    fun browseFolder(folderId: Long) = "browse/$folderId"
 
-    fun editFolder(folderId: Long) = "folders/$folderId"
+    fun newIdea(folderId: Long?) = "ideas/new?folderId=${folderId ?: ROOT_FOLDER_ID}"
+
+    fun editIdea(ideaId: Long) = "ideas/$ideaId/edit"
+
+    fun newFolder(parentFolderId: Long?) =
+        "folders/new?parentFolderId=${parentFolderId ?: ROOT_FOLDER_ID}"
+
+    fun editFolder(folderId: Long) = "folders/$folderId/edit"
 }
 
 @Composable
@@ -41,29 +52,41 @@ fun MindropNavHost(
         startDestination = Destination.HOME,
     ) {
         composable(route = Destination.HOME) {
-            val factory = remember(folderRepository, ideaRepository) {
-                HomeViewModel.factory(
-                    folderRepository = folderRepository,
-                    ideaRepository = ideaRepository,
-                )
-            }
-            val viewModel: HomeViewModel = viewModel(factory = factory)
-            HomeRoute(
-                viewModel = viewModel,
-                onFolderClick = { folderId ->
-                    navController.navigate(Destination.editFolder(folderId))
-                },
-                onIdeaClick = { ideaId ->
-                    navController.navigate(Destination.editIdea(ideaId))
-                },
-                onCreateIdea = { navController.navigate(Destination.NEW_IDEA) },
-                onCreateFolder = { navController.navigate(Destination.NEW_FOLDER) },
+            FolderBrowserDestination(
+                folderId = null,
+                navController = navController,
+                folderRepository = folderRepository,
+                ideaRepository = ideaRepository,
             )
         }
-        composable(route = Destination.NEW_IDEA) {
-            val factory = remember(folderRepository, ideaRepository) {
+        composable(
+            route = Destination.BROWSE_FOLDER,
+            arguments = listOf(navArgument("folderId") { type = NavType.LongType }),
+        ) { backStackEntry ->
+            val folderId = backStackEntry.arguments?.getLong("folderId") ?: return@composable
+            FolderBrowserDestination(
+                folderId = folderId,
+                navController = navController,
+                folderRepository = folderRepository,
+                ideaRepository = ideaRepository,
+            )
+        }
+        composable(
+            route = Destination.NEW_IDEA,
+            arguments = listOf(
+                navArgument("folderId") {
+                    type = NavType.LongType
+                    defaultValue = ROOT_FOLDER_ID
+                },
+            ),
+        ) { backStackEntry ->
+            val initialFolderId = backStackEntry.arguments
+                ?.getLong("folderId")
+                ?.takeUnless { it == ROOT_FOLDER_ID }
+            val factory = remember(initialFolderId, folderRepository, ideaRepository) {
                 IdeaEditorViewModel.factory(
                     ideaId = null,
+                    initialFolderId = initialFolderId,
                     folderRepository = folderRepository,
                     ideaRepository = ideaRepository,
                 )
@@ -92,10 +115,22 @@ fun MindropNavHost(
                 onFinished = { navController.popBackStack() },
             )
         }
-        composable(route = Destination.NEW_FOLDER) {
-            val factory = remember(folderRepository) {
+        composable(
+            route = Destination.NEW_FOLDER,
+            arguments = listOf(
+                navArgument("parentFolderId") {
+                    type = NavType.LongType
+                    defaultValue = ROOT_FOLDER_ID
+                },
+            ),
+        ) { backStackEntry ->
+            val initialParentFolderId = backStackEntry.arguments
+                ?.getLong("parentFolderId")
+                ?.takeUnless { it == ROOT_FOLDER_ID }
+            val factory = remember(initialParentFolderId, folderRepository) {
                 FolderEditorViewModel.factory(
                     folderId = null,
+                    initialParentFolderId = initialParentFolderId,
                     folderRepository = folderRepository,
                 )
             }
@@ -123,4 +158,47 @@ fun MindropNavHost(
             )
         }
     }
+}
+
+@Composable
+private fun FolderBrowserDestination(
+    folderId: Long?,
+    navController: NavHostController,
+    folderRepository: FolderRepository,
+    ideaRepository: IdeaRepository,
+) {
+    val factory = remember(folderId, folderRepository, ideaRepository) {
+        HomeViewModel.factory(
+            folderId = folderId,
+            folderRepository = folderRepository,
+            ideaRepository = ideaRepository,
+        )
+    }
+    val viewModel: HomeViewModel = viewModel(factory = factory)
+
+    HomeRoute(
+        viewModel = viewModel,
+        onFolderClick = { childFolderId ->
+            navController.navigate(Destination.browseFolder(childFolderId))
+        },
+        onIdeaClick = { ideaId ->
+            navController.navigate(Destination.editIdea(ideaId))
+        },
+        onEditFolder = { editedFolderId ->
+            navController.navigate(Destination.editFolder(editedFolderId))
+        },
+        onBack = { navController.popBackStack() },
+        onBreadcrumbClick = { targetFolderId ->
+            val targetRoute = targetFolderId?.let(Destination::browseFolder) ?: Destination.HOME
+            if (!navController.popBackStack(targetRoute, inclusive = false)) {
+                navController.navigate(targetRoute)
+            }
+        },
+        onCreateIdea = {
+            navController.navigate(Destination.newIdea(folderId))
+        },
+        onCreateFolder = {
+            navController.navigate(Destination.newFolder(folderId))
+        },
+    )
 }

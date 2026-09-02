@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -19,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ModalBottomSheet
@@ -26,14 +30,17 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -55,6 +62,9 @@ fun HomeRoute(
     viewModel: HomeViewModel,
     onFolderClick: (Long) -> Unit,
     onIdeaClick: (Long) -> Unit,
+    onEditFolder: (Long) -> Unit,
+    onBack: () -> Unit,
+    onBreadcrumbClick: (Long?) -> Unit,
     onCreateIdea: () -> Unit,
     onCreateFolder: () -> Unit,
 ) {
@@ -66,6 +76,9 @@ fun HomeRoute(
         onSearchQueryChange = viewModel::updateSearchQuery,
         onFolderClick = onFolderClick,
         onIdeaClick = onIdeaClick,
+        onEditFolder = onEditFolder,
+        onBack = onBack,
+        onBreadcrumbClick = onBreadcrumbClick,
         onAddClick = { showAddOptions = true },
     )
 
@@ -129,6 +142,9 @@ fun HomeScreen(
     onSearchQueryChange: (String) -> Unit,
     onFolderClick: (Long) -> Unit,
     onIdeaClick: (Long) -> Unit,
+    onEditFolder: (Long) -> Unit,
+    onBack: () -> Unit,
+    onBreadcrumbClick: (Long?) -> Unit,
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -139,10 +155,39 @@ fun HomeScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.home_title),
+                        text = uiState.currentFolder?.name
+                            ?: stringResource(
+                                if (uiState.folderId == null) {
+                                    R.string.home_title
+                                } else {
+                                    R.string.folders_section_title
+                                },
+                            ),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                     )
+                },
+                navigationIcon = {
+                    if (uiState.folderId != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_arrow_back),
+                                contentDescription = stringResource(R.string.back_content_description),
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    uiState.folderId?.let { folderId ->
+                        IconButton(onClick = { onEditFolder(folderId) }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_edit),
+                                contentDescription = stringResource(
+                                    R.string.edit_folder_content_description,
+                                ),
+                            )
+                        }
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
@@ -177,6 +222,14 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            if (uiState.folderId != null) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    BreadcrumbBar(
+                        breadcrumbs = uiState.breadcrumbs,
+                        onBreadcrumbClick = onBreadcrumbClick,
+                    )
+                }
+            }
             item(span = { GridItemSpan(maxLineSpan) }) {
                 SearchField(
                     query = uiState.searchQuery,
@@ -187,8 +240,20 @@ fun HomeScreen(
             if (!uiState.hasAnyContent && uiState.searchQuery.isBlank()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     EmptyState(
-                        title = stringResource(R.string.empty_home_title),
-                        message = stringResource(R.string.empty_home_message),
+                        title = stringResource(
+                            if (uiState.folderId == null) {
+                                R.string.empty_home_title
+                            } else {
+                                R.string.empty_folder_title
+                            },
+                        ),
+                        message = stringResource(
+                            if (uiState.folderId == null) {
+                                R.string.empty_home_message
+                            } else {
+                                R.string.empty_folder_message
+                            },
+                        ),
                     )
                 }
             } else {
@@ -199,8 +264,20 @@ fun HomeScreen(
                 if (uiState.folders.isEmpty()) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         EmptyState(
-                            title = stringResource(R.string.empty_folders_title),
-                            message = stringResource(R.string.empty_folders_message),
+                            title = stringResource(
+                                if (uiState.folderId == null) {
+                                    R.string.empty_folders_title
+                                } else {
+                                    R.string.empty_subfolders_title
+                                },
+                            ),
+                            message = stringResource(
+                                if (uiState.folderId == null) {
+                                    R.string.empty_folders_message
+                                } else {
+                                    R.string.empty_subfolders_message
+                                },
+                            ),
                             compact = true,
                         )
                     }
@@ -212,13 +289,22 @@ fun HomeScreen(
                         FolderCard(
                             folderSummary = summary,
                             onClick = { onFolderClick(summary.folder.id) },
+                            onEditClick = { onEditFolder(summary.folder.id) },
                         )
                     }
                 }
 
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    SectionTitle(text = stringResource(R.string.root_ideas_section_title))
+                    SectionTitle(
+                        text = stringResource(
+                            if (uiState.folderId == null) {
+                                R.string.root_ideas_section_title
+                            } else {
+                                R.string.folder_ideas_section_title
+                            },
+                        ),
+                    )
                 }
 
                 if (uiState.ideas.isEmpty()) {
@@ -251,6 +337,58 @@ fun HomeScreen(
                             idea = idea,
                             onClick = { onIdeaClick(idea.id) },
                         )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BreadcrumbBar(
+    breadcrumbs: List<FolderBreadcrumb>,
+    onBreadcrumbClick: (Long?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    LaunchedEffect(breadcrumbs) {
+        if (breadcrumbs.isNotEmpty()) listState.scrollToItem(breadcrumbs.size)
+    }
+
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        state = listState,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        item(key = "root") {
+            IconButton(onClick = { onBreadcrumbClick(null) }) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_home),
+                    contentDescription = stringResource(R.string.root_content_description),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        itemsIndexed(
+            items = breadcrumbs,
+            key = { _, breadcrumb -> breadcrumb.id },
+        ) { index, breadcrumb ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "›",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                if (index == breadcrumbs.lastIndex) {
+                    Text(
+                        text = breadcrumb.name,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                } else {
+                    TextButton(onClick = { onBreadcrumbClick(breadcrumb.id) }) {
+                        Text(text = breadcrumb.name)
                     }
                 }
             }
@@ -346,6 +484,9 @@ private fun HomeScreenPreview() {
             onSearchQueryChange = {},
             onFolderClick = {},
             onIdeaClick = {},
+            onEditFolder = {},
+            onBack = {},
+            onBreadcrumbClick = {},
             onAddClick = {},
         )
     }
@@ -360,6 +501,50 @@ private fun EmptyHomeScreenPreview() {
             onSearchQueryChange = {},
             onFolderClick = {},
             onIdeaClick = {},
+            onEditFolder = {},
+            onBack = {},
+            onBreadcrumbClick = {},
+            onAddClick = {},
+        )
+    }
+}
+
+@Preview(name = "Carpeta anidada", showBackground = true, widthDp = 400, heightDp = 820)
+@Composable
+private fun NestedFolderScreenPreview() {
+    MindropTheme {
+        HomeScreen(
+            uiState = HomeUiState(
+                folderId = 3,
+                currentFolder = FolderEntity(
+                    id = 3,
+                    name = "Aplicaciones",
+                    icon = "folder",
+                    parentFolderId = 2,
+                ),
+                breadcrumbs = listOf(
+                    FolderBreadcrumb(1, "Programación"),
+                    FolderBreadcrumb(2, "Android"),
+                    FolderBreadcrumb(3, "Aplicaciones"),
+                ),
+                ideas = listOf(
+                    IdeaEntity(
+                        id = 1,
+                        title = "Mindrop",
+                        shortDescription = "Aplicación para organizar ideas",
+                        fullDescription = "",
+                        icon = "idea",
+                        folderId = 3,
+                    ),
+                ),
+                hasAnyContent = true,
+            ),
+            onSearchQueryChange = {},
+            onFolderClick = {},
+            onIdeaClick = {},
+            onEditFolder = {},
+            onBack = {},
+            onBreadcrumbClick = {},
             onAddClick = {},
         )
     }

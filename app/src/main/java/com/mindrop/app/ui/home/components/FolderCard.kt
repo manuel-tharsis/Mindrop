@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +39,7 @@ private val FolderBackground = Color(0xFFFFF3D5)
 fun FolderCard(
     folderSummary: FolderSummary,
     onClick: () -> Unit,
+    onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ElevatedCard(
@@ -88,6 +90,17 @@ fun FolderCard(
                     maxLines = 1,
                 )
             }
+            IconButton(
+                onClick = onEditClick,
+                modifier = Modifier.size(32.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_edit),
+                    contentDescription = stringResource(R.string.edit_folder_content_description),
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -103,6 +116,7 @@ private fun FolderCardPreview() {
                 childFolderCount = 1,
             ),
             onClick = {},
+            onEditClick = {},
             modifier = Modifier.padding(16.dp),
         )
     }

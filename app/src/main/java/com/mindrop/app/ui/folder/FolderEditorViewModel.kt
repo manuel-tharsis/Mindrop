@@ -37,10 +37,13 @@ data class FolderEditorUiState(
 
 class FolderEditorViewModel(
     private val folderId: Long?,
+    initialParentFolderId: Long?,
     private val folderRepository: FolderRepository,
 ) : ViewModel() {
     private var storedFolder: FolderEntity? = null
-    private val _uiState = MutableStateFlow(FolderEditorUiState(folderId = folderId))
+    private val _uiState = MutableStateFlow(
+        FolderEditorUiState(folderId = folderId, parentFolderId = initialParentFolderId),
+    )
     val uiState: StateFlow<FolderEditorUiState> = _uiState.asStateFlow()
 
     private val _events = MutableSharedFlow<EditorEvent>(extraBufferCapacity = 1)
@@ -170,11 +173,13 @@ class FolderEditorViewModel(
     companion object {
         fun factory(
             folderId: Long?,
+            initialParentFolderId: Long? = null,
             folderRepository: FolderRepository,
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 FolderEditorViewModel(
                     folderId = folderId,
+                    initialParentFolderId = initialParentFolderId,
                     folderRepository = folderRepository,
                 )
             }

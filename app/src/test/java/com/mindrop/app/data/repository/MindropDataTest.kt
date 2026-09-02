@@ -191,6 +191,46 @@ class MindropDataTest {
         assertEquals(parentId, updated.parentFolderId)
     }
 
+    @Test
+    fun everyFolderLevelReturnsOnlyItsDirectFoldersAndIdeas() = runBlocking {
+        val programmingId = folderRepository.insert(
+            FolderEntity(name = "Programación", icon = "folder"),
+        )
+        val androidId = folderRepository.insert(
+            FolderEntity(
+                name = "Android",
+                icon = "folder",
+                parentFolderId = programmingId,
+            ),
+        )
+        val applicationsId = folderRepository.insert(
+            FolderEntity(
+                name = "Aplicaciones",
+                icon = "folder",
+                parentFolderId = androidId,
+            ),
+        )
+        ideaRepository.insert(newIdea(title = "Idea Android", folderId = androidId))
+        ideaRepository.insert(newIdea(title = "Idea aplicación", folderId = applicationsId))
+
+        assertEquals(
+            listOf("Android"),
+            folderRepository.observeChildren(programmingId).first().map { it.name },
+        )
+        assertEquals(
+            listOf("Aplicaciones"),
+            folderRepository.observeChildren(androidId).first().map { it.name },
+        )
+        assertEquals(
+            listOf("Idea Android"),
+            ideaRepository.observeInFolder(androidId).first().map { it.title },
+        )
+        assertEquals(
+            listOf("Idea aplicación"),
+            ideaRepository.observeInFolder(applicationsId).first().map { it.title },
+        )
+    }
+
     private fun newIdea(
         title: String,
         folderId: Long? = null,
