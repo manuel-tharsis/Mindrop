@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.mindrop.app.data.local.MindropDatabase
 import com.mindrop.app.data.local.dao.FolderDao
 import com.mindrop.app.data.local.entity.FolderEntity
+import com.mindrop.app.data.local.model.FolderSummary
 import kotlinx.coroutines.flow.Flow
 
 class FolderHierarchyException(message: String) : IllegalArgumentException(message)
@@ -18,6 +19,9 @@ class FolderRepository(
 ) {
     fun observeChildren(parentFolderId: Long?): Flow<List<FolderEntity>> =
         folderDao.observeChildren(parentFolderId)
+
+    fun observeChildSummaries(parentFolderId: Long?): Flow<List<FolderSummary>> =
+        folderDao.observeChildSummaries(parentFolderId)
 
     suspend fun findById(id: Long): FolderEntity? = folderDao.findById(id)
 

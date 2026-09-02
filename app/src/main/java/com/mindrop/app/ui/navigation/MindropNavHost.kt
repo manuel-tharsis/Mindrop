@@ -8,8 +8,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mindrop.app.data.repository.FolderRepository
 import com.mindrop.app.data.repository.IdeaRepository
-import com.mindrop.app.ui.folder.FolderBrowserScreen
-import com.mindrop.app.ui.folder.FolderBrowserViewModel
+import com.mindrop.app.ui.home.HomeRoute
+import com.mindrop.app.ui.home.HomeViewModel
 
 private object Destination {
     const val FOLDERS = "folders"
@@ -22,7 +22,7 @@ fun MindropNavHost(
 ) {
     val navController = rememberNavController()
     val factory = remember(folderRepository, ideaRepository) {
-        FolderBrowserViewModel.factory(
+        HomeViewModel.factory(
             folderRepository = folderRepository,
             ideaRepository = ideaRepository,
         )
@@ -33,8 +33,13 @@ fun MindropNavHost(
         startDestination = Destination.FOLDERS,
     ) {
         composable(route = Destination.FOLDERS) {
-            val viewModel: FolderBrowserViewModel = viewModel(factory = factory)
-            FolderBrowserScreen(viewModel = viewModel)
+            val viewModel: HomeViewModel = viewModel(factory = factory)
+            HomeRoute(
+                viewModel = viewModel,
+                onFolderClick = {},
+                onIdeaClick = {},
+                onAddClick = {},
+            )
         }
     }
 }

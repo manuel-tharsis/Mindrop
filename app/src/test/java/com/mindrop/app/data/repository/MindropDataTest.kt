@@ -77,6 +77,12 @@ class MindropDataTest {
             listOf("Mindrop"),
             folderRepository.observeChildren(parentFolderId = projectsId).first().map { it.name },
         )
+        val projectsSummary = folderRepository.observeChildSummaries(parentFolderId = null)
+            .first()
+            .single { it.folder.id == projectsId }
+        assertEquals(1, projectsSummary.ideaCount)
+        assertEquals(1, projectsSummary.childFolderCount)
+        assertEquals(2, projectsSummary.itemCount)
         assertEquals(
             listOf("Alfa", "Beta", "Segunda"),
             ideaRepository.observeInFolder(folderId = null).first().map { it.title },

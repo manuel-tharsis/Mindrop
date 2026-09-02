@@ -1,5 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Mindrop</string>
-    <string name="empty_folder_message">Aún no hay carpetas. La estructura inicial está lista.</string>
+    <string name="home_title">Mis ideas</string>
+    <string name="search_ideas_hint">Buscar ideas…</string>
+    <string name="folders_section_title">Carpetas</string>
+    <string name="root_ideas_section_title">Ideas en la raíz</string>
+    <string name="empty_home_title">Un espacio para tus ideas</string>
+    <string name="empty_home_message">Cuando guardes una idea o crees una carpeta, aparecerá aquí.</string>
+    <string name="empty_folders_title">Todavía no hay carpetas</string>
+    <string name="empty_folders_message">Puedes mantener tus ideas en la raíz o agruparlas en carpetas.</string>
+    <string name="empty_ideas_title">No hay ideas en la raíz</string>
+    <string name="empty_ideas_message">Las ideas que no pertenezcan a una carpeta aparecerán aquí.</string>
+    <string name="empty_search_title">Sin coincidencias</string>
+    <string name="empty_search_message">Prueba con otro título o descripción.</string>
+    <string name="add_content_description">Añadir</string>
+    <string name="search_content_description">Buscar ideas</string>
+    <string name="folder_icon_content_description">Carpeta</string>
+    <string name="idea_icon_content_description">Icono de idea</string>
+    <plurals name="item_count">
+        <item quantity="one">%d elemento</item>
+        <item quantity="other">%d elementos</item>
+    </plurals>
 </resources>
