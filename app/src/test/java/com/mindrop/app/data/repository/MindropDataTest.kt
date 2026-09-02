@@ -165,6 +165,32 @@ class MindropDataTest {
         assertEquals(2_000L, updated.updatedAt)
     }
 
+    @Test
+    fun folderCanBeCreatedAndEditedWithAParent() = runBlocking {
+        val parentId = folderRepository.insert(
+            FolderEntity(name = "Proyectos", icon = "folder"),
+        )
+        val folderId = folderRepository.insert(
+            FolderEntity(name = "Borrador", icon = "idea"),
+        )
+
+        val original = folderRepository.findById(folderId)!!
+        assertTrue(
+            folderRepository.update(
+                original.copy(
+                    name = "Mindrop",
+                    icon = "code",
+                    parentFolderId = parentId,
+                ),
+            ),
+        )
+
+        val updated = folderRepository.findById(folderId)!!
+        assertEquals("Mindrop", updated.name)
+        assertEquals("code", updated.icon)
+        assertEquals(parentId, updated.parentFolderId)
+    }
+
     private fun newIdea(
         title: String,
         folderId: Long? = null,

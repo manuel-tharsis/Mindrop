@@ -23,6 +23,8 @@ class FolderRepository(
     fun observeChildSummaries(parentFolderId: Long?): Flow<List<FolderSummary>> =
         folderDao.observeChildSummaries(parentFolderId)
 
+    fun observeAll(): Flow<List<FolderEntity>> = folderDao.observeAll()
+
     suspend fun findById(id: Long): FolderEntity? = folderDao.findById(id)
 
     suspend fun insert(folder: FolderEntity): Long = database.withTransaction {
