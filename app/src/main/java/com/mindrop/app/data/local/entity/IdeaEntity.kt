@@ -13,20 +13,28 @@ import androidx.room.PrimaryKey
             entity = FolderEntity::class,
             parentColumns = ["id"],
             childColumns = ["folder_id"],
-            onDelete = ForeignKey.RESTRICT,
+            onDelete = ForeignKey.SET_NULL,
         ),
     ],
-    indices = [Index("folder_id")],
+    indices = [Index(value = ["folder_id", "sort_order"])],
 )
 data class IdeaEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val name: String,
+    val title: String,
     @ColumnInfo(name = "short_description")
     val shortDescription: String,
     @ColumnInfo(name = "full_description")
     val fullDescription: String,
     val icon: String,
+    @ColumnInfo(name = "custom_icon_path")
+    val customIconPath: String? = null,
     @ColumnInfo(name = "folder_id")
-    val folderId: Long,
+    val folderId: Long? = null,
+    @ColumnInfo(name = "sort_order")
+    val sortOrder: Long = 0,
+    @ColumnInfo(name = "created_at")
+    val createdAt: Long = 0,
+    @ColumnInfo(name = "updated_at")
+    val updatedAt: Long = 0,
 )

@@ -16,12 +16,16 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.RESTRICT,
         ),
     ],
-    indices = [Index("parent_folder_id")],
+    indices = [Index(value = ["parent_folder_id", "sort_order"])],
 )
 data class FolderEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
+    @ColumnInfo(defaultValue = "''")
+    val icon: String = "",
     @ColumnInfo(name = "parent_folder_id")
     val parentFolderId: Long? = null,
+    @ColumnInfo(name = "sort_order", defaultValue = "0")
+    val sortOrder: Long = 0,
 )

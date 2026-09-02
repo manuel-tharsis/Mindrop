@@ -66,7 +66,7 @@ fun FolderBrowserScreen(
 
                 items(contents.ideas, key = { idea -> idea.id }) { idea ->
                     ListItem(
-                        headlineContent = { Text(text = idea.name) },
+                        headlineContent = { Text(text = idea.title) },
                         supportingContent = { Text(text = idea.shortDescription) },
                     )
                 }

@@ -14,7 +14,9 @@ Aplicación Android personal y completamente offline para guardar y organizar id
 
 El proyecto mantiene un flujo sencillo: `UI -> ViewModel -> Repository -> Room`.
 
-La base inicial contiene el modelo local, los DAO, el repositorio, un ViewModel y un destino de navegación mínimo. Las pantallas de gestión y edición se implementarán en fases posteriores.
+La base local contiene entidades y repositorios separados para carpetas e ideas, DAO reactivos con `Flow`, una migración de esquema v1 a v2, un ViewModel y un destino de navegación mínimo. Las pantallas de gestión y edición se implementarán en fases posteriores.
+
+Las carpetas admiten jerarquía recursiva sin ciclos. Solo se pueden borrar carpetas sin subcarpetas; sus ideas se conservan y pasan a la raíz.
 
 ## Compilación
 

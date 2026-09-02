@@ -12,11 +12,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val repository = (application as MindropApplication).repository
+        val mindropApplication = application as MindropApplication
 
         setContent {
             MindropTheme {
-                MindropNavHost(repository = repository)
+                MindropNavHost(
+                    folderRepository = mindropApplication.folderRepository,
+                    ideaRepository = mindropApplication.ideaRepository,
+                )
             }
         }
     }

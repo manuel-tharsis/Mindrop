@@ -6,7 +6,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.mindrop.app.data.repository.MindropRepository
+import com.mindrop.app.data.repository.FolderRepository
+import com.mindrop.app.data.repository.IdeaRepository
 import com.mindrop.app.ui.folder.FolderBrowserScreen
 import com.mindrop.app.ui.folder.FolderBrowserViewModel
 
@@ -16,11 +17,15 @@ private object Destination {
 
 @Composable
 fun MindropNavHost(
-    repository: MindropRepository,
+    folderRepository: FolderRepository,
+    ideaRepository: IdeaRepository,
 ) {
     val navController = rememberNavController()
-    val factory = remember(repository) {
-        FolderBrowserViewModel.factory(repository = repository)
+    val factory = remember(folderRepository, ideaRepository) {
+        FolderBrowserViewModel.factory(
+            folderRepository = folderRepository,
+            ideaRepository = ideaRepository,
+        )
     }
 
     NavHost(

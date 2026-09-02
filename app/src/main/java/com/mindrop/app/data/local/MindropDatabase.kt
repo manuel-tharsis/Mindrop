@@ -11,7 +11,7 @@ import com.mindrop.app.data.local.entity.IdeaEntity
 
 @Database(
     entities = [FolderEntity::class, IdeaEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class MindropDatabase : RoomDatabase() {
@@ -27,6 +27,8 @@ abstract class MindropDatabase : RoomDatabase() {
                 context.applicationContext,
                 MindropDatabase::class.java,
                 DATABASE_NAME,
-            ).build()
+            )
+                .addMigrations(MIGRATION_1_2)
+                .build()
     }
 }
