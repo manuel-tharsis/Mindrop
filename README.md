@@ -14,6 +14,12 @@ Mindrop es una aplicación Android personal y completamente offline para guardar
 - Buscar ideas dentro de la ubicación actual.
 - Conservar toda la información en el almacenamiento local del dispositivo.
 
+## Descargar APK
+
+Mindrop no se publica en Google Play Store. La APK instalable puede descargarse desde la sección **Releases** del repositorio de GitHub.
+
+En el móvil, descarga el archivo `Mindrop-v1.0.0.apk`, ábrelo y permite la instalación desde esa fuente si Android lo solicita.
+
 ## Tecnologías
 
 - Kotlin.
@@ -35,20 +41,24 @@ El proyecto requiere JDK 17 o posterior. Puede utilizarse el JDK integrado en An
 
 ## Generar APK
 
+La firma release se configura localmente mediante `keystore.properties`. Usa `keystore.properties.example` como plantilla y guarda el keystore fuera del control de versiones.
+
+Conserva una copia privada y segura del keystore y de sus credenciales: serán necesarios para firmar futuras actualizaciones de la misma aplicación.
+
 Desde la raíz del proyecto, ejecuta:
 
 En Windows:
 
 ```powershell
-.\gradlew.bat assembleDebug
+.\gradlew.bat exportReleaseApk
 ```
 
 En macOS o Linux:
 
 ```bash
-./gradlew assembleDebug
+./gradlew exportReleaseApk
 ```
 
-La APK instalable se genera en `app/build/outputs/apk/debug/app-debug.apk`.
+La APK instalable se genera en `app/build/releases/Mindrop-v1.0.0.apk`.
 
 Mindrop no solicita el permiso `INTERNET` y no utiliza cuentas, servidores, analíticas ni servicios externos.

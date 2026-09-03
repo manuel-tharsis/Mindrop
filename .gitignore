@@ -29,6 +29,7 @@ local.properties
 *.key
 key.properties
 keystore.properties
+signing/
 signing.properties
 secrets.properties
 google-services.json
