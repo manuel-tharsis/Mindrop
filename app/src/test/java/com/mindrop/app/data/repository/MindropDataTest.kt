@@ -167,6 +167,39 @@ class MindropDataTest {
     }
 
     @Test
+    fun observingIdeaDetailPreservesEmptyFieldsNewLinesAndLongText() = runBlocking {
+        val fullDescription = buildString {
+            repeat(150) { line ->
+                append("Línea ")
+                append(line)
+                append(" con contenido para comprobar el desplazamiento.\n")
+            }
+        }
+        val ideaId = ideaRepository.insert(
+            newIdea(title = "Detalle extenso").copy(
+                shortDescription = "",
+                fullDescription = fullDescription,
+                icon = "document",
+            ),
+        )
+
+        val observed = ideaRepository.observeById(ideaId).first()
+
+        assertEquals("", observed?.shortDescription)
+        assertEquals(fullDescription, observed?.fullDescription)
+        assertEquals("document", observed?.icon)
+    }
+
+    @Test
+    fun observingIdeaDetailReflectsDeletion() = runBlocking {
+        val ideaId = ideaRepository.insert(newIdea(title = "Para eliminar"))
+
+        assertNotNull(ideaRepository.observeById(ideaId).first())
+        assertTrue(ideaRepository.deleteById(ideaId))
+        assertNull(ideaRepository.observeById(ideaId).first())
+    }
+
+    @Test
     fun folderCanBeCreatedAndEditedWithAParent() = runBlocking {
         val parentId = folderRepository.insert(
             FolderEntity(name = "Proyectos", icon = "folder"),

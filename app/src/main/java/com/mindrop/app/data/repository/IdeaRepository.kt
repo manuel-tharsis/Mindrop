@@ -16,6 +16,8 @@ class IdeaRepository(
     fun observeInFolder(folderId: Long?): Flow<List<IdeaEntity>> =
         ideaDao.observeInFolder(folderId)
 
+    fun observeById(id: Long): Flow<IdeaEntity?> = ideaDao.observeById(id)
+
     suspend fun findById(id: Long): IdeaEntity? = ideaDao.findById(id)
 
     suspend fun insert(idea: IdeaEntity): Long {

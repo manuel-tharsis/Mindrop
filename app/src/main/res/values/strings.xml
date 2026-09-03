@@ -29,6 +29,11 @@
     <string name="new_folder">Nueva carpeta</string>
     <string name="add_options_title">Crear</string>
     <string name="edit_idea">Editar idea</string>
+    <string name="edit">Editar</string>
+    <string name="delete">Eliminar</string>
+    <string name="delete_idea_confirmation_title">¿Eliminar esta idea?</string>
+    <string name="delete_idea_confirmation_message">Esta acción no se puede deshacer.</string>
+    <string name="idea_not_found">No se encontró la idea.</string>
     <string name="edit_folder">Editar carpeta</string>
     <string name="name_label">Nombre</string>
     <string name="short_description_label">Descripción corta</string>

@@ -46,6 +46,22 @@ class NavigationBackStackTest {
         assertEquals(2L, restored.currentBackStackEntry?.arguments?.getLong("folderId"))
     }
 
+    @Test
+    fun ideaDetailAndEditorReturnToTheFolderTheyWereOpenedFrom() {
+        val navController = folderNavController()
+        navController.navigate("browse/12")
+        navController.navigate("ideas/34")
+        navController.navigate("ideas/34/edit")
+
+        assertTrue(navController.popBackStack())
+        assertEquals("ideas/{ideaId}", navController.currentDestination?.route)
+        assertEquals(34L, navController.currentBackStackEntry?.arguments?.getLong("ideaId"))
+
+        assertTrue(navController.popBackStack())
+        assertEquals("browse/{folderId}", navController.currentDestination?.route)
+        assertEquals(12L, navController.currentBackStackEntry?.arguments?.getLong("folderId"))
+    }
+
     private fun folderNavController(savedState: Bundle? = null): NavHostController {
         val context = ApplicationProvider.getApplicationContext<Context>()
         return NavHostController(context).apply {
@@ -57,6 +73,18 @@ class NavigationBackStackTest {
                     route = "browse/{folderId}",
                     arguments = listOf(
                         navArgument("folderId") { type = NavType.LongType },
+                    ),
+                ) {}
+                composable(
+                    route = "ideas/{ideaId}",
+                    arguments = listOf(
+                        navArgument("ideaId") { type = NavType.LongType },
+                    ),
+                ) {}
+                composable(
+                    route = "ideas/{ideaId}/edit",
+                    arguments = listOf(
+                        navArgument("ideaId") { type = NavType.LongType },
                     ),
                 ) {}
             }

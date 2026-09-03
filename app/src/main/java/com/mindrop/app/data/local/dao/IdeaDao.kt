@@ -21,6 +21,9 @@ interface IdeaDao {
     fun observeInFolder(folderId: Long?): Flow<List<IdeaEntity>>
 
     @Query("SELECT * FROM ideas WHERE id = :id LIMIT 1")
+    fun observeById(id: Long): Flow<IdeaEntity?>
+
+    @Query("SELECT * FROM ideas WHERE id = :id LIMIT 1")
     suspend fun findById(id: Long): IdeaEntity?
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
