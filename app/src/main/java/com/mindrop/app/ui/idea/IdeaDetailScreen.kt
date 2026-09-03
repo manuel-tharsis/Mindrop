@@ -5,13 +5,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -121,32 +118,24 @@ fun IdeaDetailScreen(
                     }
                 },
                 actions = {
-                    TextButton(
+                    IconButton(
                         onClick = onEdit,
                         enabled = uiState.idea != null && !uiState.isDeleting,
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_edit),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
+                            contentDescription = stringResource(R.string.edit_idea),
                         )
-                        Spacer(Modifier.width(6.dp))
-                        Text(stringResource(R.string.edit))
                     }
-                    TextButton(
+                    IconButton(
                         onClick = onDelete,
                         enabled = uiState.idea != null && !uiState.isDeleting,
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error,
-                        ),
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_delete),
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
+                            contentDescription = stringResource(R.string.delete_idea_content_description),
+                            tint = MaterialTheme.colorScheme.error,
                         )
-                        Spacer(Modifier.width(6.dp))
-                        Text(stringResource(R.string.delete))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -240,8 +229,9 @@ private fun IdeaDetailContent(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
                     ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp),

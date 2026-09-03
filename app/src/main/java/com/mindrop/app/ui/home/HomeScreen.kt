@@ -42,6 +42,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -374,6 +376,7 @@ fun HomeScreen(
                                 },
                             ),
                             compact = true,
+                            folderStyle = true,
                         )
                     }
                 } else {
@@ -500,10 +503,13 @@ private fun SearchField(
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val shape = RoundedCornerShape(28.dp)
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(elevation = 1.dp, shape = shape),
         placeholder = { Text(text = stringResource(R.string.search_ideas_hint)) },
         leadingIcon = {
             Icon(
@@ -512,12 +518,13 @@ private fun SearchField(
             )
         },
         singleLine = true,
-        shape = RoundedCornerShape(28.dp),
+        shape = shape,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.36f),
+            unfocusedBorderColor = Color.Transparent,
         ),
     )
 }

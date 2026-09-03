@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -31,9 +30,6 @@ import com.mindrop.app.data.local.entity.FolderEntity
 import com.mindrop.app.data.local.model.FolderSummary
 import com.mindrop.app.ui.icons.mindropIcon
 import com.mindrop.app.ui.theme.MindropTheme
-
-private val FolderYellow = Color(0xFFFFB629)
-private val FolderBackground = Color(0xFFFFF3D5)
 
 @Composable
 fun FolderCard(
@@ -50,7 +46,7 @@ fun FolderCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         ),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
     ) {
@@ -63,14 +59,14 @@ fun FolderCard(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(FolderBackground),
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(selectedIcon.drawableRes),
                     contentDescription = stringResource(R.string.folder_icon_content_description),
                     modifier = Modifier.size(38.dp),
-                    tint = FolderYellow,
+                    tint = MaterialTheme.colorScheme.secondary,
                 )
             }
 

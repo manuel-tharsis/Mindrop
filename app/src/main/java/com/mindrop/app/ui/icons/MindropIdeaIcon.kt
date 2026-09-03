@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -61,23 +62,19 @@ private data class IconAppearance(
     val background: Color,
 )
 
+@Composable
 private fun iconAppearance(icon: String): IconAppearance {
     val selectedIcon = mindropIcon(icon)
     return when (selectedIcon.key) {
-        "code", "mobile", "computer", "brain" -> IconAppearance(
+        "idea", "brain", "game", "star" -> IconAppearance(
             drawableRes = selectedIcon.drawableRes,
-            tint = Color(0xFF6D4CC7),
-            background = Color(0xFFEDE5FF),
-        )
-        "terminal", "tools", "work", "document" -> IconAppearance(
-            drawableRes = selectedIcon.drawableRes,
-            tint = Color(0xFF3E6670),
-            background = Color(0xFFDDEEF1),
+            tint = MaterialTheme.colorScheme.tertiary,
+            background = MaterialTheme.colorScheme.tertiaryContainer,
         )
         else -> IconAppearance(
             drawableRes = selectedIcon.drawableRes,
-            tint = Color(0xFF2F6F91),
-            background = Color(0xFFDCEEF7),
+            tint = MaterialTheme.colorScheme.primary,
+            background = MaterialTheme.colorScheme.primaryContainer,
         )
     }
 }

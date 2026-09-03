@@ -10,13 +10,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -36,6 +40,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -138,6 +143,19 @@ fun IdeaEditorScreen(
                         fontWeight = FontWeight.Bold,
                     )
                 },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            finishKeyboardInput()
+                            onCancel()
+                        },
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_arrow_back),
+                            contentDescription = stringResource(R.string.back_content_description),
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),
@@ -159,7 +177,7 @@ fun IdeaEditorScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .imePadding(),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -175,6 +193,7 @@ fun IdeaEditorScreen(
                             null
                         },
                         isError = uiState.nameError,
+                        shape = RoundedCornerShape(16.dp),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(
@@ -192,6 +211,7 @@ fun IdeaEditorScreen(
                         label = { Text(stringResource(R.string.short_description_label)) },
                         minLines = 2,
                         maxLines = 3,
+                        shape = RoundedCornerShape(16.dp),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(
                             onNext = { fullDescriptionFocus.requestFocus() },
@@ -204,9 +224,11 @@ fun IdeaEditorScreen(
                         onValueChange = onFullDescriptionChange,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 144.dp, max = 320.dp)
                             .focusRequester(fullDescriptionFocus),
                         label = { Text(stringResource(R.string.full_description_label)) },
                         minLines = 5,
+                        shape = RoundedCornerShape(16.dp),
                     )
                 }
                 item {

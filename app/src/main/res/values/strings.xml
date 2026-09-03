@@ -29,6 +29,7 @@
     <string name="new_folder">Nueva carpeta</string>
     <string name="add_options_title">Crear</string>
     <string name="edit_idea">Editar idea</string>
+    <string name="delete_idea_content_description">Eliminar idea</string>
     <string name="edit">Editar</string>
     <string name="delete">Eliminar</string>
     <string name="move">Mover</string>
