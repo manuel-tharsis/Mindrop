@@ -5,6 +5,7 @@ import com.mindrop.app.data.icon.CustomIconRepository
 import com.mindrop.app.data.local.MindropDatabase
 import com.mindrop.app.data.repository.FolderRepository
 import com.mindrop.app.data.repository.IdeaRepository
+import com.mindrop.app.data.repository.IdeaSuggestionRepository
 
 class MindropApplication : Application() {
     val customIconRepository: CustomIconRepository by lazy {
@@ -27,6 +28,13 @@ class MindropApplication : Application() {
             database = database,
             ideaDao = database.ideaDao(),
             customIconFileStore = customIconRepository,
+        )
+    }
+
+    val ideaSuggestionRepository: IdeaSuggestionRepository by lazy {
+        IdeaSuggestionRepository(
+            database = database,
+            suggestionDao = database.ideaSuggestionDao(),
         )
     }
 }

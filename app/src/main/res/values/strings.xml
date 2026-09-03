@@ -45,6 +45,14 @@
     <string name="name_label">Nombre</string>
     <string name="short_description_label">Descripción corta</string>
     <string name="full_description_label">Descripción completa</string>
+    <string name="suggestions_title">Sugerencias</string>
+    <string name="new_suggestion_label">Nueva sugerencia</string>
+    <string name="suggestion_required">Escribe una sugerencia.</string>
+    <string name="add_suggestion">Añadir</string>
+    <string name="updates_title">Actualizaciones</string>
+    <string name="update_number">Actualización %1$d</string>
+    <string name="current_suggestions_title">Sugerencias actuales</string>
+    <string name="validate_suggestion">Validar</string>
     <string name="icon_label">Icono</string>
     <string name="location_label">Ubicación</string>
     <string name="parent_folder_label">Carpeta padre</string>

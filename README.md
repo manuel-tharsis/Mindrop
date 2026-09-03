@@ -13,12 +13,13 @@ Mindrop es una aplicación Android personal y completamente offline para guardar
 - Navegar mediante el botón Atrás y una ruta de carpetas.
 - Buscar ideas dentro de la ubicación actual.
 - Conservar toda la información en el almacenamiento local del dispositivo.
+- Añadir sugerencias a una idea y convertirlas en actualizaciones numeradas al validarlas.
 
 ## Descargar APK
 
 Mindrop no se publica en Google Play Store. La APK instalable puede descargarse desde la sección **Releases** del repositorio de GitHub.
 
-En el móvil, descarga el archivo `Mindrop-v1.0.0.apk`, ábrelo y permite la instalación desde esa fuente si Android lo solicita.
+En el móvil, descarga el archivo de la versión deseada, ábrelo y permite la instalación desde esa fuente si Android lo solicita.
 
 ## Tecnologías
 
@@ -59,6 +60,6 @@ En macOS o Linux:
 ./gradlew exportReleaseApk
 ```
 
-La APK instalable se genera en `app/build/releases/Mindrop-v1.0.0.apk`.
+La APK instalable se genera en `app/build/releases/Mindrop-v1.1.0.apk`.
 
 Mindrop no solicita el permiso `INTERNET` y no utiliza cuentas, servidores, analíticas ni servicios externos.

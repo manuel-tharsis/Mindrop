@@ -12,6 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import com.mindrop.app.data.icon.CustomIconRepository
 import com.mindrop.app.data.repository.FolderRepository
 import com.mindrop.app.data.repository.IdeaRepository
+import com.mindrop.app.data.repository.IdeaSuggestionRepository
 import com.mindrop.app.ui.folder.FolderEditorRoute
 import com.mindrop.app.ui.folder.FolderEditorViewModel
 import com.mindrop.app.ui.home.HomeRoute
@@ -50,6 +51,7 @@ private object Destination {
 fun MindropNavHost(
     folderRepository: FolderRepository,
     ideaRepository: IdeaRepository,
+    ideaSuggestionRepository: IdeaSuggestionRepository,
     customIconRepository: CustomIconRepository,
 ) {
     val navController = rememberNavController()
@@ -115,10 +117,11 @@ fun MindropNavHost(
             arguments = listOf(navArgument("ideaId") { type = NavType.LongType }),
         ) { backStackEntry ->
             val ideaId = backStackEntry.arguments?.getLong("ideaId") ?: return@composable
-            val factory = remember(ideaId, ideaRepository) {
+            val factory = remember(ideaId, ideaRepository, ideaSuggestionRepository) {
                 IdeaDetailViewModel.factory(
                     ideaId = ideaId,
                     ideaRepository = ideaRepository,
+                    suggestionRepository = ideaSuggestionRepository,
                 )
             }
             val viewModel: IdeaDetailViewModel = viewModel(factory = factory)

@@ -6,18 +6,22 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.mindrop.app.data.local.dao.FolderDao
 import com.mindrop.app.data.local.dao.IdeaDao
+import com.mindrop.app.data.local.dao.IdeaSuggestionDao
 import com.mindrop.app.data.local.entity.FolderEntity
 import com.mindrop.app.data.local.entity.IdeaEntity
+import com.mindrop.app.data.local.entity.IdeaSuggestionEntity
 
 @Database(
-    entities = [FolderEntity::class, IdeaEntity::class],
-    version = 2,
+    entities = [FolderEntity::class, IdeaEntity::class, IdeaSuggestionEntity::class],
+    version = 3,
     exportSchema = true,
 )
 abstract class MindropDatabase : RoomDatabase() {
     abstract fun folderDao(): FolderDao
 
     abstract fun ideaDao(): IdeaDao
+
+    abstract fun ideaSuggestionDao(): IdeaSuggestionDao
 
     companion object {
         private const val DATABASE_NAME = "mindrop.db"
@@ -28,7 +32,7 @@ abstract class MindropDatabase : RoomDatabase() {
                 MindropDatabase::class.java,
                 DATABASE_NAME,
             )
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
     }
 }

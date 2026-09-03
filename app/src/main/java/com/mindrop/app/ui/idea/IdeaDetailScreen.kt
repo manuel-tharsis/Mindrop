@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mindrop.app.R
 import com.mindrop.app.data.local.entity.IdeaEntity
+import com.mindrop.app.data.local.entity.IdeaSuggestionEntity
 import com.mindrop.app.ui.icons.MindropIdeaIcon
 import com.mindrop.app.ui.theme.MindropTheme
 
@@ -65,6 +67,7 @@ fun IdeaDetailRoute(
         onBack = onBack,
         onEdit = { uiState.idea?.id?.let(onEdit) },
         onDelete = { showDeleteConfirmation = true },
+        onValidateSuggestion = viewModel::validateSuggestion,
     )
 
     if (showDeleteConfirmation) {
@@ -115,6 +118,7 @@ fun IdeaDetailScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    onValidateSuggestion: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -164,8 +168,8 @@ fun IdeaDetailScreen(
         when {
             uiState.isLoading -> LoadingDetail(modifier = Modifier.padding(innerPadding))
             uiState.idea != null -> IdeaDetailContent(
-                idea = uiState.idea,
-                errorMessage = uiState.errorMessage,
+                uiState = uiState,
+                onValidateSuggestion = onValidateSuggestion,
                 modifier = Modifier.padding(innerPadding),
             )
             else -> Box(
@@ -194,10 +198,11 @@ private fun LoadingDetail(modifier: Modifier = Modifier) {
 
 @Composable
 private fun IdeaDetailContent(
-    idea: IdeaEntity,
-    errorMessage: String?,
+    uiState: IdeaDetailUiState,
+    onValidateSuggestion: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val idea = uiState.idea ?: return
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, top = 16.dp, end = 20.dp, bottom = 40.dp),
@@ -231,10 +236,10 @@ private fun IdeaDetailContent(
                 }
             }
         }
-        if (errorMessage != null) {
+        if (uiState.errorMessage != null) {
             item {
                 Text(
-                    text = errorMessage,
+                    text = uiState.errorMessage,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                 )
@@ -267,6 +272,115 @@ private fun IdeaDetailContent(
                 }
             }
         }
+        if (uiState.updates.isNotEmpty()) {
+            item {
+                DetailSectionTitle(stringResource(R.string.updates_title))
+            }
+            items(
+                items = uiState.updates,
+                key = { suggestion -> "update-${suggestion.id}" },
+            ) { update ->
+                UpdateCard(update)
+            }
+        }
+        if (uiState.pendingSuggestions.isNotEmpty()) {
+            item {
+                DetailSectionTitle(stringResource(R.string.current_suggestions_title))
+            }
+            if (uiState.validationErrorMessage != null) {
+                item {
+                    Text(
+                        text = uiState.validationErrorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+            items(
+                items = uiState.pendingSuggestions,
+                key = { suggestion -> "suggestion-${suggestion.id}" },
+            ) { suggestion ->
+                PendingSuggestionCard(
+                    suggestion = suggestion,
+                    isValidating = uiState.validatingSuggestionId == suggestion.id,
+                    enabled = uiState.validatingSuggestionId == null && !uiState.isDeleting,
+                    onValidate = { onValidateSuggestion(suggestion.id) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailSectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold,
+    )
+}
+
+@Composable
+private fun UpdateCard(update: IdeaSuggestionEntity) {
+    val updateNumber = update.updateNumber ?: return
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.update_number, updateNumber),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(text = update.text, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+}
+
+@Composable
+private fun PendingSuggestionCard(
+    suggestion: IdeaSuggestionEntity,
+    isValidating: Boolean,
+    enabled: Boolean,
+    onValidate: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(text = suggestion.text, style = MaterialTheme.typography.bodyLarge)
+            TextButton(
+                onClick = onValidate,
+                modifier = Modifier.align(Alignment.End),
+                enabled = enabled,
+            ) {
+                if (isValidating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .size(18.dp),
+                        strokeWidth = 2.dp,
+                    )
+                }
+                Text(stringResource(R.string.validate_suggestion))
+            }
+        }
     }
 }
 
@@ -291,10 +405,29 @@ private fun IdeaDetailPreview() {
                     fullDescription = "Primera línea.\n\nSegunda línea con más información.",
                     icon = "brain",
                 ),
+                updates = listOf(
+                    IdeaSuggestionEntity(
+                        id = 10,
+                        ideaId = 1,
+                        text = "Permitir organizar ideas en subcarpetas.",
+                        createdAt = 1_000,
+                        validatedAt = 2_000,
+                        updateNumber = 1,
+                    ),
+                ),
+                pendingSuggestions = listOf(
+                    IdeaSuggestionEntity(
+                        id = 11,
+                        ideaId = 1,
+                        text = "Revisar el tamaño de las tarjetas.",
+                        createdAt = 3_000,
+                    ),
+                ),
             ),
             onBack = {},
             onEdit = {},
             onDelete = {},
+            onValidateSuggestion = {},
         )
     }
 }
@@ -317,6 +450,7 @@ private fun EmptyIdeaDetailPreview() {
             onBack = {},
             onEdit = {},
             onDelete = {},
+            onValidateSuggestion = {},
         )
     }
 }

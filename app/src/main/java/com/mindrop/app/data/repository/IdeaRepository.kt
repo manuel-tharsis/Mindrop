@@ -5,6 +5,7 @@ import com.mindrop.app.data.icon.CustomIconFileStore
 import com.mindrop.app.data.local.MindropDatabase
 import com.mindrop.app.data.local.dao.IdeaDao
 import com.mindrop.app.data.local.entity.IdeaEntity
+import com.mindrop.app.data.local.entity.IdeaSuggestionEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -22,32 +23,46 @@ class IdeaRepository(
 
     suspend fun findById(id: Long): IdeaEntity? = ideaDao.findById(id)
 
-    suspend fun insert(idea: IdeaEntity): Long {
+    suspend fun insert(
+        idea: IdeaEntity,
+        pendingSuggestionTexts: List<String> = emptyList(),
+    ): Long = database.withTransaction {
         require(idea.id == 0L) { "Una idea nueva no puede tener un id asignado." }
         require(idea.title.isNotBlank()) { "El título de la idea no puede estar vacío." }
+        val suggestions = validatedSuggestionTexts(pendingSuggestionTexts)
 
         val now = currentTimeMillis()
-        return ideaDao.insert(
+        val ideaId = ideaDao.insert(
             idea.copy(
                 createdAt = now,
                 updatedAt = now,
             ),
         )
+        insertPendingSuggestions(ideaId, suggestions, now)
+        ideaId
     }
 
-    suspend fun update(idea: IdeaEntity): Boolean {
+    suspend fun update(
+        idea: IdeaEntity,
+        pendingSuggestionTexts: List<String> = emptyList(),
+    ): Boolean {
         var obsoleteCustomIconPath: String? = null
         val updated = database.withTransaction {
             require(idea.id > 0L) { "La idea que se actualiza debe tener un id válido." }
             require(idea.title.isNotBlank()) { "El título de la idea no puede estar vacío." }
+            val suggestions = validatedSuggestionTexts(pendingSuggestionTexts)
 
             val storedIdea = ideaDao.findById(idea.id) ?: return@withTransaction false
+            val updatedAt = nextUpdatedAt(storedIdea.updatedAt)
             val rowUpdated = ideaDao.update(
                 idea.copy(
                     createdAt = storedIdea.createdAt,
-                    updatedAt = nextUpdatedAt(storedIdea.updatedAt),
+                    updatedAt = updatedAt,
                 ),
             ) == 1
+            if (rowUpdated) {
+                insertPendingSuggestions(idea.id, suggestions, updatedAt)
+            }
             if (rowUpdated && storedIdea.customIconPath != idea.customIconPath) {
                 obsoleteCustomIconPath = storedIdea.customIconPath
             }
@@ -89,6 +104,27 @@ class IdeaRepository(
         if (path == null || customIconFileStore == null) return
         withContext(Dispatchers.IO) {
             customIconFileStore.delete(path)
+        }
+    }
+
+    private fun validatedSuggestionTexts(texts: List<String>): List<String> = texts.map { text ->
+        require(text.isNotBlank()) { "La sugerencia no puede estar vacía." }
+        text.trim()
+    }
+
+    private suspend fun insertPendingSuggestions(
+        ideaId: Long,
+        texts: List<String>,
+        createdAt: Long,
+    ) {
+        texts.forEach { text ->
+            database.ideaSuggestionDao().insert(
+                IdeaSuggestionEntity(
+                    ideaId = ideaId,
+                    text = text,
+                    createdAt = createdAt,
+                ),
+            )
         }
     }
 

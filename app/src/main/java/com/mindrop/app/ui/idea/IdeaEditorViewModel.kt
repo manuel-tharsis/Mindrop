@@ -32,6 +32,9 @@ data class IdeaEditorUiState(
     val name: String = "",
     val shortDescription: String = "",
     val fullDescription: String = "",
+    val newSuggestionText: String = "",
+    val newSuggestions: List<String> = emptyList(),
+    val suggestionError: Boolean = false,
     val icon: String = "idea",
     val customIconPath: String? = null,
     val folderId: Long? = null,
@@ -78,6 +81,26 @@ class IdeaEditorViewModel(
     fun updateShortDescription(value: String) = updateForm { copy(shortDescription = value) }
 
     fun updateFullDescription(value: String) = updateForm { copy(fullDescription = value) }
+
+    fun updateNewSuggestion(value: String) = updateForm {
+        copy(newSuggestionText = value, suggestionError = false)
+    }
+
+    fun addSuggestion() {
+        if (isBusy()) return
+        val text = _uiState.value.newSuggestionText.trim()
+        if (text.isEmpty()) {
+            _uiState.update { it.copy(suggestionError = true) }
+            return
+        }
+        updateForm {
+            copy(
+                newSuggestionText = "",
+                newSuggestions = newSuggestions + text,
+                suggestionError = false,
+            )
+        }
+    }
 
     fun selectPresetIcon(value: String) {
         if (isBusy()) return
@@ -139,6 +162,9 @@ class IdeaEditorViewModel(
         viewModelScope.launch {
             try {
                 val current = state
+                val suggestions = current.newSuggestions + listOfNotNull(
+                    current.newSuggestionText.trim().takeIf(String::isNotEmpty),
+                )
                 val existing = storedIdea
                 if (ideaId != null && existing == null) {
                     _uiState.update {
@@ -157,6 +183,7 @@ class IdeaEditorViewModel(
                             folderId = current.folderId,
                             sortOrder = 0,
                         ),
+                        pendingSuggestionTexts = suggestions,
                     )
                 } else {
                     val updated = ideaRepository.update(
@@ -168,12 +195,20 @@ class IdeaEditorViewModel(
                             customIconPath = current.customIconPath,
                             folderId = current.folderId,
                         ),
+                        pendingSuggestionTexts = suggestions,
                     )
                     check(updated) { "La idea ya no existe." }
                 }
 
                 pendingCustomIconPath = null
-                _uiState.update { it.copy(isSaving = false, hasUnsavedChanges = false) }
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        newSuggestionText = "",
+                        newSuggestions = emptyList(),
+                        hasUnsavedChanges = false,
+                    )
+                }
                 eventChannel.send(EditorEvent.Saved)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error

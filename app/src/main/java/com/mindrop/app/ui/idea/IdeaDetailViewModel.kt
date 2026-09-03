@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mindrop.app.data.local.entity.IdeaEntity
+import com.mindrop.app.data.local.entity.IdeaSuggestionEntity
 import com.mindrop.app.data.repository.IdeaRepository
+import com.mindrop.app.data.repository.IdeaSuggestionRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +22,10 @@ import kotlinx.coroutines.launch
 data class IdeaDetailUiState(
     val isLoading: Boolean = true,
     val idea: IdeaEntity? = null,
+    val updates: List<IdeaSuggestionEntity> = emptyList(),
+    val pendingSuggestions: List<IdeaSuggestionEntity> = emptyList(),
+    val validatingSuggestionId: Long? = null,
+    val validationErrorMessage: String? = null,
     val isDeleting: Boolean = false,
     val errorMessage: String? = null,
 )
@@ -31,6 +37,7 @@ sealed interface IdeaDetailEvent {
 class IdeaDetailViewModel(
     private val ideaId: Long,
     private val ideaRepository: IdeaRepository,
+    private val suggestionRepository: IdeaSuggestionRepository,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(IdeaDetailUiState())
     val uiState: StateFlow<IdeaDetailUiState> = _uiState.asStateFlow()
@@ -50,6 +57,51 @@ class IdeaDetailViewModel(
                         } else {
                             state.errorMessage
                         },
+                    )
+                }
+            }
+        }
+        viewModelScope.launch {
+            suggestionRepository.observeUpdates(ideaId).collect { updates ->
+                _uiState.update { it.copy(updates = updates) }
+            }
+        }
+        viewModelScope.launch {
+            suggestionRepository.observePending(ideaId).collect { suggestions ->
+                _uiState.update { it.copy(pendingSuggestions = suggestions) }
+            }
+        }
+    }
+
+    fun validateSuggestion(suggestionId: Long) {
+        val state = _uiState.value
+        if (state.isDeleting || state.validatingSuggestionId != null) return
+        if (state.pendingSuggestions.none { it.id == suggestionId }) return
+
+        _uiState.update {
+            it.copy(validatingSuggestionId = suggestionId, validationErrorMessage = null)
+        }
+        viewModelScope.launch {
+            try {
+                val validated = suggestionRepository.validate(ideaId, suggestionId)
+                    ?: error("La sugerencia ya no existe.")
+                _uiState.update { current ->
+                    current.copy(
+                        updates = (current.updates + validated)
+                            .distinctBy(IdeaSuggestionEntity::id)
+                            .sortedBy { it.updateNumber },
+                        pendingSuggestions = current.pendingSuggestions.filterNot {
+                            it.id == suggestionId
+                        },
+                        validatingSuggestionId = null,
+                    )
+                }
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                _uiState.update {
+                    it.copy(
+                        validatingSuggestionId = null,
+                        validationErrorMessage = "No se pudo validar la sugerencia.",
                     )
                 }
             }
@@ -79,11 +131,13 @@ class IdeaDetailViewModel(
         fun factory(
             ideaId: Long,
             ideaRepository: IdeaRepository,
+            suggestionRepository: IdeaSuggestionRepository,
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 IdeaDetailViewModel(
                     ideaId = ideaId,
                     ideaRepository = ideaRepository,
+                    suggestionRepository = suggestionRepository,
                 )
             }
         }

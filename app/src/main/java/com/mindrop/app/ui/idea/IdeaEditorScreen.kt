@@ -7,6 +7,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -87,6 +89,8 @@ fun IdeaEditorRoute(
         onNameChange = viewModel::updateName,
         onShortDescriptionChange = viewModel::updateShortDescription,
         onFullDescriptionChange = viewModel::updateFullDescription,
+        onSuggestionTextChange = viewModel::updateNewSuggestion,
+        onAddSuggestion = viewModel::addSuggestion,
         onIconChange = viewModel::selectPresetIcon,
         onChooseCustomIcon = {
             imagePicker.launch(
@@ -114,6 +118,8 @@ fun IdeaEditorScreen(
     onNameChange: (String) -> Unit,
     onShortDescriptionChange: (String) -> Unit,
     onFullDescriptionChange: (String) -> Unit,
+    onSuggestionTextChange: (String) -> Unit,
+    onAddSuggestion: () -> Unit,
     onIconChange: (String) -> Unit,
     onChooseCustomIcon: () -> Unit,
     onUseDefaultIcon: () -> Unit,
@@ -238,6 +244,16 @@ fun IdeaEditorScreen(
                     )
                 }
                 item {
+                    SuggestionEditorSection(
+                        text = uiState.newSuggestionText,
+                        addedSuggestions = uiState.newSuggestions,
+                        showError = uiState.suggestionError,
+                        enabled = formEnabled,
+                        onTextChange = onSuggestionTextChange,
+                        onAdd = onAddSuggestion,
+                    )
+                }
+                item {
                     IconPicker(
                         selectedIcon = uiState.icon,
                         hasCustomIcon = uiState.customIconPath != null,
@@ -283,6 +299,60 @@ fun IdeaEditorScreen(
     }
 }
 
+@Composable
+private fun SuggestionEditorSection(
+    text: String,
+    addedSuggestions: List<String>,
+    showError: Boolean,
+    enabled: Boolean,
+    onTextChange: (String) -> Unit,
+    onAdd: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.suggestions_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+        OutlinedTextField(
+            value = text,
+            onValueChange = onTextChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.new_suggestion_label)) },
+            supportingText = if (showError) {
+                { Text(stringResource(R.string.suggestion_required)) }
+            } else {
+                null
+            },
+            isError = showError,
+            enabled = enabled,
+            minLines = 2,
+            maxLines = 4,
+            shape = RoundedCornerShape(16.dp),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { onAdd() }),
+        )
+        Button(
+            onClick = onAdd,
+            modifier = Modifier.align(Alignment.End),
+            enabled = enabled && text.isNotBlank(),
+        ) {
+            Text(stringResource(R.string.add_suggestion))
+        }
+        addedSuggestions.forEach { suggestion ->
+            Text(
+                text = "• $suggestion",
+                modifier = Modifier.padding(horizontal = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
 @Preview(name = "Nueva idea", showBackground = true, widthDp = 400, heightDp = 820)
 @Preview(
     name = "Editar idea oscuro",
@@ -299,11 +369,15 @@ private fun IdeaEditorPreview() {
                 isLoading = false,
                 name = "App para el coche",
                 shortDescription = "Registro de revisiones y averías",
+                newSuggestionText = "Añadir recordatorios de mantenimiento",
+                newSuggestions = listOf("Mostrar el historial por fecha"),
                 folderOptions = listOf(FolderOption(1, "Proyectos / Android")),
             ),
             onNameChange = {},
             onShortDescriptionChange = {},
             onFullDescriptionChange = {},
+            onSuggestionTextChange = {},
+            onAddSuggestion = {},
             onIconChange = {},
             onChooseCustomIcon = {},
             onUseDefaultIcon = {},
