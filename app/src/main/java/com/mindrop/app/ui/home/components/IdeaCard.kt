@@ -1,6 +1,7 @@
 package com.mindrop.app.ui.home.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -30,46 +32,76 @@ fun IdeaCard(
     onClick: () -> Unit,
     onMoveClick: () -> Unit,
     modifier: Modifier = Modifier,
+    hierarchyDepth: Int = 0,
 ) {
-    ElevatedCard(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-        ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
-    ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            MindropIdeaIcon(
-                icon = idea.icon,
-                customIconPath = idea.customIconPath,
-                contentDescription = stringResource(R.string.idea_icon_content_description),
-            )
+    val depth = hierarchyDepth.coerceAtLeast(0)
+    val indentation = (depth.coerceAtMost(8) * 18).dp
+    val connectorColor = MaterialTheme.colorScheme.outlineVariant
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = idea.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (idea.shortDescription.isNotBlank()) {
-                    Text(
-                        text = idea.shortDescription,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .drawBehind {
+                if (depth > 0) {
+                    val endX = indentation.toPx() - 4.dp.toPx()
+                    val lineX = indentation.toPx() - 10.dp.toPx()
+                    drawLine(
+                        color = connectorColor,
+                        start = androidx.compose.ui.geometry.Offset(lineX, 0f),
+                        end = androidx.compose.ui.geometry.Offset(lineX, size.height / 2f),
+                        strokeWidth = 1.dp.toPx(),
+                    )
+                    drawLine(
+                        color = connectorColor,
+                        start = androidx.compose.ui.geometry.Offset(lineX, size.height / 2f),
+                        end = androidx.compose.ui.geometry.Offset(endX, size.height / 2f),
+                        strokeWidth = 1.dp.toPx(),
                     )
                 }
+            },
+    ) {
+        ElevatedCard(
+            onClick = onClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = indentation),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+            ),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+        ) {
+            Row(
+                modifier = Modifier.padding(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MindropIdeaIcon(
+                    icon = idea.icon,
+                    customIconPath = idea.customIconPath,
+                    contentDescription = stringResource(R.string.idea_icon_content_description),
+                )
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = idea.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (idea.shortDescription.isNotBlank()) {
+                        Text(
+                            text = idea.shortDescription,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+                ContentActionsMenu(onMoveClick = onMoveClick)
             }
-            ContentActionsMenu(onMoveClick = onMoveClick)
         }
     }
 }

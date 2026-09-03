@@ -55,6 +55,8 @@
     <string name="validate_suggestion">Validar</string>
     <string name="icon_label">Icono</string>
     <string name="location_label">Ubicación</string>
+    <string name="parent_idea_label">Deriva de</string>
+    <string name="no_parent_idea">Ninguna</string>
     <string name="parent_folder_label">Carpeta padre</string>
     <string name="root_location">Mis ideas (raíz)</string>
     <string name="save">Guardar</string>

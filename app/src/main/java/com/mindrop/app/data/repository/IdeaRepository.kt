@@ -16,6 +16,8 @@ class IdeaRepository(
     private val customIconFileStore: CustomIconFileStore? = null,
     private val currentTimeMillis: () -> Long = System::currentTimeMillis,
 ) {
+    fun observeAll(): Flow<List<IdeaEntity>> = ideaDao.observeAll()
+
     fun observeInFolder(folderId: Long?): Flow<List<IdeaEntity>> =
         ideaDao.observeInFolder(folderId)
 
@@ -29,6 +31,7 @@ class IdeaRepository(
     ): Long = database.withTransaction {
         require(idea.id == 0L) { "Una idea nueva no puede tener un id asignado." }
         require(idea.title.isNotBlank()) { "El título de la idea no puede estar vacío." }
+        validateParentIdea(ideaId = null, parentIdeaId = idea.parentIdeaId)
         val suggestions = validatedSuggestionTexts(pendingSuggestionTexts)
 
         val now = currentTimeMillis()
@@ -53,6 +56,7 @@ class IdeaRepository(
             val suggestions = validatedSuggestionTexts(pendingSuggestionTexts)
 
             val storedIdea = ideaDao.findById(idea.id) ?: return@withTransaction false
+            validateParentIdea(ideaId = idea.id, parentIdeaId = idea.parentIdeaId)
             val updatedAt = nextUpdatedAt(storedIdea.updatedAt)
             val rowUpdated = ideaDao.update(
                 idea.copy(
@@ -128,6 +132,26 @@ class IdeaRepository(
         }
     }
 
+    private suspend fun validateParentIdea(ideaId: Long?, parentIdeaId: Long?) {
+        var ancestorId = parentIdeaId ?: return
+        val visitedIds = mutableSetOf<Long>()
+
+        while (true) {
+            if (ancestorId == ideaId) {
+                throw IdeaHierarchyException(
+                    "Una idea no puede derivar de sí misma ni de una subidea suya.",
+                )
+            }
+            if (!visitedIds.add(ancestorId)) {
+                throw IdeaHierarchyException("La jerarquía de ideas contiene un ciclo.")
+            }
+
+            val ancestor = ideaDao.findById(ancestorId)
+                ?: throw IdeaHierarchyException("La idea padre seleccionada ya no existe.")
+            ancestorId = ancestor.parentIdeaId ?: return
+        }
+    }
+
     private fun nextUpdatedAt(previousUpdatedAt: Long): Long {
         val now = currentTimeMillis()
         return when {
@@ -137,3 +161,5 @@ class IdeaRepository(
         }
     }
 }
+
+class IdeaHierarchyException(message: String) : IllegalArgumentException(message)

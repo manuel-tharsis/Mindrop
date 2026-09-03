@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.mindrop.app.R
 import com.mindrop.app.ui.editor.FolderOption
+import com.mindrop.app.ui.editor.IdeaOption
 import com.mindrop.app.ui.icons.CustomIconLoadState
 import com.mindrop.app.ui.icons.mindropIcon
 import com.mindrop.app.ui.icons.mindropIconOptions
@@ -206,6 +207,67 @@ fun FolderPicker(
                         enabled = enabled,
                         onClick = {
                             onFolderSelected(option.id)
+                            expanded = false
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun IdeaParentPicker(
+    selectedIdeaId: Long?,
+    options: List<IdeaOption>,
+    onIdeaSelected: (Long?) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedLabel = options.firstOrNull { it.id == selectedIdeaId }?.label
+        ?: stringResource(R.string.no_parent_idea)
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.parent_idea_label),
+            style = MaterialTheme.typography.labelLarge,
+        )
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(
+                onClick = { expanded = true },
+                enabled = enabled,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = selectedLabel,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 4.dp),
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.wrapContentSize(),
+            ) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.no_parent_idea)) },
+                    enabled = enabled,
+                    onClick = {
+                        onIdeaSelected(null)
+                        expanded = false
+                    },
+                )
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option.label) },
+                        enabled = enabled,
+                        onClick = {
+                            onIdeaSelected(option.id)
                             expanded = false
                         },
                     )

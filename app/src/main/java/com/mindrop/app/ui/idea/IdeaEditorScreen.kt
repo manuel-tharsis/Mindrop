@@ -57,6 +57,7 @@ import com.mindrop.app.ui.editor.components.CustomIconPicker
 import com.mindrop.app.ui.editor.components.FolderPicker
 import com.mindrop.app.ui.editor.components.FormActions
 import com.mindrop.app.ui.editor.components.IconPicker
+import com.mindrop.app.ui.editor.components.IdeaParentPicker
 import com.mindrop.app.ui.theme.MindropTheme
 
 @Composable
@@ -99,6 +100,7 @@ fun IdeaEditorRoute(
         },
         onUseDefaultIcon = { viewModel.selectPresetIcon(uiState.icon) },
         onFolderChange = viewModel::updateFolder,
+        onParentIdeaChange = viewModel::updateParentIdea,
         onSave = viewModel::save,
         onCancel = ::requestExit,
     )
@@ -124,6 +126,7 @@ fun IdeaEditorScreen(
     onChooseCustomIcon: () -> Unit,
     onUseDefaultIcon: () -> Unit,
     onFolderChange: (Long?) -> Unit,
+    onParentIdeaChange: (Long?) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
@@ -280,6 +283,14 @@ fun IdeaEditorScreen(
                     )
                 }
                 item {
+                    IdeaParentPicker(
+                        selectedIdeaId = uiState.parentIdeaId,
+                        options = uiState.parentIdeaOptions,
+                        onIdeaSelected = onParentIdeaChange,
+                        enabled = formEnabled,
+                    )
+                }
+                item {
                     FormActions(
                         isSaving = uiState.isSaving || uiState.isImportingIcon,
                         errorMessage = uiState.errorMessage,
@@ -382,6 +393,7 @@ private fun IdeaEditorPreview() {
             onChooseCustomIcon = {},
             onUseDefaultIcon = {},
             onFolderChange = {},
+            onParentIdeaChange = {},
             onSave = {},
             onCancel = {},
         )

@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface IdeaDao {
+    @Query("SELECT * FROM ideas ORDER BY sort_order ASC, title COLLATE NOCASE ASC, id ASC")
+    fun observeAll(): Flow<List<IdeaEntity>>
+
     @Query(
         """
         SELECT * FROM ideas

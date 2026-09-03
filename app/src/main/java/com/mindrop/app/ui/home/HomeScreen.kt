@@ -245,6 +245,8 @@ fun HomeScreen(
     onAddClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val hierarchicalIdeas = remember(uiState.ideas) { buildIdeaHierarchy(uiState.ideas) }
+
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
@@ -429,14 +431,15 @@ fun HomeScreen(
                     }
                 } else {
                     items(
-                        items = uiState.ideas,
-                        key = { idea -> "idea-${idea.id}" },
+                        items = hierarchicalIdeas,
+                        key = { item -> "idea-${item.idea.id}" },
                         span = { GridItemSpan(maxLineSpan) },
-                    ) { idea ->
+                    ) { item ->
                         IdeaCard(
-                            idea = idea,
-                            onClick = { onIdeaClick(idea.id) },
-                            onMoveClick = { onMoveIdea(idea) },
+                            idea = item.idea,
+                            hierarchyDepth = item.depth,
+                            onClick = { onIdeaClick(item.idea.id) },
+                            onMoveClick = { onMoveIdea(item.idea) },
                         )
                     }
                 }
@@ -582,6 +585,7 @@ private fun HomeScreenPreview() {
                         shortDescription = "Herramienta para generar snippets y plantillas",
                         fullDescription = "",
                         icon = "code",
+                        parentIdeaId = 1,
                     ),
                 ),
                 hasAnyContent = true,

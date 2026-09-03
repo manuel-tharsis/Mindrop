@@ -10,10 +10,14 @@ import com.mindrop.app.data.local.entity.IdeaEntity
 import com.mindrop.app.data.icon.CustomIconRepository
 import com.mindrop.app.data.icon.InvalidCustomIconException
 import com.mindrop.app.data.repository.FolderRepository
+import com.mindrop.app.data.repository.IdeaHierarchyException
 import com.mindrop.app.data.repository.IdeaRepository
 import com.mindrop.app.ui.editor.EditorEvent
 import com.mindrop.app.ui.editor.FolderOption
+import com.mindrop.app.ui.editor.IdeaOption
 import com.mindrop.app.ui.editor.buildFolderOptions
+import com.mindrop.app.ui.editor.buildIdeaOptions
+import com.mindrop.app.ui.editor.descendantIdeaIds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +43,8 @@ data class IdeaEditorUiState(
     val customIconPath: String? = null,
     val folderId: Long? = null,
     val folderOptions: List<FolderOption> = emptyList(),
+    val parentIdeaId: Long? = null,
+    val parentIdeaOptions: List<IdeaOption> = emptyList(),
     val nameError: Boolean = false,
     val errorMessage: String? = null,
     val isSaving: Boolean = false,
@@ -68,6 +74,18 @@ class IdeaEditorViewModel(
             folderRepository.observeAll().collect { folders ->
                 _uiState.update { state ->
                     state.copy(folderOptions = buildFolderOptions(folders))
+                }
+            }
+        }
+        viewModelScope.launch {
+            ideaRepository.observeAll().collect { ideas ->
+                val excludedIds = ideaId?.let { currentIdeaId ->
+                    descendantIdeaIds(ideas, currentIdeaId) + currentIdeaId
+                }.orEmpty()
+                _uiState.update { state ->
+                    state.copy(
+                        parentIdeaOptions = buildIdeaOptions(ideas, excludedIds),
+                    )
                 }
             }
         }
@@ -150,6 +168,10 @@ class IdeaEditorViewModel(
 
     fun updateFolder(folderId: Long?) = updateForm { copy(folderId = folderId) }
 
+    fun updateParentIdea(parentIdeaId: Long?) = updateForm {
+        copy(parentIdeaId = parentIdeaId)
+    }
+
     fun save() {
         val state = _uiState.value
         if (state.isSaving || state.isImportingIcon) return
@@ -181,6 +203,7 @@ class IdeaEditorViewModel(
                             icon = current.icon,
                             customIconPath = current.customIconPath,
                             folderId = current.folderId,
+                            parentIdeaId = current.parentIdeaId,
                             sortOrder = 0,
                         ),
                         pendingSuggestionTexts = suggestions,
@@ -194,6 +217,7 @@ class IdeaEditorViewModel(
                             icon = current.icon,
                             customIconPath = current.customIconPath,
                             folderId = current.folderId,
+                            parentIdeaId = current.parentIdeaId,
                         ),
                         pendingSuggestionTexts = suggestions,
                     )
@@ -215,7 +239,11 @@ class IdeaEditorViewModel(
                 _uiState.update {
                     it.copy(
                         isSaving = false,
-                        errorMessage = "No se pudo guardar la idea. Comprueba la ubicación.",
+                        errorMessage = if (error is IdeaHierarchyException) {
+                            error.message
+                        } else {
+                            "No se pudo guardar la idea. Comprueba la ubicación."
+                        },
                     )
                 }
             }
@@ -245,6 +273,7 @@ class IdeaEditorViewModel(
                     icon = idea.icon,
                     customIconPath = idea.customIconPath,
                     folderId = idea.folderId,
+                    parentIdeaId = idea.parentIdeaId,
                     hasUnsavedChanges = false,
                 )
             }

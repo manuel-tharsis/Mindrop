@@ -10,6 +10,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,8 +19,8 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [36])
-class Migration2To3Test {
-    private val databaseName = "migration-2-3-test.db"
+class Migration3To4Test {
+    private val databaseName = "migration-3-4-test.db"
     private lateinit var context: Context
 
     @Before
@@ -34,12 +35,12 @@ class Migration2To3Test {
     }
 
     @Test
-    fun migrationPreservesExistingIdeasAndCreatesEmptySuggestionStorage() {
-        createVersion2Database()
+    fun migrationPreservesIdeasAndSuggestionsAndAddsEmptyParent() {
+        createVersion3Database()
 
         val database = Room.databaseBuilder(context, MindropDatabase::class.java, databaseName)
             .allowMainThreadQueries()
-            .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_3_4)
             .build()
 
         try {
@@ -48,19 +49,22 @@ class Migration2To3Test {
                 val idea = database.ideaDao().findById(1L)
                 assertNotNull(idea)
                 assertEquals("Idea existente", idea?.title)
-                assertEquals(null, idea?.parentIdeaId)
-                assertEquals(emptyList<Any>(), database.ideaSuggestionDao().findAllForIdea(1L))
+                assertNull(idea?.parentIdeaId)
+                assertEquals(
+                    listOf("Sugerencia conservada"),
+                    database.ideaSuggestionDao().findAllForIdea(1L).map { it.text },
+                )
             }
         } finally {
             database.close()
         }
     }
 
-    private fun createVersion2Database() {
+    private fun createVersion3Database() {
         val configuration = SupportSQLiteOpenHelper.Configuration.builder(context)
             .name(databaseName)
             .callback(
-                object : SupportSQLiteOpenHelper.Callback(2) {
+                object : SupportSQLiteOpenHelper.Callback(3) {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         db.execSQL(
                             """
@@ -76,10 +80,7 @@ class Migration2To3Test {
                             """.trimIndent(),
                         )
                         db.execSQL(
-                            """
-                            CREATE INDEX index_folders_parent_folder_id_sort_order
-                            ON folders(parent_folder_id, sort_order)
-                            """.trimIndent(),
+                            "CREATE INDEX index_folders_parent_folder_id_sort_order ON folders(parent_folder_id, sort_order)",
                         )
                         db.execSQL(
                             """
@@ -100,10 +101,27 @@ class Migration2To3Test {
                             """.trimIndent(),
                         )
                         db.execSQL(
+                            "CREATE INDEX index_ideas_folder_id_sort_order ON ideas(folder_id, sort_order)",
+                        )
+                        db.execSQL(
                             """
-                            CREATE INDEX index_ideas_folder_id_sort_order
-                            ON ideas(folder_id, sort_order)
+                            CREATE TABLE idea_suggestions (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                                idea_id INTEGER NOT NULL,
+                                text TEXT NOT NULL,
+                                created_at INTEGER NOT NULL,
+                                validated_at INTEGER,
+                                update_number INTEGER,
+                                FOREIGN KEY(idea_id) REFERENCES ideas(id)
+                                    ON UPDATE NO ACTION ON DELETE CASCADE
+                            )
                             """.trimIndent(),
+                        )
+                        db.execSQL(
+                            "CREATE INDEX index_idea_suggestions_idea_id_validated_at ON idea_suggestions(idea_id, validated_at)",
+                        )
+                        db.execSQL(
+                            "CREATE UNIQUE INDEX index_idea_suggestions_idea_id_update_number ON idea_suggestions(idea_id, update_number)",
                         )
                         db.execSQL(
                             """
@@ -113,6 +131,15 @@ class Migration2To3Test {
                             ) VALUES (
                                 1, 'Idea existente', 'Resumen', 'Descripción', 'idea',
                                 NULL, NULL, 0, 1000, 1000
+                            )
+                            """.trimIndent(),
+                        )
+                        db.execSQL(
+                            """
+                            INSERT INTO idea_suggestions (
+                                id, idea_id, text, created_at, validated_at, update_number
+                            ) VALUES (
+                                1, 1, 'Sugerencia conservada', 1001, NULL, NULL
                             )
                             """.trimIndent(),
                         )
