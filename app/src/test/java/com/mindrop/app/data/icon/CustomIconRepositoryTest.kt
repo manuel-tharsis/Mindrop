@@ -2,14 +2,15 @@ package com.mindrop.app.data.icon
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
+import com.mindrop.app.ui.icons.decodeCustomIcon
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -52,12 +53,11 @@ class CustomIconRepositoryTest {
         source.delete()
 
         val storedFile = File(storedPath)
-        val bitmap = BitmapFactory.decodeFile(storedPath)
+        val bitmap = decodeCustomIcon(storedPath)!!
         assertTrue(storedFile.isFile)
         assertEquals(iconDirectory.canonicalFile, storedFile.parentFile?.canonicalFile)
         assertEquals(bitmap.width, bitmap.height)
         assertTrue(bitmap.width <= 256)
-        assertTrue(CustomIconRepository(context).isValid(storedPath))
         bitmap.recycle()
     }
 
@@ -81,8 +81,8 @@ class CustomIconRepositoryTest {
             writeText("not an image")
         }
 
-        assertFalse(repository.isValid(missing.absolutePath))
-        assertFalse(repository.isValid(corrupt.absolutePath))
+        assertNull(decodeCustomIcon(missing.absolutePath))
+        assertNull(decodeCustomIcon(corrupt.absolutePath))
     }
 
     @Test

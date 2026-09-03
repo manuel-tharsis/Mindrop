@@ -1,7 +1,9 @@
 # Gradle
 .gradle/
+.kotlin/
 **/build/
-!**/src/**/build/
+*.apk
+*.aab
 
 # Android Studio / IntelliJ IDEA
 .idea/
@@ -21,15 +23,30 @@ local.properties
 # Signing keys and credentials
 *.jks
 *.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+key.properties
 keystore.properties
 signing.properties
+secrets.properties
+google-services.json
+.env
+.env.*
+!.env.example
 
 # Local databases and SQLite sidecar files
 *.db
 *.db-shm
 *.db-wal
+*.db-journal
 *.sqlite
 *.sqlite3
+
+# Private images copied by the app
+**/custom_icons/
+**/custom-icons/
 
 # OS files
 .DS_Store
@@ -38,4 +55,7 @@ Thumbs.db
 # Logs and temporary files
 *.log
 *.tmp
+*.bak
+*.swp
+*.hprof
 captures/

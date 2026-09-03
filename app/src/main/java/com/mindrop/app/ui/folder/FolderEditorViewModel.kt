@@ -13,12 +13,12 @@ import com.mindrop.app.ui.editor.FolderOption
 import com.mindrop.app.ui.editor.buildFolderOptions
 import com.mindrop.app.ui.editor.descendantFolderIds
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -46,8 +46,8 @@ class FolderEditorViewModel(
     )
     val uiState: StateFlow<FolderEditorUiState> = _uiState.asStateFlow()
 
-    private val _events = MutableSharedFlow<EditorEvent>(extraBufferCapacity = 1)
-    val events: SharedFlow<EditorEvent> = _events.asSharedFlow()
+    private val eventChannel = Channel<EditorEvent>(capacity = Channel.BUFFERED)
+    val events: Flow<EditorEvent> = eventChannel.receiveAsFlow()
 
     init {
         viewModelScope.launch {
@@ -84,10 +84,10 @@ class FolderEditorViewModel(
             return
         }
 
+        _uiState.update { it.copy(isSaving = true, errorMessage = null) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true, errorMessage = null) }
             try {
-                val current = _uiState.value
+                val current = state
                 val existing = storedFolder
                 if (folderId != null && existing == null) {
                     _uiState.update {
@@ -116,7 +116,7 @@ class FolderEditorViewModel(
                 }
 
                 _uiState.update { it.copy(isSaving = false, hasUnsavedChanges = false) }
-                _events.emit(EditorEvent.Saved)
+                eventChannel.send(EditorEvent.Saved)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
                 _uiState.update {
@@ -162,6 +162,7 @@ class FolderEditorViewModel(
     private inline fun updateForm(
         transform: FolderEditorUiState.() -> FolderEditorUiState,
     ) {
+        if (_uiState.value.isSaving) return
         _uiState.update { state ->
             state.transform().copy(
                 hasUnsavedChanges = true,

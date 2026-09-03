@@ -76,14 +76,6 @@ class CustomIconRepository(
         return !file.exists() || file.delete()
     }
 
-    fun isValid(path: String): Boolean {
-        val file = File(path)
-        if (!file.isFile) return false
-        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeFile(file.absolutePath, bounds)
-        return bounds.outWidth > 0 && bounds.outHeight > 0
-    }
-
     private fun calculateSampleSize(width: Int, height: Int): Int {
         var sampleSize = 1
         while (width / sampleSize > MAX_DECODE_SIZE || height / sampleSize > MAX_DECODE_SIZE) {

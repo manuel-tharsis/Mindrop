@@ -1,35 +1,54 @@
 # Mindrop
 
-Aplicación Android personal y completamente offline para guardar y organizar ideas en carpetas y subcarpetas.
+Mindrop es una aplicación Android personal y completamente offline para guardar ideas y organizarlas en carpetas y subcarpetas.
+
+## Funciones
+
+- Crear, editar y eliminar ideas.
+- Guardar un nombre, una descripción corta y una descripción completa.
+- Elegir iconos predeterminados o una imagen propia como icono.
+- Crear, editar y eliminar carpetas vacías.
+- Organizar carpetas en varios niveles.
+- Mover ideas y carpetas a otra carpeta o a la raíz.
+- Navegar mediante el botón Atrás y una ruta de carpetas.
+- Buscar ideas dentro de la ubicación actual.
+- Conservar toda la información en el almacenamiento local del dispositivo.
 
 ## Tecnologías
 
-- Kotlin
-- Jetpack Compose y Material 3
-- Room
-- Navigation Compose
-- Gradle Kotlin DSL
+- Kotlin.
+- Jetpack Compose.
+- Material 3.
+- Room.
+- Navigation Compose.
+- Coroutines y Flow.
+- Gradle Kotlin DSL.
 
-## Arquitectura
+## Ejecutar el proyecto
 
-El proyecto mantiene un flujo sencillo: `UI -> ViewModel -> Repository -> Room`.
+1. Abre la carpeta del proyecto con una versión reciente de Android Studio.
+2. Instala el Android SDK 36 si Android Studio lo solicita.
+3. Sincroniza el proyecto con Gradle.
+4. Selecciona un dispositivo físico o un emulador y ejecuta la configuración `app`.
 
-La base local contiene entidades y repositorios separados para carpetas e ideas, DAO reactivos con `Flow`, una migración de esquema v1 a v2, un ViewModel y un destino de navegación mínimo. Las pantallas de gestión y edición se implementarán en fases posteriores.
+El proyecto requiere JDK 17 o posterior. Puede utilizarse el JDK integrado en Android Studio.
 
-Las carpetas admiten jerarquía recursiva sin ciclos. Solo se pueden borrar carpetas sin subcarpetas; sus ideas se conservan y pasan a la raíz.
+## Generar APK
 
-## Compilación
+Desde la raíz del proyecto, ejecuta:
 
-Se necesita Android SDK 36 y un JDK compatible con Gradle/AGP; se recomienda JDK 21. En Android Studio, selecciónalo como Gradle JDK. Desde PowerShell también puede indicarse antes de compilar:
-
-```powershell
-$env:JAVA_HOME = "C:\ruta\al\jdk-21"
-```
-
-Desde la raíz del proyecto:
+En Windows:
 
 ```powershell
 .\gradlew.bat assembleDebug
 ```
 
-La aplicación no declara el permiso `android.permission.INTERNET` ni integra servicios remotos.
+En macOS o Linux:
+
+```bash
+./gradlew assembleDebug
+```
+
+La APK instalable se genera en `app/build/outputs/apk/debug/app-debug.apk`.
+
+Mindrop no solicita el permiso `INTERNET` y no utiliza cuentas, servidores, analíticas ni servicios externos.

@@ -22,18 +22,22 @@ fun rememberCustomIcon(path: String?): State<CustomIconLoadState> = produceState
     initialValue = if (path == null) CustomIconLoadState.None else CustomIconLoadState.Loading,
     key1 = path,
 ) {
-    value = if (path == null) {
-        CustomIconLoadState.None
-    } else {
-        withContext(Dispatchers.IO) {
-            decodeIcon(path)?.let { bitmap ->
-                CustomIconLoadState.Available(bitmap.asImageBitmap())
-            } ?: CustomIconLoadState.Unavailable
-        }
+    if (path == null) {
+        value = CustomIconLoadState.None
+        return@produceState
     }
+
+    val bitmap = withContext(Dispatchers.IO) { decodeCustomIcon(path) }
+    if (bitmap == null) {
+        value = CustomIconLoadState.Unavailable
+        return@produceState
+    }
+
+    value = CustomIconLoadState.Available(bitmap.asImageBitmap())
+    awaitDispose { bitmap.recycle() }
 }
 
-private fun decodeIcon(path: String): android.graphics.Bitmap? {
+internal fun decodeCustomIcon(path: String): android.graphics.Bitmap? {
     val file = File(path)
     if (!file.isFile) return null
 

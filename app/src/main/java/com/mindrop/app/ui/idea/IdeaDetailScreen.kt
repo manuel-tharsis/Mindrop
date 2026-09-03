@@ -69,15 +69,26 @@ fun IdeaDetailRoute(
 
     if (showDeleteConfirmation) {
         AlertDialog(
-            onDismissRequest = { showDeleteConfirmation = false },
+            onDismissRequest = {
+                if (!uiState.isDeleting) showDeleteConfirmation = false
+            },
             title = { Text(stringResource(R.string.delete_idea_confirmation_title)) },
-            text = { Text(stringResource(R.string.delete_idea_confirmation_message)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.delete_idea_confirmation_message))
+                    uiState.errorMessage?.let { errorMessage ->
+                        Text(
+                            text = errorMessage,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(
-                    onClick = {
-                        showDeleteConfirmation = false
-                        viewModel.delete()
-                    },
+                    onClick = viewModel::delete,
+                    enabled = !uiState.isDeleting,
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = MaterialTheme.colorScheme.error,
                     ),
@@ -86,7 +97,10 @@ fun IdeaDetailRoute(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirmation = false }) {
+                TextButton(
+                    onClick = { showDeleteConfirmation = false },
+                    enabled = !uiState.isDeleting,
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             },
@@ -110,7 +124,10 @@ fun IdeaDetailScreen(
             TopAppBar(
                 title = {},
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(
+                        onClick = onBack,
+                        enabled = !uiState.isDeleting,
+                    ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
                             contentDescription = stringResource(R.string.back_content_description),

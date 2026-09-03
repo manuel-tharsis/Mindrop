@@ -8,12 +8,12 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mindrop.app.data.local.entity.IdeaEntity
 import com.mindrop.app.data.repository.IdeaRepository
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -35,8 +35,8 @@ class IdeaDetailViewModel(
     private val _uiState = MutableStateFlow(IdeaDetailUiState())
     val uiState: StateFlow<IdeaDetailUiState> = _uiState.asStateFlow()
 
-    private val _events = MutableSharedFlow<IdeaDetailEvent>(extraBufferCapacity = 1)
-    val events: SharedFlow<IdeaDetailEvent> = _events.asSharedFlow()
+    private val eventChannel = Channel<IdeaDetailEvent>(capacity = Channel.BUFFERED)
+    val events: Flow<IdeaDetailEvent> = eventChannel.receiveAsFlow()
 
     init {
         viewModelScope.launch {
@@ -62,7 +62,7 @@ class IdeaDetailViewModel(
             _uiState.update { it.copy(isDeleting = true, errorMessage = null) }
             try {
                 check(ideaRepository.deleteById(ideaId)) { "La idea ya no existe." }
-                _events.emit(IdeaDetailEvent.Deleted)
+                eventChannel.send(IdeaDetailEvent.Deleted)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
                 _uiState.update {

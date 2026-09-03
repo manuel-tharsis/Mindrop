@@ -71,6 +71,7 @@ fun IdeaEditorRoute(
     }
 
     fun requestExit() {
+        if (uiState.isSaving || uiState.isImportingIcon) return
         if (uiState.hasUnsavedChanges) showDiscardDialog = true else onFinished()
     }
 
@@ -121,6 +122,7 @@ fun IdeaEditorScreen(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val formEnabled = !uiState.isSaving && !uiState.isImportingIcon
     val shortDescriptionFocus = remember { FocusRequester() }
     val fullDescriptionFocus = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
@@ -149,6 +151,7 @@ fun IdeaEditorScreen(
                             finishKeyboardInput()
                             onCancel()
                         },
+                        enabled = formEnabled,
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
@@ -193,6 +196,7 @@ fun IdeaEditorScreen(
                             null
                         },
                         isError = uiState.nameError,
+                        enabled = formEnabled,
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -209,6 +213,7 @@ fun IdeaEditorScreen(
                             .fillMaxWidth()
                             .focusRequester(shortDescriptionFocus),
                         label = { Text(stringResource(R.string.short_description_label)) },
+                        enabled = formEnabled,
                         minLines = 2,
                         maxLines = 3,
                         shape = RoundedCornerShape(16.dp),
@@ -227,6 +232,7 @@ fun IdeaEditorScreen(
                             .heightIn(min = 144.dp, max = 320.dp)
                             .focusRequester(fullDescriptionFocus),
                         label = { Text(stringResource(R.string.full_description_label)) },
+                        enabled = formEnabled,
                         minLines = 5,
                         shape = RoundedCornerShape(16.dp),
                     )
@@ -236,6 +242,7 @@ fun IdeaEditorScreen(
                         selectedIcon = uiState.icon,
                         hasCustomIcon = uiState.customIconPath != null,
                         onIconSelected = onIconChange,
+                        enabled = formEnabled,
                     )
                 }
                 item {
@@ -244,6 +251,7 @@ fun IdeaEditorScreen(
                         isImporting = uiState.isImportingIcon,
                         onChooseImage = onChooseCustomIcon,
                         onUseDefaultIcon = onUseDefaultIcon,
+                        enabled = formEnabled,
                     )
                 }
                 item {
@@ -252,6 +260,7 @@ fun IdeaEditorScreen(
                         selectedFolderId = uiState.folderId,
                         options = uiState.folderOptions,
                         onFolderSelected = onFolderChange,
+                        enabled = formEnabled,
                     )
                 }
                 item {

@@ -58,6 +58,7 @@ fun FolderEditorRoute(
     var showDiscardDialog by rememberSaveable { mutableStateOf(false) }
 
     fun requestExit() {
+        if (uiState.isSaving) return
         if (uiState.hasUnsavedChanges) showDiscardDialog = true else onFinished()
     }
 
@@ -96,6 +97,7 @@ fun FolderEditorScreen(
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val formEnabled = !uiState.isSaving
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val finishKeyboardInput = {
@@ -122,6 +124,7 @@ fun FolderEditorScreen(
                             finishKeyboardInput()
                             onCancel()
                         },
+                        enabled = formEnabled,
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
@@ -165,6 +168,7 @@ fun FolderEditorScreen(
                             null
                         },
                         isError = uiState.nameError,
+                        enabled = formEnabled,
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -175,6 +179,7 @@ fun FolderEditorScreen(
                     IconPicker(
                         selectedIcon = uiState.icon,
                         onIconSelected = onIconChange,
+                        enabled = formEnabled,
                     )
                 }
                 item {
@@ -183,6 +188,7 @@ fun FolderEditorScreen(
                         selectedFolderId = uiState.parentFolderId,
                         options = uiState.parentOptions,
                         onFolderSelected = onParentChange,
+                        enabled = formEnabled,
                     )
                 }
                 item {

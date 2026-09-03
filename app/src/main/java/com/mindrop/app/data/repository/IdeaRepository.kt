@@ -5,7 +5,9 @@ import com.mindrop.app.data.icon.CustomIconFileStore
 import com.mindrop.app.data.local.MindropDatabase
 import com.mindrop.app.data.local.dao.IdeaDao
 import com.mindrop.app.data.local.entity.IdeaEntity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 
 class IdeaRepository(
     private val database: MindropDatabase,
@@ -51,7 +53,7 @@ class IdeaRepository(
             }
             rowUpdated
         }
-        if (updated) obsoleteCustomIconPath?.let { customIconFileStore?.delete(it) }
+        if (updated) deleteCustomIcon(obsoleteCustomIconPath)
         return updated
     }
 
@@ -79,8 +81,15 @@ class IdeaRepository(
             if (rowDeleted) customIconPath = storedIdea.customIconPath
             rowDeleted
         }
-        if (deleted) customIconPath?.let { customIconFileStore?.delete(it) }
+        if (deleted) deleteCustomIcon(customIconPath)
         return deleted
+    }
+
+    private suspend fun deleteCustomIcon(path: String?) {
+        if (path == null || customIconFileStore == null) return
+        withContext(Dispatchers.IO) {
+            customIconFileStore.delete(path)
+        }
     }
 
     private fun nextUpdatedAt(previousUpdatedAt: Long): Long {

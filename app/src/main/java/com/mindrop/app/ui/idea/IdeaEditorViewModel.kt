@@ -15,14 +15,16 @@ import com.mindrop.app.ui.editor.EditorEvent
 import com.mindrop.app.ui.editor.FolderOption
 import com.mindrop.app.ui.editor.buildFolderOptions
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class IdeaEditorUiState(
     val isLoading: Boolean = true,
@@ -55,8 +57,8 @@ class IdeaEditorViewModel(
     )
     val uiState: StateFlow<IdeaEditorUiState> = _uiState.asStateFlow()
 
-    private val _events = MutableSharedFlow<EditorEvent>(extraBufferCapacity = 1)
-    val events: SharedFlow<EditorEvent> = _events.asSharedFlow()
+    private val eventChannel = Channel<EditorEvent>(capacity = Channel.BUFFERED)
+    val events: Flow<EditorEvent> = eventChannel.receiveAsFlow()
 
     init {
         viewModelScope.launch {
@@ -78,18 +80,27 @@ class IdeaEditorViewModel(
     fun updateFullDescription(value: String) = updateForm { copy(fullDescription = value) }
 
     fun selectPresetIcon(value: String) {
-        pendingCustomIconPath?.let(customIconRepository::delete)
+        if (isBusy()) return
+        pendingCustomIconPath?.let { path ->
+            viewModelScope.launch(Dispatchers.IO) {
+                customIconRepository.delete(path)
+            }
+        }
         pendingCustomIconPath = null
         updateForm { copy(icon = value, customIconPath = null) }
     }
 
     fun importCustomIcon(uri: Uri) {
-        if (_uiState.value.isImportingIcon) return
+        if (isBusy()) return
+        _uiState.update { it.copy(isImportingIcon = true, errorMessage = null) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isImportingIcon = true, errorMessage = null) }
             try {
                 val importedPath = customIconRepository.importImage(uri)
-                pendingCustomIconPath?.let(customIconRepository::delete)
+                pendingCustomIconPath?.let { path ->
+                    withContext(Dispatchers.IO) {
+                        customIconRepository.delete(path)
+                    }
+                }
                 pendingCustomIconPath = importedPath
                 _uiState.update {
                     it.copy(
@@ -124,10 +135,10 @@ class IdeaEditorViewModel(
             return
         }
 
+        _uiState.update { it.copy(isSaving = true, errorMessage = null) }
         viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true, errorMessage = null) }
             try {
-                val current = _uiState.value
+                val current = state
                 val existing = storedIdea
                 if (ideaId != null && existing == null) {
                     _uiState.update {
@@ -139,8 +150,8 @@ class IdeaEditorViewModel(
                     ideaRepository.insert(
                         IdeaEntity(
                             title = current.name.trim(),
-                            shortDescription = current.shortDescription.trim(),
-                            fullDescription = current.fullDescription.trim(),
+                            shortDescription = current.shortDescription,
+                            fullDescription = current.fullDescription,
                             icon = current.icon,
                             customIconPath = current.customIconPath,
                             folderId = current.folderId,
@@ -151,8 +162,8 @@ class IdeaEditorViewModel(
                     val updated = ideaRepository.update(
                         existing.copy(
                             title = current.name.trim(),
-                            shortDescription = current.shortDescription.trim(),
-                            fullDescription = current.fullDescription.trim(),
+                            shortDescription = current.shortDescription,
+                            fullDescription = current.fullDescription,
                             icon = current.icon,
                             customIconPath = current.customIconPath,
                             folderId = current.folderId,
@@ -163,7 +174,7 @@ class IdeaEditorViewModel(
 
                 pendingCustomIconPath = null
                 _uiState.update { it.copy(isSaving = false, hasUnsavedChanges = false) }
-                _events.emit(EditorEvent.Saved)
+                eventChannel.send(EditorEvent.Saved)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
                 _uiState.update {
@@ -208,6 +219,7 @@ class IdeaEditorViewModel(
     private inline fun updateForm(
         transform: IdeaEditorUiState.() -> IdeaEditorUiState,
     ) {
+        if (isBusy()) return
         _uiState.update { state ->
             state.transform().copy(
                 hasUnsavedChanges = true,
@@ -215,6 +227,8 @@ class IdeaEditorViewModel(
             )
         }
     }
+
+    private fun isBusy(): Boolean = _uiState.value.let { it.isSaving || it.isImportingIcon }
 
     override fun onCleared() {
         pendingCustomIconPath?.let(customIconRepository::delete)

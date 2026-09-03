@@ -15,13 +15,13 @@ import com.mindrop.app.data.repository.FolderNotEmptyException
 import com.mindrop.app.data.repository.FolderRepository
 import com.mindrop.app.data.repository.IdeaRepository
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -58,8 +58,8 @@ class HomeViewModel(
     private val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY_KEY, "")
     private val savedStateHandle = savedStateHandle
     private val contentActionState = MutableStateFlow(ContentActionState())
-    private val _events = MutableSharedFlow<HomeEvent>(extraBufferCapacity = 1)
-    val events: SharedFlow<HomeEvent> = _events.asSharedFlow()
+    private val eventChannel = Channel<HomeEvent>(capacity = Channel.BUFFERED)
+    val events: Flow<HomeEvent> = eventChannel.receiveAsFlow()
 
     val uiState: StateFlow<HomeUiState> = combine(
         folderRepository.observeChildSummaries(parentFolderId = folderId),
@@ -142,7 +142,7 @@ class HomeViewModel(
             try {
                 check(action()) { "El elemento ya no existe." }
                 contentActionState.value = ContentActionState()
-                _events.emit(successEvent)
+                eventChannel.send(successEvent)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
                 contentActionState.value = ContentActionState(

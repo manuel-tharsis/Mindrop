@@ -49,6 +49,7 @@ fun IconPicker(
     onIconSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
     hasCustomIcon: Boolean = false,
+    enabled: Boolean = true,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -66,6 +67,7 @@ fun IconPicker(
                 FilterChip(
                     selected = !hasCustomIcon && mindropIcon(selectedIcon).key == option.key,
                     onClick = { onIconSelected(option.key) },
+                    enabled = enabled,
                     label = { Text(stringResource(option.labelRes)) },
                     leadingIcon = {
                         Icon(
@@ -86,6 +88,7 @@ fun CustomIconPicker(
     onChooseImage: () -> Unit,
     onUseDefaultIcon: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val iconState by rememberCustomIcon(customIconPath)
 
@@ -123,7 +126,7 @@ fun CustomIconPicker(
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             OutlinedButton(
                 onClick = onChooseImage,
-                enabled = !isImporting,
+                enabled = enabled && !isImporting,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 if (isImporting) {
@@ -143,7 +146,7 @@ fun CustomIconPicker(
             if (customIconPath != null) {
                 TextButton(
                     onClick = onUseDefaultIcon,
-                    enabled = !isImporting,
+                    enabled = enabled && !isImporting,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(stringResource(R.string.use_default_icon))
@@ -160,6 +163,7 @@ fun FolderPicker(
     options: List<FolderOption>,
     onFolderSelected: (Long?) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val selectedLabel = options.firstOrNull { it.id == selectedFolderId }?.label
@@ -173,6 +177,7 @@ fun FolderPicker(
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedButton(
                 onClick = { expanded = true },
+                enabled = enabled,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(
@@ -189,6 +194,7 @@ fun FolderPicker(
             ) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.root_location)) },
+                    enabled = enabled,
                     onClick = {
                         onFolderSelected(null)
                         expanded = false
@@ -197,6 +203,7 @@ fun FolderPicker(
                 options.forEach { option ->
                     DropdownMenuItem(
                         text = { Text(option.label) },
+                        enabled = enabled,
                         onClick = {
                             onFolderSelected(option.id)
                             expanded = false
