@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -52,10 +53,32 @@ import com.mindrop.app.R
 import com.mindrop.app.data.local.entity.FolderEntity
 import com.mindrop.app.data.local.entity.IdeaEntity
 import com.mindrop.app.data.local.model.FolderSummary
+import com.mindrop.app.ui.editor.buildFolderOptions
+import com.mindrop.app.ui.editor.descendantFolderIds
+import com.mindrop.app.ui.home.components.DeleteFolderDialog
 import com.mindrop.app.ui.home.components.EmptyState
+import com.mindrop.app.ui.home.components.FolderDestinationDialog
 import com.mindrop.app.ui.home.components.FolderCard
 import com.mindrop.app.ui.home.components.IdeaCard
 import com.mindrop.app.ui.theme.MindropTheme
+
+private sealed interface MoveRequest {
+    val id: Long
+    val name: String
+    val currentFolderId: Long?
+
+    data class Idea(
+        override val id: Long,
+        override val name: String,
+        override val currentFolderId: Long?,
+    ) : MoveRequest
+
+    data class Folder(
+        override val id: Long,
+        override val name: String,
+        override val currentFolderId: Long?,
+    ) : MoveRequest
+}
 
 @Composable
 fun HomeRoute(
@@ -70,6 +93,17 @@ fun HomeRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showAddOptions by rememberSaveable { mutableStateOf(false) }
+    var moveRequest by remember { mutableStateOf<MoveRequest?>(null) }
+    var folderToDelete by remember { mutableStateOf<FolderEntity?>(null) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                HomeEvent.MoveCompleted -> moveRequest = null
+                HomeEvent.FolderDeleted -> folderToDelete = null
+            }
+        }
+    }
 
     HomeScreen(
         uiState = uiState,
@@ -77,6 +111,26 @@ fun HomeRoute(
         onFolderClick = onFolderClick,
         onIdeaClick = onIdeaClick,
         onEditFolder = onEditFolder,
+        onMoveFolder = { folder ->
+            viewModel.clearContentActionError()
+            moveRequest = MoveRequest.Folder(
+                id = folder.id,
+                name = folder.name,
+                currentFolderId = folder.parentFolderId,
+            )
+        },
+        onDeleteFolder = { folder ->
+            viewModel.clearContentActionError()
+            folderToDelete = folder
+        },
+        onMoveIdea = { idea ->
+            viewModel.clearContentActionError()
+            moveRequest = MoveRequest.Idea(
+                id = idea.id,
+                name = idea.title,
+                currentFolderId = idea.folderId,
+            )
+        },
         onBack = onBack,
         onBreadcrumbClick = onBreadcrumbClick,
         onAddClick = { showAddOptions = true },
@@ -93,6 +147,44 @@ fun HomeRoute(
                 showAddOptions = false
                 onCreateFolder()
             },
+        )
+    }
+
+    moveRequest?.let { request ->
+        val excludedFolderIds = if (request is MoveRequest.Folder) {
+            descendantFolderIds(uiState.allFolders, request.id) + request.id
+        } else {
+            emptySet()
+        }
+        FolderDestinationDialog(
+            itemName = request.name,
+            currentFolderId = request.currentFolderId,
+            options = buildFolderOptions(uiState.allFolders, excludedFolderIds),
+            isMoving = uiState.isContentActionRunning,
+            errorMessage = uiState.contentActionError,
+            onDismiss = {
+                viewModel.clearContentActionError()
+                moveRequest = null
+            },
+            onMove = { destinationId ->
+                when (request) {
+                    is MoveRequest.Idea -> viewModel.moveIdea(request.id, destinationId)
+                    is MoveRequest.Folder -> viewModel.moveFolder(request.id, destinationId)
+                }
+            },
+        )
+    }
+
+    folderToDelete?.let { folder ->
+        DeleteFolderDialog(
+            folderName = folder.name,
+            isDeleting = uiState.isContentActionRunning,
+            errorMessage = uiState.contentActionError,
+            onDismiss = {
+                viewModel.clearContentActionError()
+                folderToDelete = null
+            },
+            onConfirm = { viewModel.deleteFolder(folder.id) },
         )
     }
 }
@@ -143,6 +235,9 @@ fun HomeScreen(
     onFolderClick: (Long) -> Unit,
     onIdeaClick: (Long) -> Unit,
     onEditFolder: (Long) -> Unit,
+    onMoveFolder: (FolderEntity) -> Unit,
+    onDeleteFolder: (FolderEntity) -> Unit,
+    onMoveIdea: (IdeaEntity) -> Unit,
     onBack: () -> Unit,
     onBreadcrumbClick: (Long?) -> Unit,
     onAddClick: () -> Unit,
@@ -290,6 +385,8 @@ fun HomeScreen(
                             folderSummary = summary,
                             onClick = { onFolderClick(summary.folder.id) },
                             onEditClick = { onEditFolder(summary.folder.id) },
+                            onMoveClick = { onMoveFolder(summary.folder) },
+                            onDeleteClick = { onDeleteFolder(summary.folder) },
                         )
                     }
                 }
@@ -336,6 +433,7 @@ fun HomeScreen(
                         IdeaCard(
                             idea = idea,
                             onClick = { onIdeaClick(idea.id) },
+                            onMoveClick = { onMoveIdea(idea) },
                         )
                     }
                 }
@@ -485,6 +583,9 @@ private fun HomeScreenPreview() {
             onFolderClick = {},
             onIdeaClick = {},
             onEditFolder = {},
+            onMoveFolder = {},
+            onDeleteFolder = {},
+            onMoveIdea = {},
             onBack = {},
             onBreadcrumbClick = {},
             onAddClick = {},
@@ -502,6 +603,9 @@ private fun EmptyHomeScreenPreview() {
             onFolderClick = {},
             onIdeaClick = {},
             onEditFolder = {},
+            onMoveFolder = {},
+            onDeleteFolder = {},
+            onMoveIdea = {},
             onBack = {},
             onBreadcrumbClick = {},
             onAddClick = {},
@@ -543,6 +647,9 @@ private fun NestedFolderScreenPreview() {
             onFolderClick = {},
             onIdeaClick = {},
             onEditFolder = {},
+            onMoveFolder = {},
+            onDeleteFolder = {},
+            onMoveIdea = {},
             onBack = {},
             onBreadcrumbClick = {},
             onAddClick = {},

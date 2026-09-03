@@ -28,6 +28,7 @@ import com.mindrop.app.ui.theme.MindropTheme
 fun IdeaCard(
     idea: IdeaEntity,
     onClick: () -> Unit,
+    onMoveClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ElevatedCard(
@@ -68,6 +69,7 @@ fun IdeaCard(
                     )
                 }
             }
+            ContentActionsMenu(onMoveClick = onMoveClick)
         }
     }
 }
@@ -84,6 +86,7 @@ private fun IdeaCardPreview() {
                 icon = "android",
             ),
             onClick = {},
+            onMoveClick = {},
             modifier = Modifier.padding(16.dp),
         )
     }

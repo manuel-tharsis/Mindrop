@@ -51,6 +51,9 @@ interface FolderDao {
     @Query("SELECT COUNT(*) FROM folders WHERE parent_folder_id = :folderId")
     suspend fun countChildren(folderId: Long): Int
 
+    @Query("SELECT COUNT(*) FROM ideas WHERE folder_id = :folderId")
+    suspend fun countIdeas(folderId: Long): Int
+
     @Query("DELETE FROM folders WHERE id = :id")
     suspend fun deleteById(id: Long): Int
 }

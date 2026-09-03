@@ -9,9 +9,11 @@ import kotlinx.coroutines.flow.Flow
 
 class FolderHierarchyException(message: String) : IllegalArgumentException(message)
 
-class FolderHasChildrenException(
+class FolderNotEmptyException(
     val folderId: Long,
-) : IllegalStateException("La carpeta $folderId contiene subcarpetas y no se puede borrar.")
+    val ideaCount: Int,
+    val childFolderCount: Int,
+) : IllegalStateException("La carpeta $folderId no está vacía y no se puede borrar.")
 
 class FolderRepository(
     private val database: MindropDatabase,
@@ -46,16 +48,30 @@ class FolderRepository(
         folderDao.update(folder) == 1
     }
 
+    suspend fun moveToFolder(folderId: Long, parentFolderId: Long?): Boolean =
+        database.withTransaction {
+            val folder = folderDao.findById(folderId) ?: return@withTransaction false
+            validateParent(folderId = folderId, parentFolderId = parentFolderId)
+            if (folder.parentFolderId == parentFolderId) return@withTransaction true
+            folderDao.update(folder.copy(parentFolderId = parentFolderId)) == 1
+        }
+
     /**
-     * Borra únicamente carpetas sin subcarpetas. Las ideas de la carpeta pasan a la raíz
-     * mediante la clave foránea ON DELETE SET NULL, por lo que nunca se eliminan en cascada.
+     * Borra únicamente carpetas completamente vacías. Así ninguna idea cambia de ubicación
+     * de forma implícita y nunca se pierde contenido por confirmar una eliminación de carpeta.
      */
     suspend fun deleteById(id: Long): Boolean = database.withTransaction {
         if (folderDao.findById(id) == null) {
             return@withTransaction false
         }
-        if (folderDao.countChildren(id) > 0) {
-            throw FolderHasChildrenException(folderId = id)
+        val ideaCount = folderDao.countIdeas(id)
+        val childFolderCount = folderDao.countChildren(id)
+        if (ideaCount > 0 || childFolderCount > 0) {
+            throw FolderNotEmptyException(
+                folderId = id,
+                ideaCount = ideaCount,
+                childFolderCount = childFolderCount,
+            )
         }
         folderDao.deleteById(id) == 1
     }

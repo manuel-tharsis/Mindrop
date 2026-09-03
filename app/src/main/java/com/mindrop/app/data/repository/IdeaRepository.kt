@@ -40,16 +40,10 @@ class IdeaRepository(
             require(idea.title.isNotBlank()) { "El título de la idea no puede estar vacío." }
 
             val storedIdea = ideaDao.findById(idea.id) ?: return@withTransaction false
-            val now = currentTimeMillis()
-            val nextUpdatedAt = when {
-                now > storedIdea.updatedAt -> now
-                storedIdea.updatedAt == Long.MAX_VALUE -> Long.MAX_VALUE
-                else -> storedIdea.updatedAt + 1
-            }
             val rowUpdated = ideaDao.update(
                 idea.copy(
                     createdAt = storedIdea.createdAt,
-                    updatedAt = nextUpdatedAt,
+                    updatedAt = nextUpdatedAt(storedIdea.updatedAt),
                 ),
             ) == 1
             if (rowUpdated && storedIdea.customIconPath != idea.customIconPath) {
@@ -61,6 +55,22 @@ class IdeaRepository(
         return updated
     }
 
+    suspend fun moveToFolder(ideaId: Long, folderId: Long?): Boolean =
+        database.withTransaction {
+            if (folderId != null && database.folderDao().findById(folderId) == null) {
+                throw IllegalArgumentException("La carpeta de destino no existe.")
+            }
+            val storedIdea = ideaDao.findById(ideaId) ?: return@withTransaction false
+            if (storedIdea.folderId == folderId) return@withTransaction true
+
+            ideaDao.update(
+                storedIdea.copy(
+                    folderId = folderId,
+                    updatedAt = nextUpdatedAt(storedIdea.updatedAt),
+                ),
+            ) == 1
+        }
+
     suspend fun deleteById(id: Long): Boolean {
         var customIconPath: String? = null
         val deleted = database.withTransaction {
@@ -71,5 +81,14 @@ class IdeaRepository(
         }
         if (deleted) customIconPath?.let { customIconFileStore?.delete(it) }
         return deleted
+    }
+
+    private fun nextUpdatedAt(previousUpdatedAt: Long): Long {
+        val now = currentTimeMillis()
+        return when {
+            now > previousUpdatedAt -> now
+            previousUpdatedAt == Long.MAX_VALUE -> Long.MAX_VALUE
+            else -> previousUpdatedAt + 1
+        }
     }
 }

@@ -100,16 +100,15 @@ class MindropDataTest {
         val childId = folderRepository.insert(
             FolderEntity(name = "Hija", icon = "folder", parentFolderId = rootId),
         )
+        val grandchildId = folderRepository.insert(
+            FolderEntity(name = "Nieta", icon = "folder", parentFolderId = childId),
+        )
 
         val descendantCycle = runCatching {
-            folderRepository.update(
-                folderRepository.findById(rootId)!!.copy(parentFolderId = childId),
-            )
+            folderRepository.moveToFolder(rootId, grandchildId)
         }.exceptionOrNull()
         val selfCycle = runCatching {
-            folderRepository.update(
-                folderRepository.findById(childId)!!.copy(parentFolderId = childId),
-            )
+            folderRepository.moveToFolder(childId, childId)
         }.exceptionOrNull()
 
         assertTrue(descendantCycle is FolderHierarchyException)
@@ -117,37 +116,76 @@ class MindropDataTest {
 
         assertNull(folderRepository.findById(rootId)!!.parentFolderId)
         assertEquals(rootId, folderRepository.findById(childId)!!.parentFolderId)
+        assertEquals(childId, folderRepository.findById(grandchildId)!!.parentFolderId)
     }
 
     @Test
-    fun deletingFolderWithChildrenIsRejected() = runBlocking {
+    fun movingFolderSupportsOtherParentsAndRoot() = runBlocking {
+        val firstParentId = folderRepository.insert(
+            FolderEntity(name = "Primera", icon = "folder"),
+        )
+        val secondParentId = folderRepository.insert(
+            FolderEntity(name = "Segunda", icon = "folder"),
+        )
+        val folderId = folderRepository.insert(
+            FolderEntity(name = "Movible", icon = "folder", parentFolderId = firstParentId),
+        )
+
+        assertTrue(folderRepository.moveToFolder(folderId, secondParentId))
+        assertEquals(secondParentId, folderRepository.findById(folderId)?.parentFolderId)
+
+        assertTrue(folderRepository.moveToFolder(folderId, null))
+        assertNull(folderRepository.findById(folderId)?.parentFolderId)
+    }
+
+    @Test
+    fun movingIdeaSupportsAnyFolderAndRoot() = runBlocking {
+        val firstFolderId = folderRepository.insert(
+            FolderEntity(name = "Primera", icon = "folder"),
+        )
+        val secondFolderId = folderRepository.insert(
+            FolderEntity(name = "Segunda", icon = "folder"),
+        )
+        val ideaId = ideaRepository.insert(newIdea(title = "Movible"))
+
+        assertTrue(ideaRepository.moveToFolder(ideaId, firstFolderId))
+        assertEquals(firstFolderId, ideaRepository.findById(ideaId)?.folderId)
+
+        assertTrue(ideaRepository.moveToFolder(ideaId, secondFolderId))
+        assertEquals(secondFolderId, ideaRepository.findById(ideaId)?.folderId)
+
+        assertTrue(ideaRepository.moveToFolder(ideaId, null))
+        assertNull(ideaRepository.findById(ideaId)?.folderId)
+    }
+
+    @Test
+    fun deletingNonEmptyFolderIsRejectedWithoutMovingOrDeletingContent() = runBlocking {
         val rootId = folderRepository.insert(FolderEntity(name = "Raíz", icon = "folder"))
-        folderRepository.insert(
+        val childId = folderRepository.insert(
             FolderEntity(name = "Hija", icon = "folder", parentFolderId = rootId),
+        )
+        val ideaId = ideaRepository.insert(
+            newIdea(title = "Idea conservada", folderId = rootId),
         )
 
         val failure = runCatching { folderRepository.deleteById(rootId) }.exceptionOrNull()
 
-        assertTrue(failure is FolderHasChildrenException)
+        assertTrue(failure is FolderNotEmptyException)
+        failure as FolderNotEmptyException
+        assertEquals(1, failure.ideaCount)
+        assertEquals(1, failure.childFolderCount)
         assertNotNull(folderRepository.findById(rootId))
+        assertEquals(rootId, folderRepository.findById(childId)?.parentFolderId)
+        assertEquals(rootId, ideaRepository.findById(ideaId)?.folderId)
     }
 
     @Test
-    fun deletingLeafFolderMovesItsIdeasToRootWithoutDeletingThem() = runBlocking {
+    fun deletingEmptyFolderRemovesOnlyThatFolder() = runBlocking {
         val folderId = folderRepository.insert(FolderEntity(name = "Temporal", icon = "folder"))
-        val ideaId = ideaRepository.insert(
-            newIdea(title = "Idea conservada", folderId = folderId),
-        )
 
         assertTrue(folderRepository.deleteById(folderId))
 
         assertNull(folderRepository.findById(folderId))
-        assertEquals(ideaId, ideaRepository.findById(ideaId)?.id)
-        assertNull(ideaRepository.findById(ideaId)?.folderId)
-        assertEquals(
-            listOf("Idea conservada"),
-            ideaRepository.observeInFolder(folderId = null).first().map { it.title },
-        )
     }
 
     @Test
