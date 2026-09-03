@@ -25,7 +25,10 @@ interface FolderDao {
         """
         SELECT
             folder.*,
-            (SELECT COUNT(*) FROM ideas WHERE folder_id = folder.id) AS idea_count,
+            (
+                SELECT COUNT(*) FROM ideas
+                WHERE folder_id = folder.id AND is_completed = 0
+            ) AS idea_count,
             (SELECT COUNT(*) FROM folders AS child WHERE child.parent_folder_id = folder.id)
                 AS child_folder_count
         FROM folders AS folder

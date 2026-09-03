@@ -21,6 +21,8 @@ class IdeaRepository(
     fun observeInFolder(folderId: Long?): Flow<List<IdeaEntity>> =
         ideaDao.observeInFolder(folderId)
 
+    fun observeCompleted(): Flow<List<IdeaEntity>> = ideaDao.observeCompleted()
+
     fun observeById(id: Long): Flow<IdeaEntity?> = ideaDao.observeById(id)
 
     suspend fun findById(id: Long): IdeaEntity? = ideaDao.findById(id)
@@ -89,6 +91,18 @@ class IdeaRepository(
                     folderId = folderId,
                     updatedAt = nextUpdatedAt(storedIdea.updatedAt),
                 ),
+            ) == 1
+        }
+
+    suspend fun setCompleted(ideaId: Long, isCompleted: Boolean): Boolean =
+        database.withTransaction {
+            val storedIdea = ideaDao.findById(ideaId) ?: return@withTransaction false
+            if (storedIdea.isCompleted == isCompleted) return@withTransaction true
+
+            ideaDao.setCompleted(
+                id = ideaId,
+                isCompleted = isCompleted,
+                updatedAt = nextUpdatedAt(storedIdea.updatedAt),
             ) == 1
         }
 

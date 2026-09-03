@@ -16,12 +16,24 @@ interface IdeaDao {
     @Query(
         """
         SELECT * FROM ideas
-        WHERE (:folderId IS NULL AND folder_id IS NULL)
-           OR folder_id = :folderId
+        WHERE is_completed = 0
+          AND (
+              (:folderId IS NULL AND folder_id IS NULL)
+              OR folder_id = :folderId
+          )
         ORDER BY sort_order ASC, title COLLATE NOCASE ASC, id ASC
         """,
     )
     fun observeInFolder(folderId: Long?): Flow<List<IdeaEntity>>
+
+    @Query(
+        """
+        SELECT * FROM ideas
+        WHERE is_completed = 1
+        ORDER BY sort_order ASC, title COLLATE NOCASE ASC, id ASC
+        """,
+    )
+    fun observeCompleted(): Flow<List<IdeaEntity>>
 
     @Query("SELECT * FROM ideas WHERE id = :id LIMIT 1")
     fun observeById(id: Long): Flow<IdeaEntity?>
@@ -34,6 +46,15 @@ interface IdeaDao {
 
     @Update(onConflict = OnConflictStrategy.ABORT)
     suspend fun update(idea: IdeaEntity): Int
+
+    @Query(
+        """
+        UPDATE ideas
+        SET is_completed = :isCompleted, updated_at = :updatedAt
+        WHERE id = :id
+        """,
+    )
+    suspend fun setCompleted(id: Long, isCompleted: Boolean, updatedAt: Long): Int
 
     @Query("DELETE FROM ideas WHERE id = :id")
     suspend fun deleteById(id: Long): Int

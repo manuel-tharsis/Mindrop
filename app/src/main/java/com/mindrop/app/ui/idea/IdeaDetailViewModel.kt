@@ -26,6 +26,7 @@ data class IdeaDetailUiState(
     val pendingSuggestions: List<IdeaSuggestionEntity> = emptyList(),
     val validatingSuggestionId: Long? = null,
     val validationErrorMessage: String? = null,
+    val isUpdatingCompletion: Boolean = false,
     val isDeleting: Boolean = false,
     val errorMessage: String? = null,
 )
@@ -75,7 +76,11 @@ class IdeaDetailViewModel(
 
     fun validateSuggestion(suggestionId: Long) {
         val state = _uiState.value
-        if (state.isDeleting || state.validatingSuggestionId != null) return
+        if (
+            state.isDeleting ||
+            state.isUpdatingCompletion ||
+            state.validatingSuggestionId != null
+        ) return
         if (state.pendingSuggestions.none { it.id == suggestionId }) return
 
         _uiState.update {
@@ -108,8 +113,36 @@ class IdeaDetailViewModel(
         }
     }
 
+    fun toggleCompleted() {
+        val state = _uiState.value
+        val idea = state.idea ?: return
+        if (state.isDeleting || state.isUpdatingCompletion) return
+
+        _uiState.update { it.copy(isUpdatingCompletion = true, errorMessage = null) }
+        viewModelScope.launch {
+            try {
+                check(ideaRepository.setCompleted(ideaId, !idea.isCompleted)) {
+                    "La idea ya no existe."
+                }
+                _uiState.update { it.copy(isUpdatingCompletion = false) }
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                _uiState.update {
+                    it.copy(
+                        isUpdatingCompletion = false,
+                        errorMessage = "No se pudo cambiar el estado de la idea.",
+                    )
+                }
+            }
+        }
+    }
+
     fun delete() {
-        if (_uiState.value.isDeleting || _uiState.value.idea == null) return
+        if (
+            _uiState.value.isDeleting ||
+            _uiState.value.isUpdatingCompletion ||
+            _uiState.value.idea == null
+        ) return
         viewModelScope.launch {
             _uiState.update { it.copy(isDeleting = true, errorMessage = null) }
             try {

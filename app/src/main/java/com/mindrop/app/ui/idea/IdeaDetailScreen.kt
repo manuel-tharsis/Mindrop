@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -67,6 +68,7 @@ fun IdeaDetailRoute(
         onBack = onBack,
         onEdit = { uiState.idea?.id?.let(onEdit) },
         onDelete = { showDeleteConfirmation = true },
+        onToggleCompleted = viewModel::toggleCompleted,
         onValidateSuggestion = viewModel::validateSuggestion,
     )
 
@@ -118,6 +120,7 @@ fun IdeaDetailScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    onToggleCompleted: () -> Unit,
     onValidateSuggestion: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -130,7 +133,7 @@ fun IdeaDetailScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = onBack,
-                        enabled = !uiState.isDeleting,
+                        enabled = !uiState.isDeleting && !uiState.isUpdatingCompletion,
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_arrow_back),
@@ -141,7 +144,9 @@ fun IdeaDetailScreen(
                 actions = {
                     IconButton(
                         onClick = onEdit,
-                        enabled = uiState.idea != null && !uiState.isDeleting,
+                        enabled = uiState.idea != null &&
+                            !uiState.isDeleting &&
+                            !uiState.isUpdatingCompletion,
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_edit),
@@ -150,7 +155,9 @@ fun IdeaDetailScreen(
                     }
                     IconButton(
                         onClick = onDelete,
-                        enabled = uiState.idea != null && !uiState.isDeleting,
+                        enabled = uiState.idea != null &&
+                            !uiState.isDeleting &&
+                            !uiState.isUpdatingCompletion,
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_delete),
@@ -169,6 +176,7 @@ fun IdeaDetailScreen(
             uiState.isLoading -> LoadingDetail(modifier = Modifier.padding(innerPadding))
             uiState.idea != null -> IdeaDetailContent(
                 uiState = uiState,
+                onToggleCompleted = onToggleCompleted,
                 onValidateSuggestion = onValidateSuggestion,
                 modifier = Modifier.padding(innerPadding),
             )
@@ -199,6 +207,7 @@ private fun LoadingDetail(modifier: Modifier = Modifier) {
 @Composable
 private fun IdeaDetailContent(
     uiState: IdeaDetailUiState,
+    onToggleCompleted: () -> Unit,
     onValidateSuggestion: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -232,6 +241,30 @@ private fun IdeaDetailContent(
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
+                    )
+                }
+                Button(
+                    onClick = onToggleCompleted,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !uiState.isUpdatingCompletion && !uiState.isDeleting,
+                ) {
+                    if (uiState.isUpdatingCompletion) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .size(18.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp,
+                        )
+                    }
+                    Text(
+                        stringResource(
+                            if (idea.isCompleted) {
+                                R.string.mark_as_not_completed
+                            } else {
+                                R.string.mark_as_completed
+                            },
+                        ),
                     )
                 }
             }
@@ -303,7 +336,9 @@ private fun IdeaDetailContent(
                 PendingSuggestionCard(
                     suggestion = suggestion,
                     isValidating = uiState.validatingSuggestionId == suggestion.id,
-                    enabled = uiState.validatingSuggestionId == null && !uiState.isDeleting,
+                    enabled = uiState.validatingSuggestionId == null &&
+                        !uiState.isDeleting &&
+                        !uiState.isUpdatingCompletion,
                     onValidate = { onValidateSuggestion(suggestion.id) },
                 )
             }
@@ -427,6 +462,7 @@ private fun IdeaDetailPreview() {
             onBack = {},
             onEdit = {},
             onDelete = {},
+            onToggleCompleted = {},
             onValidateSuggestion = {},
         )
     }
@@ -450,6 +486,7 @@ private fun EmptyIdeaDetailPreview() {
             onBack = {},
             onEdit = {},
             onDelete = {},
+            onToggleCompleted = {},
             onValidateSuggestion = {},
         )
     }

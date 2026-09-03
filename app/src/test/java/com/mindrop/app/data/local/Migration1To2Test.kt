@@ -40,7 +40,7 @@ class Migration1To2Test {
 
         val database = Room.databaseBuilder(context, MindropDatabase::class.java, databaseName)
             .allowMainThreadQueries()
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .build()
 
         try {
@@ -57,6 +57,7 @@ class Migration1To2Test {
                 assertEquals(1L, idea.folderId)
                 assertNull(idea.customIconPath)
                 assertNull(idea.parentIdeaId)
+                assertEquals(false, idea.isCompleted)
                 assertEquals(0L, idea.sortOrder)
                 assertTrue(idea.createdAt > 0L)
                 assertEquals(idea.createdAt, idea.updatedAt)

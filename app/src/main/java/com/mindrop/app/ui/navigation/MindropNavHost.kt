@@ -15,6 +15,8 @@ import com.mindrop.app.data.repository.IdeaRepository
 import com.mindrop.app.data.repository.IdeaSuggestionRepository
 import com.mindrop.app.ui.folder.FolderEditorRoute
 import com.mindrop.app.ui.folder.FolderEditorViewModel
+import com.mindrop.app.ui.home.CompletedIdeasRoute
+import com.mindrop.app.ui.home.CompletedIdeasViewModel
 import com.mindrop.app.ui.home.HomeRoute
 import com.mindrop.app.ui.home.HomeViewModel
 import com.mindrop.app.ui.idea.IdeaDetailRoute
@@ -26,6 +28,7 @@ private const val ROOT_FOLDER_ID = -1L
 
 private object Destination {
     const val HOME = "home"
+    const val COMPLETED = "completed"
     const val BROWSE_FOLDER = "browse/{folderId}"
     const val NEW_IDEA = "ideas/new?folderId={folderId}"
     const val IDEA_DETAIL = "ideas/{ideaId}"
@@ -66,6 +69,19 @@ fun MindropNavHost(
                 navController = navController,
                 folderRepository = folderRepository,
                 ideaRepository = ideaRepository,
+            )
+        }
+        composable(route = Destination.COMPLETED) {
+            val factory = remember(ideaRepository) {
+                CompletedIdeasViewModel.factory(ideaRepository)
+            }
+            val viewModel: CompletedIdeasViewModel = viewModel(factory = factory)
+            CompletedIdeasRoute(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onIdeaClick = { ideaId ->
+                    navController.navigate(Destination.ideaDetail(ideaId))
+                },
             )
         }
         composable(
@@ -241,6 +257,9 @@ private fun FolderBrowserDestination(
         },
         onCreateFolder = {
             navController.navigate(Destination.newFolder(folderId))
+        },
+        onCompletedClick = {
+            navController.navigate(Destination.COMPLETED)
         },
     )
 }

@@ -30,8 +30,8 @@ import com.mindrop.app.ui.theme.MindropTheme
 fun IdeaCard(
     idea: IdeaEntity,
     onClick: () -> Unit,
-    onMoveClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onMoveClick: (() -> Unit)? = null,
     hierarchyDepth: Int = 0,
 ) {
     val depth = hierarchyDepth.coerceAtLeast(0)
@@ -100,7 +100,9 @@ fun IdeaCard(
                         )
                     }
                 }
-                ContentActionsMenu(onMoveClick = onMoveClick)
+                if (onMoveClick != null) {
+                    ContentActionsMenu(onMoveClick = onMoveClick)
+                }
             }
         }
     }

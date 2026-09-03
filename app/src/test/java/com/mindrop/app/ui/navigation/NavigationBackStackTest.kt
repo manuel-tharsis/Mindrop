@@ -62,6 +62,22 @@ class NavigationBackStackTest {
         assertEquals(12L, navController.currentBackStackEntry?.arguments?.getLong("folderId"))
     }
 
+    @Test
+    fun completedListAndIdeaDetailSurviveRestorationAndReturnCorrectly() {
+        val original = folderNavController()
+        original.navigate("completed")
+        original.navigate("ideas/44")
+
+        val restored = folderNavController(original.saveState())
+
+        assertEquals("ideas/{ideaId}", restored.currentDestination?.route)
+        assertEquals(44L, restored.currentBackStackEntry?.arguments?.getLong("ideaId"))
+        assertTrue(restored.popBackStack())
+        assertEquals("completed", restored.currentDestination?.route)
+        assertTrue(restored.popBackStack())
+        assertEquals("home", restored.currentDestination?.route)
+    }
+
     private fun folderNavController(savedState: Bundle? = null): NavHostController {
         val context = ApplicationProvider.getApplicationContext<Context>()
         return NavHostController(context).apply {
@@ -69,6 +85,7 @@ class NavigationBackStackTest {
             if (savedState != null) restoreState(savedState)
             graph = createGraph(startDestination = "home") {
                 composable("home") {}
+                composable("completed") {}
                 composable(
                     route = "browse/{folderId}",
                     arguments = listOf(

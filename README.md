@@ -15,6 +15,7 @@ Mindrop es una aplicación Android personal y completamente offline para guardar
 - Conservar toda la información en el almacenamiento local del dispositivo.
 - Añadir sugerencias a una idea y convertirlas en actualizaciones numeradas al validarlas.
 - Relacionar ideas y subideas en varios niveles sin sustituir su organización por carpetas.
+- Marcar ideas como completadas y restaurarlas después en su carpeta original.
 
 ## Descargar APK
 

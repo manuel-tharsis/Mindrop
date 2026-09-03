@@ -53,6 +53,12 @@
     <string name="update_number">Actualización %1$d</string>
     <string name="current_suggestions_title">Sugerencias actuales</string>
     <string name="validate_suggestion">Validar</string>
+    <string name="mark_as_completed">Marcar como completada</string>
+    <string name="mark_as_not_completed">Marcar como no completada</string>
+    <string name="completed_ideas_title">Completadas</string>
+    <string name="completed_ideas_section_title">Ideas completadas</string>
+    <string name="empty_completed_title">Todavía no hay ideas completadas</string>
+    <string name="empty_completed_message">Las ideas que completes aparecerán aquí sin perder su carpeta original.</string>
     <string name="icon_label">Icono</string>
     <string name="location_label">Ubicación</string>
     <string name="parent_idea_label">Deriva de</string>

@@ -39,7 +39,7 @@ class Migration2To3Test {
 
         val database = Room.databaseBuilder(context, MindropDatabase::class.java, databaseName)
             .allowMainThreadQueries()
-            .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .build()
 
         try {
@@ -49,6 +49,7 @@ class Migration2To3Test {
                 assertNotNull(idea)
                 assertEquals("Idea existente", idea?.title)
                 assertEquals(null, idea?.parentIdeaId)
+                assertEquals(false, idea?.isCompleted)
                 assertEquals(emptyList<Any>(), database.ideaSuggestionDao().findAllForIdea(1L))
             }
         } finally {

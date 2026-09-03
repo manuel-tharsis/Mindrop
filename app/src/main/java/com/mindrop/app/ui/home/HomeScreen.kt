@@ -58,6 +58,7 @@ import com.mindrop.app.data.local.model.FolderSummary
 import com.mindrop.app.ui.editor.buildFolderOptions
 import com.mindrop.app.ui.editor.descendantFolderIds
 import com.mindrop.app.ui.home.components.DeleteFolderDialog
+import com.mindrop.app.ui.home.components.CompletedIdeasCard
 import com.mindrop.app.ui.home.components.EmptyState
 import com.mindrop.app.ui.home.components.FolderDestinationDialog
 import com.mindrop.app.ui.home.components.FolderCard
@@ -92,6 +93,7 @@ fun HomeRoute(
     onBreadcrumbClick: (Long?) -> Unit,
     onCreateIdea: () -> Unit,
     onCreateFolder: () -> Unit,
+    onCompletedClick: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showAddOptions by rememberSaveable { mutableStateOf(false) }
@@ -136,6 +138,7 @@ fun HomeRoute(
         onBack = onBack,
         onBreadcrumbClick = onBreadcrumbClick,
         onAddClick = { showAddOptions = true },
+        onCompletedClick = onCompletedClick,
     )
 
     if (showAddOptions) {
@@ -243,6 +246,7 @@ fun HomeScreen(
     onBack: () -> Unit,
     onBreadcrumbClick: (Long?) -> Unit,
     onAddClick: () -> Unit,
+    onCompletedClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val hierarchicalIdeas = remember(uiState.ideas) { buildIdeaHierarchy(uiState.ideas) }
@@ -444,6 +448,15 @@ fun HomeScreen(
                     }
                 }
             }
+
+            if (uiState.folderId == null) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    CompletedIdeasCard(
+                        onClick = onCompletedClick,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
+            }
         }
     }
 }
@@ -501,7 +514,7 @@ private fun BreadcrumbBar(
 }
 
 @Composable
-private fun SearchField(
+fun SearchField(
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -533,7 +546,7 @@ private fun SearchField(
 }
 
 @Composable
-private fun SectionTitle(
+fun SectionTitle(
     text: String,
     modifier: Modifier = Modifier,
 ) {
@@ -600,6 +613,7 @@ private fun HomeScreenPreview() {
             onBack = {},
             onBreadcrumbClick = {},
             onAddClick = {},
+            onCompletedClick = {},
         )
     }
 }
@@ -620,6 +634,7 @@ private fun EmptyHomeScreenPreview() {
             onBack = {},
             onBreadcrumbClick = {},
             onAddClick = {},
+            onCompletedClick = {},
         )
     }
 }
@@ -664,6 +679,7 @@ private fun NestedFolderScreenPreview() {
             onBack = {},
             onBreadcrumbClick = {},
             onAddClick = {},
+            onCompletedClick = {},
         )
     }
 }

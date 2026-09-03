@@ -23,7 +23,7 @@ android {
         applicationId = "com.mindrop.app"
         minSdk = 23
         targetSdk = 36
-        versionCode = 2
+        versionCode = 3
         versionName = releaseVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

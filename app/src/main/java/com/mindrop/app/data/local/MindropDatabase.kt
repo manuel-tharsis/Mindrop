@@ -13,7 +13,7 @@ import com.mindrop.app.data.local.entity.IdeaSuggestionEntity
 
 @Database(
     entities = [FolderEntity::class, IdeaEntity::class, IdeaSuggestionEntity::class],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class MindropDatabase : RoomDatabase() {
@@ -32,7 +32,12 @@ abstract class MindropDatabase : RoomDatabase() {
                 MindropDatabase::class.java,
                 DATABASE_NAME,
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(
+                    MIGRATION_1_2,
+                    MIGRATION_2_3,
+                    MIGRATION_3_4,
+                    MIGRATION_4_5,
+                )
                 .build()
     }
 }
