@@ -2,6 +2,9 @@ package com.mindrop.app.ui.idea
 
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -43,6 +46,7 @@ import com.mindrop.app.R
 import com.mindrop.app.ui.editor.EditorEvent
 import com.mindrop.app.ui.editor.FolderOption
 import com.mindrop.app.ui.editor.components.DiscardChangesDialog
+import com.mindrop.app.ui.editor.components.CustomIconPicker
 import com.mindrop.app.ui.editor.components.FolderPicker
 import com.mindrop.app.ui.editor.components.FormActions
 import com.mindrop.app.ui.editor.components.IconPicker
@@ -55,6 +59,11 @@ fun IdeaEditorRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDiscardDialog by rememberSaveable { mutableStateOf(false) }
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        if (uri != null) viewModel.importCustomIcon(uri)
+    }
 
     fun requestExit() {
         if (uiState.hasUnsavedChanges) showDiscardDialog = true else onFinished()
@@ -72,7 +81,13 @@ fun IdeaEditorRoute(
         onNameChange = viewModel::updateName,
         onShortDescriptionChange = viewModel::updateShortDescription,
         onFullDescriptionChange = viewModel::updateFullDescription,
-        onIconChange = viewModel::updateIcon,
+        onIconChange = viewModel::selectPresetIcon,
+        onChooseCustomIcon = {
+            imagePicker.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+            )
+        },
+        onUseDefaultIcon = { viewModel.selectPresetIcon(uiState.icon) },
         onFolderChange = viewModel::updateFolder,
         onSave = viewModel::save,
         onCancel = ::requestExit,
@@ -94,6 +109,8 @@ fun IdeaEditorScreen(
     onShortDescriptionChange: (String) -> Unit,
     onFullDescriptionChange: (String) -> Unit,
     onIconChange: (String) -> Unit,
+    onChooseCustomIcon: () -> Unit,
+    onUseDefaultIcon: () -> Unit,
     onFolderChange: (Long?) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
@@ -195,7 +212,16 @@ fun IdeaEditorScreen(
                 item {
                     IconPicker(
                         selectedIcon = uiState.icon,
+                        hasCustomIcon = uiState.customIconPath != null,
                         onIconSelected = onIconChange,
+                    )
+                }
+                item {
+                    CustomIconPicker(
+                        customIconPath = uiState.customIconPath,
+                        isImporting = uiState.isImportingIcon,
+                        onChooseImage = onChooseCustomIcon,
+                        onUseDefaultIcon = onUseDefaultIcon,
                     )
                 }
                 item {
@@ -208,7 +234,7 @@ fun IdeaEditorScreen(
                 }
                 item {
                     FormActions(
-                        isSaving = uiState.isSaving,
+                        isSaving = uiState.isSaving || uiState.isImportingIcon,
                         errorMessage = uiState.errorMessage,
                         onSave = {
                             finishKeyboardInput()
@@ -248,6 +274,8 @@ private fun IdeaEditorPreview() {
             onShortDescriptionChange = {},
             onFullDescriptionChange = {},
             onIconChange = {},
+            onChooseCustomIcon = {},
+            onUseDefaultIcon = {},
             onFolderChange = {},
             onSave = {},
             onCancel = {},

@@ -1,7 +1,7 @@
 package com.mindrop.app.ui.editor.components
 
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,30 +31,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.mindrop.app.R
 import com.mindrop.app.ui.editor.FolderOption
-
-private data class IconOption(
-    val value: String,
-    @param:DrawableRes val drawable: Int,
-    @param:StringRes val label: Int,
-)
-
-private val iconOptions = listOf(
-    IconOption("idea", R.drawable.ic_idea, R.string.idea_icon_option),
-    IconOption("folder", R.drawable.ic_folder, R.string.folder_icon_option),
-    IconOption("code", R.drawable.ic_code, R.string.code_icon_option),
-    IconOption("terminal", R.drawable.ic_terminal, R.string.terminal_icon_option),
-)
+import com.mindrop.app.ui.icons.CustomIconLoadState
+import com.mindrop.app.ui.icons.mindropIcon
+import com.mindrop.app.ui.icons.mindropIconOptions
+import com.mindrop.app.ui.icons.rememberCustomIcon
 
 @Composable
 fun IconPicker(
     selectedIcon: String,
     onIconSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
+    hasCustomIcon: Boolean = false,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -67,18 +62,92 @@ fun IconPicker(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            iconOptions.forEach { option ->
+            mindropIconOptions.forEach { option ->
                 FilterChip(
-                    selected = selectedIcon == option.value,
-                    onClick = { onIconSelected(option.value) },
-                    label = { Text(stringResource(option.label)) },
+                    selected = !hasCustomIcon && mindropIcon(selectedIcon).key == option.key,
+                    onClick = { onIconSelected(option.key) },
+                    label = { Text(stringResource(option.labelRes)) },
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(option.drawable),
+                            painter = painterResource(option.drawableRes),
                             contentDescription = null,
                         )
                     },
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun CustomIconPicker(
+    customIconPath: String?,
+    isImporting: Boolean,
+    onChooseImage: () -> Unit,
+    onUseDefaultIcon: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val iconState by rememberCustomIcon(customIconPath)
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.custom_icon_label),
+            style = MaterialTheme.typography.labelLarge,
+        )
+        when (val state = iconState) {
+            is CustomIconLoadState.Available -> {
+                Image(
+                    bitmap = state.bitmap,
+                    contentDescription = stringResource(R.string.custom_icon_preview),
+                    modifier = Modifier
+                        .size(88.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainer),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+            CustomIconLoadState.Loading -> CircularProgressIndicator(
+                modifier = Modifier.size(32.dp),
+                strokeWidth = 3.dp,
+            )
+            CustomIconLoadState.Unavailable -> Text(
+                text = stringResource(R.string.custom_icon_unavailable),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+            )
+            CustomIconLoadState.None -> Unit
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            OutlinedButton(
+                onClick = onChooseImage,
+                enabled = !isImporting,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                if (isImporting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .size(18.dp),
+                        strokeWidth = 2.dp,
+                    )
+                }
+                Text(
+                    stringResource(
+                        if (customIconPath == null) R.string.choose_image else R.string.change_image,
+                    ),
+                )
+            }
+            if (customIconPath != null) {
+                TextButton(
+                    onClick = onUseDefaultIcon,
+                    enabled = !isImporting,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(R.string.use_default_icon))
+                }
             }
         }
     }

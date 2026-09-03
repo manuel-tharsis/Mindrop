@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.mindrop.app.R
 import com.mindrop.app.data.local.entity.FolderEntity
 import com.mindrop.app.data.local.model.FolderSummary
+import com.mindrop.app.ui.icons.mindropIcon
 import com.mindrop.app.ui.theme.MindropTheme
 
 private val FolderYellow = Color(0xFFFFB629)
@@ -42,6 +43,7 @@ fun FolderCard(
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val selectedIcon = mindropIcon(folderSummary.folder.icon)
     ElevatedCard(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
@@ -64,7 +66,7 @@ fun FolderCard(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.ic_folder),
+                    painter = painterResource(selectedIcon.drawableRes),
                     contentDescription = stringResource(R.string.folder_icon_content_description),
                     modifier = Modifier.size(38.dp),
                     tint = FolderYellow,

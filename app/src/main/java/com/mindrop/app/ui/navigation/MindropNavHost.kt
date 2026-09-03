@@ -9,6 +9,7 @@ import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.mindrop.app.data.icon.CustomIconRepository
 import com.mindrop.app.data.repository.FolderRepository
 import com.mindrop.app.data.repository.IdeaRepository
 import com.mindrop.app.ui.folder.FolderEditorRoute
@@ -44,6 +45,7 @@ private object Destination {
 fun MindropNavHost(
     folderRepository: FolderRepository,
     ideaRepository: IdeaRepository,
+    customIconRepository: CustomIconRepository,
 ) {
     val navController = rememberNavController()
 
@@ -83,12 +85,18 @@ fun MindropNavHost(
             val initialFolderId = backStackEntry.arguments
                 ?.getLong("folderId")
                 ?.takeUnless { it == ROOT_FOLDER_ID }
-            val factory = remember(initialFolderId, folderRepository, ideaRepository) {
+            val factory = remember(
+                initialFolderId,
+                folderRepository,
+                ideaRepository,
+                customIconRepository,
+            ) {
                 IdeaEditorViewModel.factory(
                     ideaId = null,
                     initialFolderId = initialFolderId,
                     folderRepository = folderRepository,
                     ideaRepository = ideaRepository,
+                    customIconRepository = customIconRepository,
                 )
             }
             val viewModel: IdeaEditorViewModel = viewModel(factory = factory)
@@ -102,11 +110,17 @@ fun MindropNavHost(
             arguments = listOf(navArgument("ideaId") { type = NavType.LongType }),
         ) { backStackEntry ->
             val ideaId = backStackEntry.arguments?.getLong("ideaId") ?: return@composable
-            val factory = remember(ideaId, folderRepository, ideaRepository) {
+            val factory = remember(
+                ideaId,
+                folderRepository,
+                ideaRepository,
+                customIconRepository,
+            ) {
                 IdeaEditorViewModel.factory(
                     ideaId = ideaId,
                     folderRepository = folderRepository,
                     ideaRepository = ideaRepository,
+                    customIconRepository = customIconRepository,
                 )
             }
             val viewModel: IdeaEditorViewModel = viewModel(factory = factory)

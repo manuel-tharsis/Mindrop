@@ -1,11 +1,14 @@
 package com.mindrop.app.ui.idea
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mindrop.app.data.local.entity.IdeaEntity
+import com.mindrop.app.data.icon.CustomIconRepository
+import com.mindrop.app.data.icon.InvalidCustomIconException
 import com.mindrop.app.data.repository.FolderRepository
 import com.mindrop.app.data.repository.IdeaRepository
 import com.mindrop.app.ui.editor.EditorEvent
@@ -28,11 +31,13 @@ data class IdeaEditorUiState(
     val shortDescription: String = "",
     val fullDescription: String = "",
     val icon: String = "idea",
+    val customIconPath: String? = null,
     val folderId: Long? = null,
     val folderOptions: List<FolderOption> = emptyList(),
     val nameError: Boolean = false,
     val errorMessage: String? = null,
     val isSaving: Boolean = false,
+    val isImportingIcon: Boolean = false,
     val hasUnsavedChanges: Boolean = false,
 )
 
@@ -41,8 +46,10 @@ class IdeaEditorViewModel(
     initialFolderId: Long?,
     private val folderRepository: FolderRepository,
     private val ideaRepository: IdeaRepository,
+    private val customIconRepository: CustomIconRepository,
 ) : ViewModel() {
     private var storedIdea: IdeaEntity? = null
+    private var pendingCustomIconPath: String? = null
     private val _uiState = MutableStateFlow(
         IdeaEditorUiState(ideaId = ideaId, folderId = initialFolderId),
     )
@@ -70,13 +77,48 @@ class IdeaEditorViewModel(
 
     fun updateFullDescription(value: String) = updateForm { copy(fullDescription = value) }
 
-    fun updateIcon(value: String) = updateForm { copy(icon = value) }
+    fun selectPresetIcon(value: String) {
+        pendingCustomIconPath?.let(customIconRepository::delete)
+        pendingCustomIconPath = null
+        updateForm { copy(icon = value, customIconPath = null) }
+    }
+
+    fun importCustomIcon(uri: Uri) {
+        if (_uiState.value.isImportingIcon) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isImportingIcon = true, errorMessage = null) }
+            try {
+                val importedPath = customIconRepository.importImage(uri)
+                pendingCustomIconPath?.let(customIconRepository::delete)
+                pendingCustomIconPath = importedPath
+                _uiState.update {
+                    it.copy(
+                        customIconPath = importedPath,
+                        isImportingIcon = false,
+                        hasUnsavedChanges = true,
+                    )
+                }
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                _uiState.update {
+                    it.copy(
+                        isImportingIcon = false,
+                        errorMessage = if (error is InvalidCustomIconException) {
+                            error.message
+                        } else {
+                            "No se pudo usar la imagen seleccionada."
+                        },
+                    )
+                }
+            }
+        }
+    }
 
     fun updateFolder(folderId: Long?) = updateForm { copy(folderId = folderId) }
 
     fun save() {
         val state = _uiState.value
-        if (state.isSaving) return
+        if (state.isSaving || state.isImportingIcon) return
         if (state.name.isBlank()) {
             _uiState.update { it.copy(nameError = true, errorMessage = null) }
             return
@@ -100,7 +142,7 @@ class IdeaEditorViewModel(
                             shortDescription = current.shortDescription.trim(),
                             fullDescription = current.fullDescription.trim(),
                             icon = current.icon,
-                            customIconPath = null,
+                            customIconPath = current.customIconPath,
                             folderId = current.folderId,
                             sortOrder = 0,
                         ),
@@ -112,12 +154,14 @@ class IdeaEditorViewModel(
                             shortDescription = current.shortDescription.trim(),
                             fullDescription = current.fullDescription.trim(),
                             icon = current.icon,
+                            customIconPath = current.customIconPath,
                             folderId = current.folderId,
                         ),
                     )
                     check(updated) { "La idea ya no existe." }
                 }
 
+                pendingCustomIconPath = null
                 _uiState.update { it.copy(isSaving = false, hasUnsavedChanges = false) }
                 _events.emit(EditorEvent.Saved)
             } catch (error: Exception) {
@@ -153,6 +197,7 @@ class IdeaEditorViewModel(
                     shortDescription = idea.shortDescription,
                     fullDescription = idea.fullDescription,
                     icon = idea.icon,
+                    customIconPath = idea.customIconPath,
                     folderId = idea.folderId,
                     hasUnsavedChanges = false,
                 )
@@ -171,12 +216,19 @@ class IdeaEditorViewModel(
         }
     }
 
+    override fun onCleared() {
+        pendingCustomIconPath?.let(customIconRepository::delete)
+        pendingCustomIconPath = null
+        super.onCleared()
+    }
+
     companion object {
         fun factory(
             ideaId: Long?,
             initialFolderId: Long? = null,
             folderRepository: FolderRepository,
             ideaRepository: IdeaRepository,
+            customIconRepository: CustomIconRepository,
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 IdeaEditorViewModel(
@@ -184,6 +236,7 @@ class IdeaEditorViewModel(
                     initialFolderId = initialFolderId,
                     folderRepository = folderRepository,
                     ideaRepository = ideaRepository,
+                    customIconRepository = customIconRepository,
                 )
             }
         }

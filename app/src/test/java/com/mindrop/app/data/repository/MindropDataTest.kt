@@ -3,6 +3,7 @@ package com.mindrop.app.data.repository
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.mindrop.app.data.icon.CustomIconFileStore
 import com.mindrop.app.data.local.MindropDatabase
 import com.mindrop.app.data.local.entity.FolderEntity
 import com.mindrop.app.data.local.entity.IdeaEntity
@@ -231,6 +232,54 @@ class MindropDataTest {
         )
     }
 
+    @Test
+    fun replacingOrRemovingCustomIconDeletesTheObsoleteFileReference() = runBlocking {
+        val fileStore = RecordingIconFileStore()
+        val repository = IdeaRepository(
+            database = database,
+            ideaDao = database.ideaDao(),
+            customIconFileStore = fileStore,
+        ) { now }
+        val ideaId = repository.insert(
+            newIdea(title = "Personalizada").copy(customIconPath = "old.png"),
+        )
+
+        assertTrue(
+            repository.update(
+                repository.findById(ideaId)!!.copy(customIconPath = "new.png"),
+            ),
+        )
+
+        assertEquals(listOf("old.png"), fileStore.deletedPaths)
+        assertEquals("new.png", repository.findById(ideaId)?.customIconPath)
+
+        assertTrue(
+            repository.update(
+                repository.findById(ideaId)!!.copy(customIconPath = null, icon = "star"),
+            ),
+        )
+        assertEquals(listOf("old.png", "new.png"), fileStore.deletedPaths)
+        assertNull(repository.findById(ideaId)?.customIconPath)
+    }
+
+    @Test
+    fun deletingIdeaAlsoDeletesItsCustomIcon() = runBlocking {
+        val fileStore = RecordingIconFileStore()
+        val repository = IdeaRepository(
+            database = database,
+            ideaDao = database.ideaDao(),
+            customIconFileStore = fileStore,
+        ) { now }
+        val ideaId = repository.insert(
+            newIdea(title = "Temporal").copy(customIconPath = "custom.png"),
+        )
+
+        assertTrue(repository.deleteById(ideaId))
+
+        assertEquals(listOf("custom.png"), fileStore.deletedPaths)
+        assertNull(repository.findById(ideaId))
+    }
+
     private fun newIdea(
         title: String,
         folderId: Long? = null,
@@ -244,4 +293,13 @@ class MindropDataTest {
         folderId = folderId,
         sortOrder = sortOrder,
     )
+
+    private class RecordingIconFileStore : CustomIconFileStore {
+        val deletedPaths = mutableListOf<String>()
+
+        override fun delete(path: String): Boolean {
+            deletedPaths += path
+            return true
+        }
+    }
 }

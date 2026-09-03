@@ -19,6 +19,7 @@ class MainActivity : ComponentActivity() {
                 MindropNavHost(
                     folderRepository = mindropApplication.folderRepository,
                     ideaRepository = mindropApplication.ideaRepository,
+                    customIconRepository = mindropApplication.customIconRepository,
                 )
             }
         }
