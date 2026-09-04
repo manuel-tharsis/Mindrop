@@ -7,16 +7,16 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mindrop.app.data.local.entity.IdeaEntity
+import com.mindrop.app.data.local.entity.IdeaSuggestionEntity
 import com.mindrop.app.data.icon.CustomIconRepository
 import com.mindrop.app.data.icon.InvalidCustomIconException
 import com.mindrop.app.data.repository.FolderRepository
 import com.mindrop.app.data.repository.IdeaHierarchyException
 import com.mindrop.app.data.repository.IdeaRepository
+import com.mindrop.app.data.repository.IdeaSuggestionRepository
 import com.mindrop.app.ui.editor.EditorEvent
-import com.mindrop.app.ui.editor.FolderOption
-import com.mindrop.app.ui.editor.IdeaOption
-import com.mindrop.app.ui.editor.buildFolderOptions
-import com.mindrop.app.ui.editor.buildIdeaOptions
+import com.mindrop.app.ui.editor.IdeaLocationOption
+import com.mindrop.app.ui.editor.buildIdeaLocationOptions
 import com.mindrop.app.ui.editor.descendantIdeaIds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -38,17 +39,22 @@ data class IdeaEditorUiState(
     val fullDescription: String = "",
     val newSuggestionText: String = "",
     val newSuggestions: List<String> = emptyList(),
+    val pendingSuggestions: List<IdeaSuggestionEntity> = emptyList(),
     val suggestionError: Boolean = false,
+    val suggestionActionError: String? = null,
     val icon: String = "idea",
     val customIconPath: String? = null,
     val folderId: Long? = null,
-    val folderOptions: List<FolderOption> = emptyList(),
     val parentIdeaId: Long? = null,
-    val parentIdeaOptions: List<IdeaOption> = emptyList(),
+    val locationOptions: List<IdeaLocationOption> = emptyList(),
     val nameError: Boolean = false,
     val errorMessage: String? = null,
     val isSaving: Boolean = false,
     val isImportingIcon: Boolean = false,
+    val isAddingSuggestion: Boolean = false,
+    val validatingSuggestionId: Long? = null,
+    val deletingSuggestionId: Long? = null,
+    val hasIdeaChanges: Boolean = false,
     val hasUnsavedChanges: Boolean = false,
 )
 
@@ -57,6 +63,7 @@ class IdeaEditorViewModel(
     initialFolderId: Long?,
     private val folderRepository: FolderRepository,
     private val ideaRepository: IdeaRepository,
+    private val suggestionRepository: IdeaSuggestionRepository,
     private val customIconRepository: CustomIconRepository,
 ) : ViewModel() {
     private var storedIdea: IdeaEntity? = null
@@ -71,21 +78,28 @@ class IdeaEditorViewModel(
 
     init {
         viewModelScope.launch {
-            folderRepository.observeAll().collect { folders ->
-                _uiState.update { state ->
-                    state.copy(folderOptions = buildFolderOptions(folders))
-                }
-            }
-        }
-        viewModelScope.launch {
-            ideaRepository.observeAll().collect { ideas ->
+            combine(
+                folderRepository.observeAll(),
+                ideaRepository.observeAll(),
+            ) { folders, ideas -> folders to ideas }.collect { (folders, ideas) ->
                 val excludedIds = ideaId?.let { currentIdeaId ->
                     descendantIdeaIds(ideas, currentIdeaId) + currentIdeaId
                 }.orEmpty()
                 _uiState.update { state ->
                     state.copy(
-                        parentIdeaOptions = buildIdeaOptions(ideas, excludedIds),
+                        locationOptions = buildIdeaLocationOptions(
+                            folders = folders,
+                            ideas = ideas,
+                            excludedIdeaIds = excludedIds,
+                        ),
                     )
+                }
+            }
+        }
+        if (ideaId != null) {
+            viewModelScope.launch {
+                suggestionRepository.observePending(ideaId).collect { suggestions ->
+                    _uiState.update { it.copy(pendingSuggestions = suggestions) }
                 }
             }
         }
@@ -94,28 +108,152 @@ class IdeaEditorViewModel(
         }
     }
 
-    fun updateName(value: String) = updateForm { copy(name = value, nameError = false) }
+    fun updateName(value: String) = updateIdeaForm { copy(name = value, nameError = false) }
 
-    fun updateShortDescription(value: String) = updateForm { copy(shortDescription = value) }
+    fun updateShortDescription(value: String) = updateIdeaForm { copy(shortDescription = value) }
 
-    fun updateFullDescription(value: String) = updateForm { copy(fullDescription = value) }
+    fun updateFullDescription(value: String) = updateIdeaForm { copy(fullDescription = value) }
 
-    fun updateNewSuggestion(value: String) = updateForm {
-        copy(newSuggestionText = value, suggestionError = false)
+    fun updateNewSuggestion(value: String) {
+        if (isBusy()) return
+        _uiState.update { state ->
+            state.copy(
+                newSuggestionText = value,
+                suggestionError = false,
+                suggestionActionError = null,
+                hasUnsavedChanges = state.hasIdeaChanges ||
+                    value.isNotBlank() ||
+                    state.newSuggestions.isNotEmpty(),
+            )
+        }
     }
 
     fun addSuggestion() {
         if (isBusy()) return
-        val text = _uiState.value.newSuggestionText.trim()
+        val state = _uiState.value
+        val text = state.newSuggestionText.trim()
         if (text.isEmpty()) {
             _uiState.update { it.copy(suggestionError = true) }
             return
         }
-        updateForm {
-            copy(
-                newSuggestionText = "",
-                newSuggestions = newSuggestions + text,
-                suggestionError = false,
+
+        if (ideaId == null) {
+            _uiState.update {
+                it.copy(
+                    newSuggestionText = "",
+                    newSuggestions = it.newSuggestions + text,
+                    suggestionError = false,
+                    suggestionActionError = null,
+                    hasUnsavedChanges = true,
+                )
+            }
+            return
+        }
+
+        _uiState.update {
+            it.copy(isAddingSuggestion = true, suggestionActionError = null)
+        }
+        viewModelScope.launch {
+            try {
+                suggestionRepository.addPending(ideaId, text)
+                _uiState.update {
+                    it.copy(
+                        newSuggestionText = "",
+                        suggestionError = false,
+                        isAddingSuggestion = false,
+                        hasUnsavedChanges = it.hasIdeaChanges,
+                    )
+                }
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                _uiState.update {
+                    it.copy(
+                        isAddingSuggestion = false,
+                        suggestionActionError = "No se pudo añadir la sugerencia.",
+                    )
+                }
+            }
+        }
+    }
+
+    fun validateSuggestion(suggestionId: Long) {
+        val state = _uiState.value
+        if (ideaId == null || isBusy()) return
+        if (state.pendingSuggestions.none { it.id == suggestionId }) return
+
+        _uiState.update {
+            it.copy(validatingSuggestionId = suggestionId, suggestionActionError = null)
+        }
+        viewModelScope.launch {
+            try {
+                check(suggestionRepository.validate(ideaId, suggestionId) != null) {
+                    "La sugerencia ya no existe."
+                }
+                _uiState.update { current ->
+                    current.copy(
+                        pendingSuggestions = current.pendingSuggestions.filterNot {
+                            it.id == suggestionId
+                        },
+                        validatingSuggestionId = null,
+                    )
+                }
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                _uiState.update {
+                    it.copy(
+                        validatingSuggestionId = null,
+                        suggestionActionError = "No se pudo validar la sugerencia.",
+                    )
+                }
+            }
+        }
+    }
+
+    fun deleteSuggestion(suggestionId: Long) {
+        val state = _uiState.value
+        if (ideaId == null || isBusy()) return
+        if (state.pendingSuggestions.none { it.id == suggestionId }) return
+
+        _uiState.update {
+            it.copy(deletingSuggestionId = suggestionId, suggestionActionError = null)
+        }
+        viewModelScope.launch {
+            try {
+                check(suggestionRepository.deletePending(ideaId, suggestionId)) {
+                    "La sugerencia ya no existe."
+                }
+                _uiState.update { current ->
+                    current.copy(
+                        pendingSuggestions = current.pendingSuggestions.filterNot {
+                            it.id == suggestionId
+                        },
+                        deletingSuggestionId = null,
+                    )
+                }
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                _uiState.update {
+                    it.copy(
+                        deletingSuggestionId = null,
+                        suggestionActionError = "No se pudo eliminar la sugerencia.",
+                    )
+                }
+            }
+        }
+    }
+
+    fun removeDraftSuggestion(index: Int) {
+        if (ideaId != null || isBusy()) return
+        _uiState.update { state ->
+            if (index !in state.newSuggestions.indices) return@update state
+            val remainingSuggestions = state.newSuggestions.toMutableList().apply {
+                removeAt(index)
+            }
+            state.copy(
+                newSuggestions = remainingSuggestions,
+                hasUnsavedChanges = state.hasIdeaChanges ||
+                    state.newSuggestionText.isNotBlank() ||
+                    remainingSuggestions.isNotEmpty(),
             )
         }
     }
@@ -128,7 +266,7 @@ class IdeaEditorViewModel(
             }
         }
         pendingCustomIconPath = null
-        updateForm { copy(icon = value, customIconPath = null) }
+        updateIdeaForm { copy(icon = value, customIconPath = null) }
     }
 
     fun importCustomIcon(uri: Uri) {
@@ -147,6 +285,7 @@ class IdeaEditorViewModel(
                     it.copy(
                         customIconPath = importedPath,
                         isImportingIcon = false,
+                        hasIdeaChanges = true,
                         hasUnsavedChanges = true,
                     )
                 }
@@ -166,15 +305,16 @@ class IdeaEditorViewModel(
         }
     }
 
-    fun updateFolder(folderId: Long?) = updateForm { copy(folderId = folderId) }
-
-    fun updateParentIdea(parentIdeaId: Long?) = updateForm {
-        copy(parentIdeaId = parentIdeaId)
+    fun updateLocation(option: IdeaLocationOption?) = updateIdeaForm {
+        copy(
+            folderId = option?.folderId,
+            parentIdeaId = option?.parentIdeaId,
+        )
     }
 
     fun save() {
         val state = _uiState.value
-        if (state.isSaving || state.isImportingIcon) return
+        if (isBusy()) return
         if (state.name.isBlank()) {
             _uiState.update { it.copy(nameError = true, errorMessage = null) }
             return
@@ -230,6 +370,7 @@ class IdeaEditorViewModel(
                         isSaving = false,
                         newSuggestionText = "",
                         newSuggestions = emptyList(),
+                        hasIdeaChanges = false,
                         hasUnsavedChanges = false,
                     )
                 }
@@ -274,25 +415,33 @@ class IdeaEditorViewModel(
                     customIconPath = idea.customIconPath,
                     folderId = idea.folderId,
                     parentIdeaId = idea.parentIdeaId,
+                    hasIdeaChanges = false,
                     hasUnsavedChanges = false,
                 )
             }
         }
     }
 
-    private inline fun updateForm(
+    private inline fun updateIdeaForm(
         transform: IdeaEditorUiState.() -> IdeaEditorUiState,
     ) {
         if (isBusy()) return
         _uiState.update { state ->
             state.transform().copy(
+                hasIdeaChanges = true,
                 hasUnsavedChanges = true,
                 errorMessage = null,
             )
         }
     }
 
-    private fun isBusy(): Boolean = _uiState.value.let { it.isSaving || it.isImportingIcon }
+    private fun isBusy(): Boolean = _uiState.value.let { state ->
+        state.isSaving ||
+            state.isImportingIcon ||
+            state.isAddingSuggestion ||
+            state.validatingSuggestionId != null ||
+            state.deletingSuggestionId != null
+    }
 
     override fun onCleared() {
         pendingCustomIconPath?.let(customIconRepository::delete)
@@ -306,6 +455,7 @@ class IdeaEditorViewModel(
             initialFolderId: Long? = null,
             folderRepository: FolderRepository,
             ideaRepository: IdeaRepository,
+            suggestionRepository: IdeaSuggestionRepository,
             customIconRepository: CustomIconRepository,
         ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
@@ -314,6 +464,7 @@ class IdeaEditorViewModel(
                     initialFolderId = initialFolderId,
                     folderRepository = folderRepository,
                     ideaRepository = ideaRepository,
+                    suggestionRepository = suggestionRepository,
                     customIconRepository = customIconRepository,
                 )
             }

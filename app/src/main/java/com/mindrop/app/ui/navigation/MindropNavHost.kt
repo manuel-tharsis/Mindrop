@@ -112,6 +112,7 @@ fun MindropNavHost(
                 initialFolderId,
                 folderRepository,
                 ideaRepository,
+                ideaSuggestionRepository,
                 customIconRepository,
             ) {
                 IdeaEditorViewModel.factory(
@@ -119,6 +120,7 @@ fun MindropNavHost(
                     initialFolderId = initialFolderId,
                     folderRepository = folderRepository,
                     ideaRepository = ideaRepository,
+                    suggestionRepository = ideaSuggestionRepository,
                     customIconRepository = customIconRepository,
                 )
             }
@@ -158,12 +160,14 @@ fun MindropNavHost(
                 ideaId,
                 folderRepository,
                 ideaRepository,
+                ideaSuggestionRepository,
                 customIconRepository,
             ) {
                 IdeaEditorViewModel.factory(
                     ideaId = ideaId,
                     folderRepository = folderRepository,
                     ideaRepository = ideaRepository,
+                    suggestionRepository = ideaSuggestionRepository,
                     customIconRepository = customIconRepository,
                 )
             }

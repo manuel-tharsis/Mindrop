@@ -38,7 +38,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.mindrop.app.R
 import com.mindrop.app.ui.editor.FolderOption
-import com.mindrop.app.ui.editor.IdeaOption
+import com.mindrop.app.ui.editor.IdeaLocationKind
+import com.mindrop.app.ui.editor.IdeaLocationOption
 import com.mindrop.app.ui.icons.CustomIconLoadState
 import com.mindrop.app.ui.icons.mindropIcon
 import com.mindrop.app.ui.icons.mindropIconOptions
@@ -217,23 +218,31 @@ fun FolderPicker(
 }
 
 @Composable
-fun IdeaParentPicker(
-    selectedIdeaId: Long?,
-    options: List<IdeaOption>,
-    onIdeaSelected: (Long?) -> Unit,
+fun IdeaLocationPicker(
+    selectedFolderId: Long?,
+    selectedParentIdeaId: Long?,
+    options: List<IdeaLocationOption>,
+    onLocationSelected: (IdeaLocationOption?) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val selectedLabel = options.firstOrNull { it.id == selectedIdeaId }?.label
-        ?: stringResource(R.string.no_parent_idea)
+    val selectedOption = options.firstOrNull { option ->
+        if (selectedParentIdeaId != null) {
+            option.kind == IdeaLocationKind.Idea &&
+                option.parentIdeaId == selectedParentIdeaId
+        } else {
+            option.kind == IdeaLocationKind.Folder && option.folderId == selectedFolderId
+        }
+    }
+    val selectedLabel = selectedOption?.path ?: stringResource(R.string.root_location)
 
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            text = stringResource(R.string.parent_idea_label),
+            text = stringResource(R.string.location_label),
             style = MaterialTheme.typography.labelLarge,
         )
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -255,19 +264,40 @@ fun IdeaParentPicker(
                 modifier = Modifier.wrapContentSize(),
             ) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.no_parent_idea)) },
+                    text = { Text(stringResource(R.string.root_location)) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_home),
+                            contentDescription = null,
+                        )
+                    },
                     enabled = enabled,
                     onClick = {
-                        onIdeaSelected(null)
+                        onLocationSelected(null)
                         expanded = false
                     },
                 )
                 options.forEach { option ->
+                    val selectedIcon = mindropIcon(option.icon)
                     DropdownMenuItem(
-                        text = { Text(option.label) },
+                        text = { Text(option.name) },
+                        modifier = Modifier.padding(
+                            start = (option.depth.coerceAtMost(8) * 12).dp,
+                        ),
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(selectedIcon.drawableRes),
+                                contentDescription = null,
+                                tint = if (option.kind == IdeaLocationKind.Folder) {
+                                    MaterialTheme.colorScheme.secondary
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                },
+                            )
+                        },
                         enabled = enabled,
                         onClick = {
-                            onIdeaSelected(option.id)
+                            onLocationSelected(option)
                             expanded = false
                         },
                     )

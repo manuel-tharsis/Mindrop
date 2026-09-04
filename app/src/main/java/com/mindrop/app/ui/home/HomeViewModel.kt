@@ -35,6 +35,7 @@ data class HomeUiState(
     val allFolders: List<FolderEntity> = emptyList(),
     val searchQuery: String = "",
     val hasAnyContent: Boolean = false,
+    val completedIdeaCount: Int = 0,
     val isContentActionRunning: Boolean = false,
     val contentActionError: String? = null,
 )
@@ -49,6 +50,11 @@ private data class ContentActionState(
     val errorMessage: String? = null,
 )
 
+private data class HomeAuxiliaryState(
+    val contentAction: ContentActionState,
+    val completedIdeaCount: Int,
+)
+
 class HomeViewModel(
     private val folderId: Long?,
     savedStateHandle: SavedStateHandle,
@@ -58,6 +64,12 @@ class HomeViewModel(
     private val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY_KEY, "")
     private val savedStateHandle = savedStateHandle
     private val contentActionState = MutableStateFlow(ContentActionState())
+    private val auxiliaryState = combine(
+        contentActionState,
+        ideaRepository.observeCompletedCount(),
+    ) { actionState, completedCount ->
+        HomeAuxiliaryState(actionState, completedCount)
+    }
     private val eventChannel = Channel<HomeEvent>(capacity = Channel.BUFFERED)
     val events: Flow<HomeEvent> = eventChannel.receiveAsFlow()
 
@@ -66,8 +78,8 @@ class HomeViewModel(
         ideaRepository.observeInFolder(folderId = folderId),
         folderRepository.observeAll(),
         searchQuery,
-        contentActionState,
-    ) { folders, ideas, allFolders, query, actionState ->
+        auxiliaryState,
+    ) { folders, ideas, allFolders, query, auxiliary ->
         val normalizedQuery = query.trim()
         val filteredIdeas = if (normalizedQuery.isEmpty()) {
             ideas
@@ -86,9 +98,12 @@ class HomeViewModel(
             ideas = filteredIdeas,
             allFolders = allFolders,
             searchQuery = query,
-            hasAnyContent = folders.isNotEmpty() || ideas.isNotEmpty(),
-            isContentActionRunning = actionState.isRunning,
-            contentActionError = actionState.errorMessage,
+            hasAnyContent = folders.isNotEmpty() ||
+                ideas.isNotEmpty() ||
+                (folderId == null && auxiliary.completedIdeaCount > 0),
+            completedIdeaCount = auxiliary.completedIdeaCount,
+            isContentActionRunning = auxiliary.contentAction.isRunning,
+            contentActionError = auxiliary.contentAction.errorMessage,
         )
     }.stateIn(
         scope = viewModelScope,

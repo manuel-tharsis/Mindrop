@@ -25,6 +25,7 @@ data class IdeaDetailUiState(
     val updates: List<IdeaSuggestionEntity> = emptyList(),
     val pendingSuggestions: List<IdeaSuggestionEntity> = emptyList(),
     val validatingSuggestionId: Long? = null,
+    val deletingSuggestionId: Long? = null,
     val validationErrorMessage: String? = null,
     val isUpdatingCompletion: Boolean = false,
     val isDeleting: Boolean = false,
@@ -79,6 +80,7 @@ class IdeaDetailViewModel(
         if (
             state.isDeleting ||
             state.isUpdatingCompletion ||
+            state.deletingSuggestionId != null ||
             state.validatingSuggestionId != null
         ) return
         if (state.pendingSuggestions.none { it.id == suggestionId }) return
@@ -113,10 +115,53 @@ class IdeaDetailViewModel(
         }
     }
 
+    fun deleteSuggestion(suggestionId: Long) {
+        val state = _uiState.value
+        if (
+            state.isDeleting ||
+            state.isUpdatingCompletion ||
+            state.validatingSuggestionId != null ||
+            state.deletingSuggestionId != null
+        ) return
+        if (state.pendingSuggestions.none { it.id == suggestionId }) return
+
+        _uiState.update {
+            it.copy(deletingSuggestionId = suggestionId, validationErrorMessage = null)
+        }
+        viewModelScope.launch {
+            try {
+                check(suggestionRepository.deletePending(ideaId, suggestionId)) {
+                    "La sugerencia ya no existe."
+                }
+                _uiState.update { current ->
+                    current.copy(
+                        pendingSuggestions = current.pendingSuggestions.filterNot {
+                            it.id == suggestionId
+                        },
+                        deletingSuggestionId = null,
+                    )
+                }
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                _uiState.update {
+                    it.copy(
+                        deletingSuggestionId = null,
+                        validationErrorMessage = "No se pudo eliminar la sugerencia.",
+                    )
+                }
+            }
+        }
+    }
+
     fun toggleCompleted() {
         val state = _uiState.value
         val idea = state.idea ?: return
-        if (state.isDeleting || state.isUpdatingCompletion) return
+        if (
+            state.isDeleting ||
+            state.isUpdatingCompletion ||
+            state.validatingSuggestionId != null ||
+            state.deletingSuggestionId != null
+        ) return
 
         _uiState.update { it.copy(isUpdatingCompletion = true, errorMessage = null) }
         viewModelScope.launch {
@@ -141,6 +186,8 @@ class IdeaDetailViewModel(
         if (
             _uiState.value.isDeleting ||
             _uiState.value.isUpdatingCompletion ||
+            _uiState.value.validatingSuggestionId != null ||
+            _uiState.value.deletingSuggestionId != null ||
             _uiState.value.idea == null
         ) return
         viewModelScope.launch {

@@ -62,6 +62,6 @@ En macOS o Linux:
 ./gradlew exportReleaseApk
 ```
 
-La APK instalable se genera en `app/build/releases/Mindrop-v1.1.0.apk`.
+La APK instalable se genera en `app/build/releases/Mindrop-v1.1.1.apk`.
 
 Mindrop no solicita el permiso `INTERNET` y no utiliza cuentas, servidores, analíticas ni servicios externos.

@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,6 +28,7 @@ import com.mindrop.app.ui.theme.MindropTheme
 
 @Composable
 fun CompletedIdeasCard(
+    ideaCount: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -60,13 +62,19 @@ fun CompletedIdeasCard(
                     fontWeight = FontWeight.Bold,
                 )
             }
-            Text(
-                text = stringResource(R.string.completed_ideas_title),
-                modifier = Modifier.weight(1f),
-                color = completedGreen,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
+            androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.completed_ideas_title),
+                    color = completedGreen,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = pluralStringResource(R.plurals.idea_count, ideaCount, ideaCount),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
     }
 }
@@ -75,6 +83,6 @@ fun CompletedIdeasCard(
 @Composable
 private fun CompletedIdeasCardPreview() {
     MindropTheme {
-        CompletedIdeasCard(onClick = {}, modifier = Modifier.padding(16.dp))
+        CompletedIdeasCard(ideaCount = 3, onClick = {}, modifier = Modifier.padding(16.dp))
     }
 }

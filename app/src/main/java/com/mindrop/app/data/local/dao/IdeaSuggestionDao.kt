@@ -65,4 +65,12 @@ interface IdeaSuggestionDao {
         validatedAt: Long,
         updateNumber: Int,
     ): Int
+
+    @Query(
+        """
+        DELETE FROM idea_suggestions
+        WHERE id = :id AND idea_id = :ideaId AND validated_at IS NULL
+        """,
+    )
+    suspend fun deletePending(ideaId: Long, id: Long): Int
 }

@@ -23,6 +23,8 @@ class IdeaRepository(
 
     fun observeCompleted(): Flow<List<IdeaEntity>> = ideaDao.observeCompleted()
 
+    fun observeCompletedCount(): Flow<Int> = ideaDao.observeCompletedCount()
+
     fun observeById(id: Long): Flow<IdeaEntity?> = ideaDao.observeById(id)
 
     suspend fun findById(id: Long): IdeaEntity? = ideaDao.findById(id)

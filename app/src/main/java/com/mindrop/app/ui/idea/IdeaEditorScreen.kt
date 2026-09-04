@@ -9,16 +9,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -27,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -50,14 +56,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mindrop.app.R
+import com.mindrop.app.data.local.entity.IdeaSuggestionEntity
 import com.mindrop.app.ui.editor.EditorEvent
-import com.mindrop.app.ui.editor.FolderOption
+import com.mindrop.app.ui.editor.IdeaLocationKind
+import com.mindrop.app.ui.editor.IdeaLocationOption
 import com.mindrop.app.ui.editor.components.DiscardChangesDialog
 import com.mindrop.app.ui.editor.components.CustomIconPicker
-import com.mindrop.app.ui.editor.components.FolderPicker
 import com.mindrop.app.ui.editor.components.FormActions
 import com.mindrop.app.ui.editor.components.IconPicker
-import com.mindrop.app.ui.editor.components.IdeaParentPicker
+import com.mindrop.app.ui.editor.components.IdeaLocationPicker
 import com.mindrop.app.ui.theme.MindropTheme
 
 @Composable
@@ -67,6 +74,8 @@ fun IdeaEditorRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDiscardDialog by rememberSaveable { mutableStateOf(false) }
+    var suggestionToDelete by rememberSaveable { mutableStateOf<Long?>(null) }
+    var draftSuggestionToDelete by rememberSaveable { mutableStateOf<Int?>(null) }
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
     ) { uri ->
@@ -74,7 +83,13 @@ fun IdeaEditorRoute(
     }
 
     fun requestExit() {
-        if (uiState.isSaving || uiState.isImportingIcon) return
+        if (
+            uiState.isSaving ||
+            uiState.isImportingIcon ||
+            uiState.isAddingSuggestion ||
+            uiState.validatingSuggestionId != null ||
+            uiState.deletingSuggestionId != null
+        ) return
         if (uiState.hasUnsavedChanges) showDiscardDialog = true else onFinished()
     }
 
@@ -92,6 +107,9 @@ fun IdeaEditorRoute(
         onFullDescriptionChange = viewModel::updateFullDescription,
         onSuggestionTextChange = viewModel::updateNewSuggestion,
         onAddSuggestion = viewModel::addSuggestion,
+        onValidateSuggestion = viewModel::validateSuggestion,
+        onDeleteSuggestion = { suggestionId -> suggestionToDelete = suggestionId },
+        onDeleteDraftSuggestion = { index -> draftSuggestionToDelete = index },
         onIconChange = viewModel::selectPresetIcon,
         onChooseCustomIcon = {
             imagePicker.launch(
@@ -99,8 +117,7 @@ fun IdeaEditorRoute(
             )
         },
         onUseDefaultIcon = { viewModel.selectPresetIcon(uiState.icon) },
-        onFolderChange = viewModel::updateFolder,
-        onParentIdeaChange = viewModel::updateParentIdea,
+        onLocationChange = viewModel::updateLocation,
         onSave = viewModel::save,
         onCancel = ::requestExit,
     )
@@ -109,6 +126,43 @@ fun IdeaEditorRoute(
         DiscardChangesDialog(
             onDiscard = onFinished,
             onKeepEditing = { showDiscardDialog = false },
+        )
+    }
+
+    val hasSuggestionDeleteRequest = suggestionToDelete != null || draftSuggestionToDelete != null
+    if (hasSuggestionDeleteRequest) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = {
+                suggestionToDelete = null
+                draftSuggestionToDelete = null
+            },
+            title = { Text(stringResource(R.string.delete_suggestion_title)) },
+            text = { Text(stringResource(R.string.delete_suggestion_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        suggestionToDelete?.let(viewModel::deleteSuggestion)
+                        draftSuggestionToDelete?.let(viewModel::removeDraftSuggestion)
+                        suggestionToDelete = null
+                        draftSuggestionToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text(stringResource(R.string.delete))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        suggestionToDelete = null
+                        draftSuggestionToDelete = null
+                    },
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
         )
     }
 }
@@ -122,16 +176,22 @@ fun IdeaEditorScreen(
     onFullDescriptionChange: (String) -> Unit,
     onSuggestionTextChange: (String) -> Unit,
     onAddSuggestion: () -> Unit,
+    onValidateSuggestion: (Long) -> Unit,
+    onDeleteSuggestion: (Long) -> Unit,
+    onDeleteDraftSuggestion: (Int) -> Unit,
     onIconChange: (String) -> Unit,
     onChooseCustomIcon: () -> Unit,
     onUseDefaultIcon: () -> Unit,
-    onFolderChange: (Long?) -> Unit,
-    onParentIdeaChange: (Long?) -> Unit,
+    onLocationChange: (IdeaLocationOption?) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val formEnabled = !uiState.isSaving && !uiState.isImportingIcon
+    val formEnabled = !uiState.isSaving &&
+        !uiState.isImportingIcon &&
+        !uiState.isAddingSuggestion &&
+        uiState.validatingSuggestionId == null &&
+        uiState.deletingSuggestionId == null
     val shortDescriptionFocus = remember { FocusRequester() }
     val fullDescriptionFocus = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
@@ -250,10 +310,18 @@ fun IdeaEditorScreen(
                     SuggestionEditorSection(
                         text = uiState.newSuggestionText,
                         addedSuggestions = uiState.newSuggestions,
+                        pendingSuggestions = uiState.pendingSuggestions,
                         showError = uiState.suggestionError,
+                        actionError = uiState.suggestionActionError,
+                        isAdding = uiState.isAddingSuggestion,
+                        validatingSuggestionId = uiState.validatingSuggestionId,
+                        deletingSuggestionId = uiState.deletingSuggestionId,
                         enabled = formEnabled,
                         onTextChange = onSuggestionTextChange,
                         onAdd = onAddSuggestion,
+                        onValidate = onValidateSuggestion,
+                        onDelete = onDeleteSuggestion,
+                        onDeleteDraft = onDeleteDraftSuggestion,
                     )
                 }
                 item {
@@ -274,19 +342,11 @@ fun IdeaEditorScreen(
                     )
                 }
                 item {
-                    FolderPicker(
-                        label = stringResource(R.string.location_label),
+                    IdeaLocationPicker(
                         selectedFolderId = uiState.folderId,
-                        options = uiState.folderOptions,
-                        onFolderSelected = onFolderChange,
-                        enabled = formEnabled,
-                    )
-                }
-                item {
-                    IdeaParentPicker(
-                        selectedIdeaId = uiState.parentIdeaId,
-                        options = uiState.parentIdeaOptions,
-                        onIdeaSelected = onParentIdeaChange,
+                        selectedParentIdeaId = uiState.parentIdeaId,
+                        options = uiState.locationOptions,
+                        onLocationSelected = onLocationChange,
                         enabled = formEnabled,
                     )
                 }
@@ -314,10 +374,18 @@ fun IdeaEditorScreen(
 private fun SuggestionEditorSection(
     text: String,
     addedSuggestions: List<String>,
+    pendingSuggestions: List<IdeaSuggestionEntity>,
     showError: Boolean,
+    actionError: String?,
+    isAdding: Boolean,
+    validatingSuggestionId: Long?,
+    deletingSuggestionId: Long?,
     enabled: Boolean,
     onTextChange: (String) -> Unit,
     onAdd: () -> Unit,
+    onValidate: (Long) -> Unit,
+    onDelete: (Long) -> Unit,
+    onDeleteDraft: (Int) -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -351,17 +419,109 @@ private fun SuggestionEditorSection(
             modifier = Modifier.align(Alignment.End),
             enabled = enabled && text.isNotBlank(),
         ) {
-            Text(stringResource(R.string.add_suggestion))
+            if (isAdding) {
+                SuggestionActionProgress()
+            } else {
+                Text(stringResource(R.string.add_suggestion))
+            }
         }
-        addedSuggestions.forEach { suggestion ->
+        actionError?.let { message ->
             Text(
-                text = "• $suggestion",
+                text = message,
                 modifier = Modifier.padding(horizontal = 4.dp),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+        pendingSuggestions.forEach { suggestion ->
+            SuggestionEditorItem(
+                text = suggestion.text,
+                canValidate = true,
+                isValidating = validatingSuggestionId == suggestion.id,
+                isDeleting = deletingSuggestionId == suggestion.id,
+                enabled = enabled,
+                onValidate = { onValidate(suggestion.id) },
+                onDelete = { onDelete(suggestion.id) },
+            )
+        }
+        addedSuggestions.forEachIndexed { index, suggestion ->
+            SuggestionEditorItem(
+                text = suggestion,
+                canValidate = false,
+                isValidating = false,
+                isDeleting = false,
+                enabled = enabled,
+                onValidate = {},
+                onDelete = { onDeleteDraft(index) },
             )
         }
     }
+}
+
+@Composable
+private fun SuggestionEditorItem(
+    text: String,
+    canValidate: Boolean,
+    isValidating: Boolean,
+    isDeleting: Boolean,
+    enabled: Boolean,
+    onValidate: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = text,
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Row(
+                modifier = Modifier.align(Alignment.End),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (canValidate) {
+                    TextButton(onClick = onValidate, enabled = enabled) {
+                        if (isValidating) {
+                            SuggestionActionProgress()
+                        } else {
+                            Text(stringResource(R.string.validate_suggestion))
+                        }
+                    }
+                }
+                TextButton(
+                    onClick = onDelete,
+                    enabled = enabled,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    if (isDeleting) {
+                        SuggestionActionProgress()
+                    } else {
+                        Text(stringResource(R.string.delete))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SuggestionActionProgress() {
+    CircularProgressIndicator(
+        modifier = Modifier.size(18.dp),
+        strokeWidth = 2.dp,
+    )
 }
 
 @Preview(name = "Nueva idea", showBackground = true, widthDp = 400, heightDp = 820)
@@ -382,18 +542,31 @@ private fun IdeaEditorPreview() {
                 shortDescription = "Registro de revisiones y averías",
                 newSuggestionText = "Añadir recordatorios de mantenimiento",
                 newSuggestions = listOf("Mostrar el historial por fecha"),
-                folderOptions = listOf(FolderOption(1, "Proyectos / Android")),
+                locationOptions = listOf(
+                    IdeaLocationOption(
+                        key = "folder:1",
+                        name = "Android",
+                        path = "Proyectos / Android",
+                        depth = 1,
+                        kind = IdeaLocationKind.Folder,
+                        icon = "folder",
+                        folderId = 1,
+                        parentIdeaId = null,
+                    ),
+                ),
             ),
             onNameChange = {},
             onShortDescriptionChange = {},
             onFullDescriptionChange = {},
             onSuggestionTextChange = {},
             onAddSuggestion = {},
+            onValidateSuggestion = {},
+            onDeleteSuggestion = {},
+            onDeleteDraftSuggestion = {},
             onIconChange = {},
             onChooseCustomIcon = {},
             onUseDefaultIcon = {},
-            onFolderChange = {},
-            onParentIdeaChange = {},
+            onLocationChange = {},
             onSave = {},
             onCancel = {},
         )

@@ -35,6 +35,9 @@ interface IdeaDao {
     )
     fun observeCompleted(): Flow<List<IdeaEntity>>
 
+    @Query("SELECT COUNT(*) FROM ideas WHERE is_completed = 1")
+    fun observeCompletedCount(): Flow<Int>
+
     @Query("SELECT * FROM ideas WHERE id = :id LIMIT 1")
     fun observeById(id: Long): Flow<IdeaEntity?>
 

@@ -49,4 +49,9 @@ class IdeaSuggestionRepository(
             check(changed == 1) { "La sugerencia ya no está pendiente." }
             suggestionDao.findById(suggestion.id)
         }
+
+    suspend fun deletePending(ideaId: Long, suggestionId: Long): Boolean =
+        database.withTransaction {
+            suggestionDao.deletePending(ideaId = ideaId, id = suggestionId) == 1
+        }
 }

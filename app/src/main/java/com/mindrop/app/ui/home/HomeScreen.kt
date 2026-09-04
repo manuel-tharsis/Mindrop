@@ -340,52 +340,22 @@ fun HomeScreen(
                 )
             }
 
-            if (!uiState.hasAnyContent && uiState.searchQuery.isBlank()) {
+            if (
+                uiState.folderId == null &&
+                !uiState.hasAnyContent &&
+                uiState.searchQuery.isBlank()
+            ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     EmptyState(
-                        title = stringResource(
-                            if (uiState.folderId == null) {
-                                R.string.empty_home_title
-                            } else {
-                                R.string.empty_folder_title
-                            },
-                        ),
-                        message = stringResource(
-                            if (uiState.folderId == null) {
-                                R.string.empty_home_message
-                            } else {
-                                R.string.empty_folder_message
-                            },
-                        ),
+                        title = stringResource(R.string.empty_home_title),
+                        message = stringResource(R.string.empty_home_message),
                     )
                 }
             } else {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    SectionTitle(text = stringResource(R.string.folders_section_title))
-                }
-
-                if (uiState.folders.isEmpty()) {
+                if (uiState.folders.isNotEmpty()) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
-                        EmptyState(
-                            title = stringResource(
-                                if (uiState.folderId == null) {
-                                    R.string.empty_folders_title
-                                } else {
-                                    R.string.empty_subfolders_title
-                                },
-                            ),
-                            message = stringResource(
-                                if (uiState.folderId == null) {
-                                    R.string.empty_folders_message
-                                } else {
-                                    R.string.empty_subfolders_message
-                                },
-                            ),
-                            compact = true,
-                            folderStyle = true,
-                        )
+                        SectionTitle(text = stringResource(R.string.folders_section_title))
                     }
-                } else {
                     items(
                         items = uiState.folders,
                         key = { summary -> "folder-${summary.folder.id}" },
@@ -400,40 +370,21 @@ fun HomeScreen(
                     }
                 }
 
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    SectionTitle(
-                        text = stringResource(
-                            if (uiState.folderId == null) {
-                                R.string.root_ideas_section_title
-                            } else {
-                                R.string.folder_ideas_section_title
-                            },
-                        ),
-                    )
-                }
-
-                if (uiState.ideas.isEmpty()) {
+                if (uiState.ideas.isNotEmpty()) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
-                        EmptyState(
-                            title = stringResource(
-                                if (uiState.searchQuery.isBlank()) {
-                                    R.string.empty_ideas_title
+                        if (uiState.folders.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                        SectionTitle(
+                            text = stringResource(
+                                if (uiState.folderId == null) {
+                                    R.string.root_ideas_section_title
                                 } else {
-                                    R.string.empty_search_title
+                                    R.string.folder_ideas_section_title
                                 },
                             ),
-                            message = stringResource(
-                                if (uiState.searchQuery.isBlank()) {
-                                    R.string.empty_ideas_message
-                                } else {
-                                    R.string.empty_search_message
-                                },
-                            ),
-                            compact = true,
                         )
                     }
-                } else {
                     items(
                         items = hierarchicalIdeas,
                         key = { item -> "idea-${item.idea.id}" },
@@ -446,12 +397,21 @@ fun HomeScreen(
                             onMoveClick = { onMoveIdea(item.idea) },
                         )
                     }
+                } else if (uiState.searchQuery.isNotBlank()) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        EmptyState(
+                            title = stringResource(R.string.empty_search_title),
+                            message = stringResource(R.string.empty_search_message),
+                            compact = true,
+                        )
+                    }
                 }
             }
 
             if (uiState.folderId == null) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     CompletedIdeasCard(
+                        ideaCount = uiState.completedIdeaCount,
                         onClick = onCompletedClick,
                         modifier = Modifier.padding(top = 8.dp),
                     )

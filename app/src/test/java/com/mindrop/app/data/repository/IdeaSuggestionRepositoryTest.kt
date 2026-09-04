@@ -19,6 +19,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -182,6 +183,30 @@ class IdeaSuggestionRepositoryTest {
         ideaRepository.deleteById(ideaId)
 
         assertEquals(emptyList<Any>(), database.ideaSuggestionDao().findAllForIdea(ideaId))
+    }
+
+    @Test
+    fun deletingPendingSuggestionDoesNotCreateAnUpdate() = runBlocking {
+        val ideaId = ideaRepository.insert(newIdea("Idea"))
+        val suggestionId = suggestionRepository.addPending(ideaId, "Integrar báscula")
+
+        assertTrue(suggestionRepository.deletePending(ideaId, suggestionId))
+
+        assertTrue(suggestionRepository.observePending(ideaId).first().isEmpty())
+        assertTrue(suggestionRepository.observeUpdates(ideaId).first().isEmpty())
+    }
+
+    @Test
+    fun validatedUpdateCannotBeDeletedAsPendingSuggestion() = runBlocking {
+        val ideaId = ideaRepository.insert(newIdea("Idea"))
+        val suggestionId = suggestionRepository.addPending(ideaId, "Conservar actualización")
+        suggestionRepository.validate(ideaId, suggestionId)
+
+        assertEquals(false, suggestionRepository.deletePending(ideaId, suggestionId))
+        assertEquals(
+            listOf("Conservar actualización"),
+            suggestionRepository.observeUpdates(ideaId).first().map { it.text },
+        )
     }
 
     private fun openPersistentDatabase(name: String): MindropDatabase =

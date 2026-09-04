@@ -56,6 +56,20 @@ class CompletedIdeasRepositoryTest {
         assertFalse(ideaRepository.findById(ideaId)!!.isCompleted)
         assertEquals(listOf(ideaId), ideaRepository.observeInFolder(null).first().map { it.id })
         assertTrue(ideaRepository.observeCompleted().first().isEmpty())
+        assertEquals(0, ideaRepository.observeCompletedCount().first())
+    }
+
+    @Test
+    fun completedCountTracksCompletionAndRestoration() = runBlocking {
+        val firstId = ideaRepository.insert(newIdea("Primera"))
+        val secondId = ideaRepository.insert(newIdea("Segunda"))
+
+        ideaRepository.setCompleted(firstId, true)
+        ideaRepository.setCompleted(secondId, true)
+        assertEquals(2, ideaRepository.observeCompletedCount().first())
+
+        ideaRepository.setCompleted(firstId, false)
+        assertEquals(1, ideaRepository.observeCompletedCount().first())
     }
 
     @Test
