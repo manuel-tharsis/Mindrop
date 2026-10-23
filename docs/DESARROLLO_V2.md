@@ -24,7 +24,8 @@ El código nuevo usa nombres españoles; no se renombra masivamente código anti
 - G: implementadas 11 recompensas entre temas/fondos, diseños y efectos. Se valida el
   bloqueo en el repositorio y se conserva la selección en DataStore.
 - H: integración automática comprobada; validación manual en Android pendiente.
-- I: generada APK 2.0.0, code 5, firmada con la clave existente. Sin tag ni Release.
+- I: generada APK 2.0.0, code 5, firmada con la clave existente. Tag y Release publicados
+  posteriormente por petición explícita del usuario; detalles al final de esta memoria.
 
 ## Decisiones aplicadas
 
@@ -96,4 +97,15 @@ de publicar una Release, completar en un dispositivo compatible:
 No usar la APK debug sobre una instalación release: la firma debug es diferente.
 Los avisos no son exactos y Android impide ejecutarlos mientras la app está forzada a
 detenerse; se reconcilian cuando vuelve a abrirse. No publicar como versión final sin
-estas comprobaciones. No se ha creado una GitHub Release automáticamente.
+estas comprobaciones. La publicación posterior se realizó por petición explícita del
+usuario y comunica las comprobaciones físicas pendientes en las notas de la Release.
+
+## Publicación autorizada de v2.0.0
+
+- Tag anotado `v2.0.0` sobre el commit verificado `817f38e647f1474cb38cc3702d46de63785fe3e0`.
+- Release: [Mindrop v2.0.0 — RPG Edition](https://github.com/manuel-tharsis/Mindrop/releases/tag/v2.0.0).
+- Archivo adjunto: `Mindrop-v2.0.0.apk`, 9.346.828 bytes. GitHub confirma estado `uploaded`.
+- SHA-256 local y remoto coinciden:
+  `caeb86893c8aee9dd823b77742df668b6614b365b6316a186e1b9461aa38a26f`.
+- Firma v1/v2/v3 válida, misma clave que v1.1.1; no se han modificado releases anteriores.
+- La revisión física pendiente no se presenta como realizada.
