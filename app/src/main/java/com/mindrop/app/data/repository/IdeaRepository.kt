@@ -9,6 +9,7 @@ import com.mindrop.app.data.local.entity.IdeaSuggestionEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import com.mindrop.app.data.rpg.ProgresoRpg
 
 class IdeaRepository(
     private val database: MindropDatabase,
@@ -16,6 +17,8 @@ class IdeaRepository(
     private val customIconFileStore: CustomIconFileStore? = null,
     private val currentTimeMillis: () -> Long = System::currentTimeMillis,
 ) {
+    private val progreso = ProgresoRpg(database)
+    var alCancelarRecordatorio: (Long) -> Unit = {}
     fun observeAll(): Flow<List<IdeaEntity>> = ideaDao.observeAll()
 
     fun observeInFolder(folderId: Long?): Flow<List<IdeaEntity>> =
@@ -29,10 +32,18 @@ class IdeaRepository(
 
     suspend fun findById(id: Long): IdeaEntity? = ideaDao.findById(id)
 
+    suspend fun registrarRevision(id: Long) = database.withTransaction {
+        if (ideaDao.findById(id) == null) return@withTransaction
+        val revision = database.daoRpg().revisionIdea(id)
+            ?: com.mindrop.app.data.local.entity.RevisionIdea(id)
+        database.daoRpg().guardarRevision(revision.copy(revisada = System.currentTimeMillis()))
+    }
+
     suspend fun insert(
         idea: IdeaEntity,
         pendingSuggestionTexts: List<String> = emptyList(),
     ): Long = database.withTransaction {
+        progreso.inicializar()
         require(idea.id == 0L) { "Una idea nueva no puede tener un id asignado." }
         require(idea.title.isNotBlank()) { "El título de la idea no puede estar vacío." }
         validateParentIdea(ideaId = null, parentIdeaId = idea.parentIdeaId)
@@ -46,6 +57,8 @@ class IdeaRepository(
             ),
         )
         insertPendingSuggestions(ideaId, suggestions, now)
+        progreso.registrar("ideas", ideaId)
+        if (idea.parentIdeaId != null) progreso.registrar("subideas", ideaId)
         ideaId
     }
 
@@ -55,6 +68,7 @@ class IdeaRepository(
     ): Boolean {
         var obsoleteCustomIconPath: String? = null
         val updated = database.withTransaction {
+            progreso.inicializar()
             require(idea.id > 0L) { "La idea que se actualiza debe tener un id válido." }
             require(idea.title.isNotBlank()) { "El título de la idea no puede estar vacío." }
             val suggestions = validatedSuggestionTexts(pendingSuggestionTexts)
@@ -70,6 +84,10 @@ class IdeaRepository(
             ) == 1
             if (rowUpdated) {
                 insertPendingSuggestions(idea.id, suggestions, updatedAt)
+                progreso.actividad()
+                if (idea.parentIdeaId != null) progreso.registrar("subideas", idea.id)
+                progreso.jerarquia()
+                progreso.evaluar()
             }
             if (rowUpdated && storedIdea.customIconPath != idea.customIconPath) {
                 obsoleteCustomIconPath = storedIdea.customIconPath
@@ -98,20 +116,32 @@ class IdeaRepository(
 
     suspend fun setCompleted(ideaId: Long, isCompleted: Boolean): Boolean =
         database.withTransaction {
+            progreso.inicializar()
             val storedIdea = ideaDao.findById(ideaId) ?: return@withTransaction false
             if (storedIdea.isCompleted == isCompleted) return@withTransaction true
 
-            ideaDao.setCompleted(
+            val cambiado = ideaDao.setCompleted(
                 id = ideaId,
                 isCompleted = isCompleted,
                 updatedAt = nextUpdatedAt(storedIdea.updatedAt),
             ) == 1
+            if (cambiado) {
+                if (isCompleted) {
+                    progreso.registrar("completadas", ideaId)
+                    database.daoRpg().recordatorioIdea(ideaId)?.let {
+                        database.daoRpg().borrarRecordatorio(it.id)
+                        alCancelarRecordatorio(it.id)
+                    }
+                } else progreso.actividad()
+            }
+            cambiado
         }
 
     suspend fun deleteById(id: Long): Boolean {
         var customIconPath: String? = null
         val deleted = database.withTransaction {
             val storedIdea = ideaDao.findById(id) ?: return@withTransaction false
+            database.daoRpg().recordatorioIdea(id)?.let { alCancelarRecordatorio(it.id) }
             val rowDeleted = ideaDao.deleteById(id) == 1
             if (rowDeleted) customIconPath = storedIdea.customIconPath
             rowDeleted

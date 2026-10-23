@@ -64,6 +64,7 @@ import com.mindrop.app.ui.home.components.FolderDestinationDialog
 import com.mindrop.app.ui.home.components.FolderCard
 import com.mindrop.app.ui.home.components.IdeaCard
 import com.mindrop.app.ui.theme.MindropTheme
+import com.mindrop.app.ui.rpg.EntradaPixel
 
 private sealed interface MoveRequest {
     val id: Long
@@ -253,7 +254,7 @@ fun HomeScreen(
 
     Scaffold(
         modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
             TopAppBar(
                 title = {
@@ -390,12 +391,14 @@ fun HomeScreen(
                         key = { item -> "idea-${item.idea.id}" },
                         span = { GridItemSpan(maxLineSpan) },
                     ) { item ->
+                        EntradaPixel(item.idea.id to item.idea.updatedAt) {
                         IdeaCard(
                             idea = item.idea,
                             hierarchyDepth = item.depth,
                             onClick = { onIdeaClick(item.idea.id) },
                             onMoveClick = { onMoveIdea(item.idea) },
                         )
+                        }
                     }
                 } else if (uiState.searchQuery.isNotBlank()) {
                     item(span = { GridItemSpan(maxLineSpan) }) {

@@ -216,6 +216,7 @@ class CompletedIdeasRepositoryTest {
                 com.mindrop.app.data.local.MIGRATION_2_3,
                 com.mindrop.app.data.local.MIGRATION_3_4,
                 com.mindrop.app.data.local.MIGRATION_4_5,
+                com.mindrop.app.data.local.MIGRATION_5_6,
             )
             .build()
 

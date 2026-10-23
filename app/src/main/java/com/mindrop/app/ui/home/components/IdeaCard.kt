@@ -25,6 +25,11 @@ import com.mindrop.app.R
 import com.mindrop.app.data.local.entity.IdeaEntity
 import com.mindrop.app.ui.icons.MindropIdeaIcon
 import com.mindrop.app.ui.theme.MindropTheme
+import com.mindrop.app.ui.rpg.FormaPixel
+import com.mindrop.app.ui.rpg.marcoRpg
+import com.mindrop.app.ui.rpg.reboteRpg
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.interaction.MutableInteractionSource
 
 @Composable
 fun IdeaCard(
@@ -37,6 +42,7 @@ fun IdeaCard(
     val depth = hierarchyDepth.coerceAtLeast(0)
     val indentation = (depth.coerceAtMost(8) * 18).dp
     val connectorColor = MaterialTheme.colorScheme.outlineVariant
+    val interacciones = remember { MutableInteractionSource() }
 
     Box(
         modifier = modifier
@@ -61,11 +67,14 @@ fun IdeaCard(
             },
     ) {
         ElevatedCard(
+            interactionSource = interacciones,
             onClick = onClick,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = indentation),
-            shape = RoundedCornerShape(18.dp),
+                .padding(start = indentation)
+                .reboteRpg(interacciones)
+                .marcoRpg(MaterialTheme.colorScheme.primary),
+            shape = FormaPixel,
             colors = CardDefaults.elevatedCardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
             ),

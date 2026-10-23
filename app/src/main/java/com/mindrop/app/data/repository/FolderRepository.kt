@@ -6,6 +6,7 @@ import com.mindrop.app.data.local.dao.FolderDao
 import com.mindrop.app.data.local.entity.FolderEntity
 import com.mindrop.app.data.local.model.FolderSummary
 import kotlinx.coroutines.flow.Flow
+import com.mindrop.app.data.rpg.ProgresoRpg
 
 class FolderHierarchyException(message: String) : IllegalArgumentException(message)
 
@@ -30,10 +31,12 @@ class FolderRepository(
     suspend fun findById(id: Long): FolderEntity? = folderDao.findById(id)
 
     suspend fun insert(folder: FolderEntity): Long = database.withTransaction {
+        val progreso = ProgresoRpg(database)
+        progreso.inicializar()
         require(folder.id == 0L) { "Una carpeta nueva no puede tener un id asignado." }
         require(folder.name.isNotBlank()) { "El nombre de la carpeta no puede estar vacío." }
         validateParent(folderId = null, parentFolderId = folder.parentFolderId)
-        folderDao.insert(folder)
+        folderDao.insert(folder).also { progreso.registrar("carpetas", it) }
     }
 
     suspend fun update(folder: FolderEntity): Boolean = database.withTransaction {
@@ -45,7 +48,9 @@ class FolderRepository(
         }
 
         validateParent(folderId = folder.id, parentFolderId = folder.parentFolderId)
-        folderDao.update(folder) == 1
+        (folderDao.update(folder) == 1).also { actualizado ->
+            if (actualizado) ProgresoRpg(database).actividad()
+        }
     }
 
     suspend fun moveToFolder(folderId: Long, parentFolderId: Long?): Boolean =

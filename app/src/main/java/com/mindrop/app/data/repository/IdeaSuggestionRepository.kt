@@ -5,6 +5,7 @@ import com.mindrop.app.data.local.MindropDatabase
 import com.mindrop.app.data.local.dao.IdeaSuggestionDao
 import com.mindrop.app.data.local.entity.IdeaSuggestionEntity
 import kotlinx.coroutines.flow.Flow
+import com.mindrop.app.data.rpg.ProgresoRpg
 
 class IdeaSuggestionRepository(
     private val database: MindropDatabase,
@@ -18,19 +19,24 @@ class IdeaSuggestionRepository(
         suggestionDao.observeUpdates(ideaId)
 
     suspend fun addPending(ideaId: Long, text: String): Long = database.withTransaction {
+        ProgresoRpg(database).inicializar()
         require(text.isNotBlank()) { "La sugerencia no puede estar vacía." }
         require(database.ideaDao().findById(ideaId) != null) { "La idea no existe." }
-        suggestionDao.insert(
+        val id = suggestionDao.insert(
             IdeaSuggestionEntity(
                 ideaId = ideaId,
                 text = text.trim(),
                 createdAt = currentTimeMillis(),
             ),
         )
+        ProgresoRpg(database).actividad()
+        id
     }
 
     suspend fun validate(ideaId: Long, suggestionId: Long): IdeaSuggestionEntity? =
         database.withTransaction {
+            val progreso = ProgresoRpg(database)
+            progreso.inicializar()
             val suggestion = suggestionDao.findById(suggestionId)
                 ?: return@withTransaction null
             if (suggestion.ideaId != ideaId) return@withTransaction null
@@ -47,6 +53,7 @@ class IdeaSuggestionRepository(
                 updateNumber = updateNumber,
             )
             check(changed == 1) { "La sugerencia ya no está pendiente." }
+            progreso.registrar("validadas", suggestion.id)
             suggestionDao.findById(suggestion.id)
         }
 

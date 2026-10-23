@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -57,16 +58,35 @@ import com.mindrop.app.data.local.entity.IdeaEntity
 import com.mindrop.app.data.local.entity.IdeaSuggestionEntity
 import com.mindrop.app.ui.icons.MindropIdeaIcon
 import com.mindrop.app.ui.theme.MindropTheme
+import com.mindrop.app.ui.rpg.DestelloPixel
+import androidx.compose.ui.platform.testTag
 
 @Composable
 fun IdeaDetailRoute(
     viewModel: IdeaDetailViewModel,
     onBack: () -> Unit,
     onEdit: (Long) -> Unit,
+    onRecordatorio: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteConfirmation by rememberSaveable { mutableStateOf(false) }
     var suggestionToDelete by rememberSaveable { mutableStateOf<Long?>(null) }
+    var celebracion by remember { mutableStateOf(false) }
+    var ultimaVersion by remember { mutableStateOf<com.mindrop.app.data.local.entity.IdeaEntity?>(null) }
+    var confirmacion by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(uiState.idea) {
+        val anterior = ultimaVersion
+        val actual = uiState.idea
+        if (anterior != null && actual != null && actual.updatedAt != anterior.updatedAt) {
+            confirmacion = when {
+                actual.isCompleted && !anterior.isCompleted -> "¡Idea completada!"
+                !actual.isCompleted && anterior.isCompleted -> "Idea restaurada"
+                else -> "Cambios guardados"
+            }
+            celebracion = actual.isCompleted && !anterior.isCompleted
+        }
+        ultimaVersion = actual
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -82,7 +102,17 @@ fun IdeaDetailRoute(
         onToggleCompleted = viewModel::toggleCompleted,
         onValidateSuggestion = viewModel::validateSuggestion,
         onDeleteSuggestion = { suggestionId -> suggestionToDelete = suggestionId },
+        onRecordatorio = onRecordatorio,
     )
+    if (celebracion) DestelloPixel(uiState.idea?.id ?: 0, alTerminar = { celebracion = false })
+    confirmacion?.let { mensaje ->
+        LaunchedEffect(mensaje) { kotlinx.coroutines.delay(1600); confirmacion = null }
+        Box(Modifier.fillMaxSize().padding(bottom = 32.dp), contentAlignment = Alignment.BottomCenter) {
+            Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.secondaryContainer) {
+                Text(mensaje, Modifier.padding(12.dp))
+            }
+        }
+    }
 
     if (showDeleteConfirmation) {
         AlertDialog(
@@ -162,6 +192,7 @@ fun IdeaDetailScreen(
     onValidateSuggestion: (Long) -> Unit,
     onDeleteSuggestion: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    onRecordatorio: () -> Unit = {},
 ) {
     val isBusy = uiState.isDeleting ||
         uiState.isUpdatingCompletion ||
@@ -183,6 +214,9 @@ fun IdeaDetailScreen(
                     }
                 },
                 actions = {
+                    TextButton(onClick = onRecordatorio, enabled = uiState.idea != null && !isBusy) {
+                        Text("Recordatorio")
+                    }
                     IconButton(
                         onClick = onEdit,
                         enabled = uiState.idea != null && !isBusy,
@@ -280,7 +314,8 @@ private fun IdeaDetailContent(
             state = pagerState,
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .weight(1f)
+                .testTag("paginas_idea"),
             beyondViewportPageCount = 1,
         ) { pageIndex ->
             when (val page = pages.getOrNull(pageIndex)) {

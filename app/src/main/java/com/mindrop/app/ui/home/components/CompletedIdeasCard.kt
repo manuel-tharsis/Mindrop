@@ -32,7 +32,7 @@ fun CompletedIdeasCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val completedGreen = if (isSystemInDarkTheme()) Color(0xFF81C784) else Color(0xFF2E7D32)
+    val completedGreen = Color(0xFF81C784)
 
     ElevatedCard(
         onClick = onClick,

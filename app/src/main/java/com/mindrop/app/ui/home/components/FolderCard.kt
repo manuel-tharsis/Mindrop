@@ -15,6 +15,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import com.mindrop.app.ui.rpg.movimientoPermitido
+import com.mindrop.app.ui.rpg.DestelloPixel
+import com.mindrop.app.ui.rpg.reboteRpg
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,6 +37,9 @@ import com.mindrop.app.data.local.entity.FolderEntity
 import com.mindrop.app.data.local.model.FolderSummary
 import com.mindrop.app.ui.icons.mindropIcon
 import com.mindrop.app.ui.theme.MindropTheme
+import com.mindrop.app.ui.rpg.IconoPixel
+import com.mindrop.app.ui.rpg.FormaPixel
+import com.mindrop.app.ui.rpg.marcoRpg
 
 @Composable
 fun FolderCard(
@@ -40,21 +50,33 @@ fun FolderCard(
     onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val selectedIcon = mindropIcon(folderSummary.folder.icon)
+    var abriendo by remember { mutableStateOf(false) }
+    val ambito = rememberCoroutineScope()
+    val movimiento = movimientoPermitido()
+    val interacciones = remember { MutableInteractionSource() }
     ElevatedCard(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        interactionSource = interacciones,
+        onClick = {
+            if (!abriendo) ambito.launch {
+                abriendo = true
+                if (movimiento) delay(180)
+                onClick()
+                abriendo = false
+            }
+        },
+        modifier = modifier.fillMaxWidth().reboteRpg(interacciones).marcoRpg(MaterialTheme.colorScheme.secondary),
+        shape = FormaPixel,
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         ),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
     ) {
-        Row(
+        Column(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -62,20 +84,25 @@ fun FolderCard(
                     .background(MaterialTheme.colorScheme.secondaryContainer),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    painter = painterResource(selectedIcon.drawableRes),
-                    contentDescription = stringResource(R.string.folder_icon_content_description),
-                    modifier = Modifier.size(38.dp),
-                    tint = MaterialTheme.colorScheme.secondary,
-                )
+                IconoPixel(tipo = "carpeta", abierto = abriendo)
+                if (folderSummary.folder.icon.isNotBlank() && folderSummary.folder.icon != "folder") {
+                    Icon(
+                        painterResource(mindropIcon(folderSummary.folder.icon).drawableRes),
+                        contentDescription = stringResource(R.string.folder_icon_content_description),
+                        modifier = Modifier.size(16.dp).align(Alignment.BottomEnd),
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                }
+                if (abriendo) DestelloPixel(folderSummary.folder.id)
             }
-
-            Column(modifier = Modifier.weight(1f)) {
+                ContentActionsMenu(onEditClick = onEditClick, onMoveClick = onMoveClick, onDeleteClick = onDeleteClick)
+            }
+            Column {
                 Text(
                     text = folderSummary.folder.name,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
@@ -89,11 +116,6 @@ fun FolderCard(
                     maxLines = 1,
                 )
             }
-            ContentActionsMenu(
-                onEditClick = onEditClick,
-                onMoveClick = onMoveClick,
-                onDeleteClick = onDeleteClick,
-            )
         }
     }
 }

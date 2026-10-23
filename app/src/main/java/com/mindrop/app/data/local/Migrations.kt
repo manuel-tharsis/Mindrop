@@ -120,3 +120,28 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         )
     }
 }
+
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("""CREATE TABLE IF NOT EXISTS eventos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, titulo TEXT NOT NULL,
+            descripcion TEXT NOT NULL, fecha TEXT NOT NULL, minutoDelDia INTEGER,
+            ideaId INTEGER, minutosAntes INTEGER,
+            FOREIGN KEY(ideaId) REFERENCES ideas(id) ON UPDATE NO ACTION ON DELETE SET NULL)""")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_eventos_fecha ON eventos(fecha)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_eventos_ideaId ON eventos(ideaId)")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS recordatorios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, ideaId INTEGER, eventoId INTEGER,
+            fechaHora TEXT NOT NULL, revision INTEGER NOT NULL, enviado INTEGER NOT NULL,
+            FOREIGN KEY(ideaId) REFERENCES ideas(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+            FOREIGN KEY(eventoId) REFERENCES eventos(id) ON UPDATE NO ACTION ON DELETE CASCADE)""")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_recordatorios_ideaId ON recordatorios(ideaId)")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_recordatorios_eventoId ON recordatorios(eventoId)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS logros (clave TEXT NOT NULL PRIMARY KEY, instante INTEGER NOT NULL, celebrado INTEGER NOT NULL)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS acciones_rpg (clave TEXT NOT NULL PRIMARY KEY)")
+        db.execSQL("CREATE TABLE IF NOT EXISTS metricas_rpg (clave TEXT NOT NULL PRIMARY KEY, valor INTEGER NOT NULL)")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS revisiones_ideas (
+            ideaId INTEGER NOT NULL PRIMARY KEY, revisada INTEGER NOT NULL, sugerida INTEGER NOT NULL,
+            FOREIGN KEY(ideaId) REFERENCES ideas(id) ON UPDATE NO ACTION ON DELETE CASCADE)""")
+    }
+}

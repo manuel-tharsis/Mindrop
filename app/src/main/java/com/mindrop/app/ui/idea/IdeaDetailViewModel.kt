@@ -48,6 +48,7 @@ class IdeaDetailViewModel(
     val events: Flow<IdeaDetailEvent> = eventChannel.receiveAsFlow()
 
     init {
+        viewModelScope.launch { ideaRepository.registrarRevision(ideaId) }
         viewModelScope.launch {
             ideaRepository.observeById(ideaId).collect { idea ->
                 _uiState.update { state ->

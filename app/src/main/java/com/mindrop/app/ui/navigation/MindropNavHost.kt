@@ -2,6 +2,20 @@ package com.mindrop.app.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.mindrop.app.MindropApplication
+import com.mindrop.app.ui.agenda.*
+import com.mindrop.app.ui.rpg.*
+import com.mindrop.app.ui.idea.DialogoRecordatorio
+import com.mindrop.app.ui.theme.MindropTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -56,13 +70,49 @@ fun MindropNavHost(
     ideaRepository: IdeaRepository,
     ideaSuggestionRepository: IdeaSuggestionRepository,
     customIconRepository: CustomIconRepository,
+    app: MindropApplication,
+    destinoNotificacion: String? = null,
+    consumirNotificacion: () -> Unit = {},
 ) {
     val navController = rememberNavController()
+    val rpg: RpgViewModel = viewModel(factory = remember(app) { fabricaRpg { RpgViewModel(app) } })
+    val preferencias by rpg.preferencias.collectAsStateWithLifecycle()
+    val entrada by navController.currentBackStackEntryAsState()
+    val ruta = entrada?.destination?.route.orEmpty()
+    val principal = ruta in listOf("home", "agenda", "logros", "ajustes", "completed", "browse/{folderId}")
+    LaunchedEffect(destinoNotificacion) {
+        destinoNotificacion?.let { destino ->
+            when {
+                destino == "agenda" -> navController.navigate("agenda") { launchSingleTop = true }
+                destino.startsWith("idea/") -> destino.substringAfter("idea/").toLongOrNull()?.takeIf { it > 0 }?.let {
+                    navController.navigate(Destination.ideaDetail(it)) { launchSingleTop = true }
+                }
+            }
+            consumirNotificacion()
+        }
+    }
+    MindropTheme(tema = preferencias.tema) {
+    CompositionLocalProvider(LocalMovimiento provides !preferencias.reducirMovimiento,
+        LocalEfecto provides preferencias.efecto, LocalDiseno provides preferencias.diseno) {
+    Surface(color = MaterialTheme.colorScheme.background) {
+    Column(Modifier.fillMaxSize().fondoRpg(preferencias.tema, MaterialTheme.colorScheme.primary)) {
+    Box(Modifier.weight(1f)) {
 
     NavHost(
         navController = navController,
         startDestination = Destination.HOME,
     ) {
+        composable("agenda") {
+            val ideas by rpg.ideas.collectAsStateWithLifecycle()
+            val vm: AgendaViewModel = viewModel(factory = remember(app) { fabricaRpg { AgendaViewModel(app.agenda) } })
+            AgendaScreen(vm, ideas) { navController.navigate(Destination.ideaDetail(it)) }
+        }
+        composable("logros") { PantallaLogros(rpg) }
+        composable("ajustes") { PantallaAjustes(rpg) }
+        composable("ideas/{ideaId}/recordatorio", arguments = listOf(navArgument("ideaId") { type = NavType.LongType })) { entradaRecordatorio ->
+            val id = entradaRecordatorio.arguments?.getLong("ideaId") ?: return@composable
+            DialogoRecordatorio(id, app, salir = { navController.popBackStack() })
+        }
         composable(route = Destination.HOME) {
             FolderBrowserDestination(
                 folderId = null,
@@ -149,6 +199,7 @@ fun MindropNavHost(
                 onEdit = { editedIdeaId ->
                     navController.navigate(Destination.editIdea(editedIdeaId))
                 },
+                onRecordatorio = { navController.navigate("ideas/$ideaId/recordatorio") },
             )
         }
         composable(
@@ -220,6 +271,27 @@ fun MindropNavHost(
             )
         }
     }
+    }
+    if (principal) NavigationBar {
+        listOf("home" to "Inicio", "agenda" to "Agenda", "logros" to "Logros", "ajustes" to "Ajustes").forEachIndexed { indice, (destino, nombre) ->
+            NavigationBarItem(selected = if (destino == "home") ruta in listOf("home", "completed", "browse/{folderId}") else ruta == destino,
+                onClick = { navController.navigate(destino) {
+                    popUpTo("home") { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                } }, icon = { Text(listOf("⌂", "▦", "★", "⚙")[indice]) }, label = { Text(nombre) })
+        }
+    }
+    }
+    CelebracionLogro(rpg)
+    }
+    }
+    }
+}
+
+fun <T : ViewModel> fabricaRpg(crear: () -> T): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <V : ViewModel> create(modelClass: Class<V>): V = crear() as V
 }
 
 @Composable

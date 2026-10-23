@@ -6,8 +6,27 @@ import com.mindrop.app.data.local.MindropDatabase
 import com.mindrop.app.data.repository.FolderRepository
 import com.mindrop.app.data.repository.IdeaRepository
 import com.mindrop.app.data.repository.IdeaSuggestionRepository
+import com.mindrop.app.data.repository.RepositorioAgenda
+import com.mindrop.app.data.repository.RepositorioLogros
+import com.mindrop.app.data.preferences.RepositorioPreferencias
+import com.mindrop.app.notifications.ProgramadorRecordatorios
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 
 class MindropApplication : Application() {
+    private val ambito = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    val preferencias by lazy { RepositorioPreferencias(applicationContext) }
+    val logros by lazy { RepositorioLogros(database, preferencias) }
+    val programador by lazy { ProgramadorRecordatorios(applicationContext, database) }
+    val agenda by lazy { RepositorioAgenda(database).apply {
+        alCambiarRecordatorios = { ambito.launch { programador.reconciliar() } }
+        alCancelarRecordatorio = programador::cancelar
+    } }
+    fun iniciarRpg() = ambito.launch {
+        logros.iniciar()
+        programador.reconciliar()
+        if (preferencias.preferencias.first().diasRedescubrimiento > 0) programador.activarRedescubrimiento()
+    }
     val customIconRepository: CustomIconRepository by lazy {
         CustomIconRepository(applicationContext)
     }
@@ -28,7 +47,7 @@ class MindropApplication : Application() {
             database = database,
             ideaDao = database.ideaDao(),
             customIconFileStore = customIconRepository,
-        )
+        ).apply { alCancelarRecordatorio = programador::cancelar }
     }
 
     val ideaSuggestionRepository: IdeaSuggestionRepository by lazy {
