@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.mindrop.app.data.local.entity.PaginaProyecto
 import com.mindrop.app.data.local.entity.Proyecto
 import com.mindrop.app.data.repository.RepositorioProyectos
+import com.mindrop.app.data.local.entity.ImagenPagina
+import com.mindrop.app.data.cuaderno.TrazoDibujo
+import android.net.Uri
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
@@ -17,6 +20,7 @@ data class EstadoCuaderno(
     val cargando: Boolean = true,
     val proyecto: Proyecto? = null,
     val paginas: List<PaginaProyecto> = emptyList(),
+    val imagenes: List<ImagenPagina> = emptyList(),
     val paginaActualId: Long? = null,
     val borrador: BorradorPagina? = null,
     val editando: Boolean = false,
@@ -39,6 +43,7 @@ class CuadernoViewModel(
     val salidas = canalSalida.receiveAsFlow()
 
     init {
+        viewModelScope.launch { repositorio.observarImagenes(proyectoId).collect { imagenes -> estado.update { it.copy(imagenes = imagenes) } } }
         viewModelScope.launch {
             combine(repositorio.observarProyecto(proyectoId), repositorio.observarPaginas(proyectoId)) { p, hojas -> p to hojas }
                 .collect { (proyecto, hojas) ->
@@ -98,6 +103,7 @@ class CuadernoViewModel(
     }
 
     fun guardarAhora() { viewModelScope.launch { intentarGuardar() } }
+    fun limpiarError() { estado.update { it.copy(error = null) } }
 
     fun seleccionar(id: Long) {
         if (estado.value.paginaActualId == id) return
@@ -118,6 +124,12 @@ class CuadernoViewModel(
     }
 
     fun moverPagina(id: Long, desplazamiento: Int) = ejecutar { repositorio.moverPagina(proyectoId, id, desplazamiento) }
+    fun importarImagen(paginaId: Long, uri: Uri) = ejecutar { repositorio.importarImagen(proyectoId, paginaId, uri) }
+    fun guardarDibujo(paginaId: Long, trazos: List<TrazoDibujo>, alGuardar: () -> Unit) = ejecutar {
+        repositorio.guardarDibujo(proyectoId, paginaId, trazos)
+        alGuardar()
+    }
+    fun eliminarImagen(imagenId: Long) = ejecutar { repositorio.eliminarImagen(proyectoId, imagenId) }
 
     fun eliminarPagina(id: Long) = ejecutar {
         repositorio.eliminarPaginaConDeshacer(proyectoId, id)

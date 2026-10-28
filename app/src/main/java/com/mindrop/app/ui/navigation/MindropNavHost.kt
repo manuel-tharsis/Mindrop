@@ -143,7 +143,10 @@ fun MindropNavHost(
         }
         composable("proyectos") {
             val vm: ProyectosViewModel = viewModel(factory = remember(app) { fabricaRpg { ProyectosViewModel(app.proyectos) } })
-            ProyectosRoute(vm) { id -> navController.navigate("proyectos/$id/cuaderno") }
+            val exportar: ExportarPdfViewModel = viewModel(factory = remember(app) { viewModelFactory {
+                initializer { ExportarPdfViewModel(app, createSavedStateHandle()) }
+            } })
+            ProyectosRoute(vm, exportar) { id -> navController.navigate("proyectos/$id/cuaderno") }
         }
         composable("proyectos/{proyectoId}/cuaderno?pagina={pagina}", arguments = listOf(
             navArgument("proyectoId") { type = NavType.LongType },

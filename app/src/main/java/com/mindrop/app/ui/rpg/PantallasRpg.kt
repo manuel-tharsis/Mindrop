@@ -142,7 +142,7 @@ fun PantallaAjustes(vm: RpgViewModel, copias: @Composable () -> Unit = {}) {
             }
         }
         error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
-        item { Text("Mindrop 2.1.0 · datos privados en este dispositivo. Los avisos pueden retrasarse por el ahorro de batería. No hay sincronización.", style = MaterialTheme.typography.bodySmall) }
+        item { Text("Mindrop 2.2.0 · datos privados en este dispositivo. Los avisos pueden retrasarse por el ahorro de batería. No hay sincronización.", style = MaterialTheme.typography.bodySmall) }
     }
 }
 

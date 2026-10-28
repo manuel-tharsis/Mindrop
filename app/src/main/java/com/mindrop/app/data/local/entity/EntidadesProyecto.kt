@@ -25,3 +25,16 @@ data class PaginaProyecto(
     val texto: String = "",
     val orden: Long = 0,
 )
+
+@Entity(
+    tableName = "imagenes_pagina",
+    foreignKeys = [ForeignKey(entity = PaginaProyecto::class, parentColumns = ["id"],
+        childColumns = ["paginaId"], onDelete = ForeignKey.CASCADE)],
+    indices = [Index(value = ["paginaId", "orden"])],
+)
+data class ImagenPagina(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val paginaId: Long,
+    val ruta: String,
+    val orden: Long = 0,
+)

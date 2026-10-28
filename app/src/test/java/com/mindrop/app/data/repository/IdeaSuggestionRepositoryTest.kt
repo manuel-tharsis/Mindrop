@@ -9,6 +9,7 @@ import com.mindrop.app.data.local.MIGRATION_3_4
 import com.mindrop.app.data.local.MIGRATION_4_5
 import com.mindrop.app.data.local.MIGRATION_5_6
 import com.mindrop.app.data.local.MIGRATION_6_7
+import com.mindrop.app.data.local.MIGRATION_7_8
 import com.mindrop.app.data.local.MindropDatabase
 import com.mindrop.app.data.local.entity.IdeaEntity
 import kotlinx.coroutines.Dispatchers
@@ -214,7 +215,7 @@ class IdeaSuggestionRepositoryTest {
     private fun openPersistentDatabase(name: String): MindropDatabase =
         Room.databaseBuilder(context, MindropDatabase::class.java, name)
             .allowMainThreadQueries()
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
             .build()
 
     private fun newIdea(title: String) = IdeaEntity(

@@ -4,9 +4,19 @@ import androidx.room.withTransaction
 import com.mindrop.app.data.local.MindropDatabase
 import com.mindrop.app.data.local.entity.PaginaProyecto
 import com.mindrop.app.data.local.entity.Proyecto
+import com.mindrop.app.data.local.entity.ImagenPagina
+import com.mindrop.app.data.cuaderno.AlmacenImagenesCuaderno
+import com.mindrop.app.data.cuaderno.TrazoDibujo
+import android.net.Uri
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.combine
 
-class RepositorioProyectos(private val db: MindropDatabase, private val borrados: BorradosRecuperables? = null) {
+data class PaginaParaPdf(val pagina: PaginaProyecto, val imagenes: List<ImagenPagina>)
+data class CuadernoParaPdf(val proyecto: Proyecto, val paginas: List<PaginaParaPdf>)
+
+class RepositorioProyectos(private val db: MindropDatabase, private val borrados: BorradosRecuperables? = null,
+    private val almacenImagenes: AlmacenImagenesCuaderno? = null) {
     private val dao = db.proyectoDao()
     fun observarProyectos() = dao.observarProyectos()
     fun observarProyecto(id: Long) = dao.observarProyecto(id)
@@ -19,6 +29,7 @@ class RepositorioProyectos(private val db: MindropDatabase, private val borrados
         paginas.filterNot { "pagina:${it.id}" in ocultas }
     } } ?: dao.observarPaginas(id)
     suspend fun pagina(id: Long) = dao.pagina(id)
+    fun observarImagenes(proyectoId: Long) = dao.observarImagenes(proyectoId)
     suspend fun paginas(id: Long) = dao.paginas(id).filterNot { p -> borrados?.pendientes?.value?.any { it.clave == "pagina:${p.id}" } == true }
 
     suspend fun eliminarPaginaConDeshacer(proyectoId: Long, paginaId: Long) {
@@ -43,8 +54,13 @@ class RepositorioProyectos(private val db: MindropDatabase, private val borrados
         check(dao.renombrar(id, nombre.trim()) == 1) { "El proyecto ya no existe." }
     }
 
-    suspend fun eliminar(id: Long) = db.withTransaction {
-        check(dao.borrarProyecto(id) == 1) { "El proyecto ya no existe." }
+    suspend fun eliminar(id: Long) {
+        val imagenes = db.withTransaction {
+            val imagenes = dao.imagenesProyecto(id)
+            check(dao.borrarProyecto(id) == 1) { "El proyecto ya no existe." }
+            imagenes
+        }
+        limpiarImagenes(imagenes)
     }
 
     suspend fun anadirPagina(proyectoId: Long): Long = db.withTransaction {
@@ -82,16 +98,72 @@ class RepositorioProyectos(private val db: MindropDatabase, private val borrados
             .forEachIndexed { orden, id -> dao.ordenar(id, orden.toLong()) }
     }
 
-    suspend fun eliminarPagina(proyectoId: Long, paginaId: Long) = db.withTransaction {
+    suspend fun eliminarPagina(proyectoId: Long, paginaId: Long) {
+      val imagenes = db.withTransaction {
         val proyecto = dao.proyecto(proyectoId) ?: error("El proyecto ya no existe.")
         val paginas = dao.paginas(proyectoId)
         val indice = paginas.indexOfFirst { it.id == paginaId }
         check(indice >= 0) { "La página no pertenece al proyecto." }
+        val imagenes = dao.imagenesPagina(paginaId)
         dao.borrarPagina(paginaId)
         val restantes = paginas.filterNot { it.id == paginaId }
         // Un cuaderno siempre conserva al menos una hoja; nunca se recrea contenido borrado.
         val sustituta = if (restantes.isEmpty()) dao.insertarPagina(PaginaProyecto(proyectoId = proyectoId))
             else restantes[indice.coerceAtMost(restantes.lastIndex)].id
         if (proyecto.ultimaPaginaId == paginaId || restantes.isEmpty()) dao.recordarPagina(proyectoId, sustituta)
+        imagenes
+      }
+      limpiarImagenes(imagenes)
+    }
+
+    suspend fun importarImagen(proyectoId: Long, paginaId: Long, uri: Uri) =
+        anadirImagen(proyectoId, paginaId) { checkNotNull(almacenImagenes).importar(uri) }
+
+    suspend fun guardarDibujo(proyectoId: Long, paginaId: Long, trazos: List<TrazoDibujo>) =
+        anadirImagen(proyectoId, paginaId) { checkNotNull(almacenImagenes).dibujar(trazos) }
+
+    private suspend fun anadirImagen(proyectoId: Long, paginaId: Long, preparar: suspend () -> String) = withContext(kotlinx.coroutines.NonCancellable) {
+        comprobarPagina(proyectoId, paginaId)
+        val ruta = preparar()
+        var insertada = false
+        try {
+            db.withTransaction {
+                comprobarPagina(proyectoId, paginaId)
+                val orden = (dao.imagenesPagina(paginaId).maxOfOrNull { it.orden } ?: -1) + 1
+                dao.insertarImagen(ImagenPagina(paginaId = paginaId, ruta = ruta, orden = orden))
+            }
+            insertada = true
+        } finally { if (!insertada) withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) { almacenImagenes?.eliminar(ruta) } }
+    }
+
+    private suspend fun comprobarPagina(proyectoId: Long, paginaId: Long) {
+        check(dao.pagina(paginaId)?.proyectoId == proyectoId && borrados?.pendientes?.value?.none { it.clave == "pagina:$paginaId" } != false) {
+            "La página ya no está disponible."
+        }
+    }
+
+    suspend fun eliminarImagen(proyectoId: Long, imagenId: Long) {
+        val imagen = db.withTransaction {
+            val imagen = dao.imagen(imagenId) ?: error("La imagen ya no existe.")
+            comprobarPagina(proyectoId, imagen.paginaId)
+            check(dao.borrarImagen(imagenId) == 1)
+            imagen
+        }
+        limpiarImagenes(listOf(imagen))
+    }
+
+    suspend fun contenidoPdf(proyectoId: Long): CuadernoParaPdf = db.withTransaction {
+        val proyecto = dao.proyecto(proyectoId) ?: error("El proyecto ya no existe.")
+        val paginas = dao.paginas(proyectoId)
+        val claves = paginas.map { "pagina:${it.id}" }.toSet()
+        check(borrados?.pendientes?.value?.none { it.clave in claves } != false) {
+            "Espera a que termine el aviso de borrado o pulsa Deshacer antes de exportar."
+        }
+        val imagenes = dao.imagenesProyecto(proyectoId).groupBy { it.paginaId }
+        CuadernoParaPdf(proyecto, paginas.map { PaginaParaPdf(it, imagenes[it.id].orEmpty()) })
+    }
+
+    private suspend fun limpiarImagenes(imagenes: List<ImagenPagina>) = withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+        imagenes.forEach { almacenImagenes?.eliminar(it.ruta) }
     }
 }

@@ -35,10 +35,10 @@ class CuadernoUiTest {
         compose.onNodeWithText("Control de horas").assertIsDisplayed()
         compose.onNodeWithTag("paginas_cuaderno").performTouchInput { swipeRight() }
         compose.onNodeWithText("Visión general").assertIsDisplayed()
-        compose.onNodeWithText("Índice").performClick()
+        compose.onNodeWithContentDescription("Índice").performClick()
         compose.onNodeWithText("3. APK Jara").performClick()
         compose.onNodeWithText("Tercera página").assertIsDisplayed()
-        compose.onNodeWithText("Índice").performClick()
+        compose.onNodeWithContentDescription("Índice").performClick()
         compose.onAllNodesWithText("Eliminar").onFirst().performClick()
         compose.onNodeWithText("¿Eliminar esta página?").assertIsDisplayed()
         assertFalse(eliminada)
@@ -68,6 +68,28 @@ class CuadernoUiTest {
         compose.onNodeWithText("PÁGINA 1").assertIsDisplayed()
         compose.onNodeWithTag("hoja_cuaderno_1").performTouchInput { swipeUp() }
         compose.onNodeWithText("PÁGINA 1").assertIsNotDisplayed()
-        compose.onNodeWithText("Guardado automáticamente").assertIsDisplayed()
+        compose.onNodeWithText("✓ Guardado").assertIsDisplayed()
+    }
+
+    @Test fun accionesSuperioresYFlechasUsanSimbolosAccesibles() {
+        var editando by mutableStateOf(false)
+        var nueva = false
+        var imagen = false
+        var dibujo = false
+        compose.setContent { MindropTheme {
+            CuadernoScreen(EstadoCuaderno(cargando = false, proyecto = Proyecto(1,"BioGestor",1), paginaActualId = 1,
+                paginas = listOf(PaginaProyecto(1,1,"Idea","Texto")), editando = editando), seleccionar = {},
+                cambiarTitulo = { _, _ -> }, cambiarTexto = { _, _ -> }, editar = { editando = it }, anadir = { nueva = true },
+                mover = { _, _ -> }, eliminar = {}, reintentar = {}, salir = {}, anadirFoto = { imagen = true }, dibujar = { dibujo = true })
+        } }
+        compose.onNodeWithContentDescription("Editar página").performClick()
+        compose.onNodeWithContentDescription("Terminar edición").assertExists()
+        compose.onNodeWithContentDescription("Terminar edición").performClick()
+        compose.onNodeWithContentDescription("Añadir página").performClick(); assertTrue(nueva)
+        compose.onNodeWithContentDescription("Añadir imagen").performClick(); assertTrue(imagen)
+        compose.onNodeWithContentDescription("Dibujar nota").performClick(); assertTrue(dibujo)
+        compose.onNodeWithContentDescription("Página anterior").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Página siguiente").assertIsNotEnabled()
+        compose.onNodeWithText("Editar página").assertDoesNotExist()
     }
 }

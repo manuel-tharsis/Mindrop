@@ -17,8 +17,8 @@ import com.mindrop.app.data.local.dao.ProyectoDao
 @Database(
     entities = [FolderEntity::class, IdeaEntity::class, IdeaSuggestionEntity::class,
         EventoAgenda::class, RecordatorioLocal::class, LogroDesbloqueado::class,
-        AccionRpg::class, MetricaRpg::class, RevisionIdea::class, Proyecto::class, PaginaProyecto::class],
-    version = 7,
+        AccionRpg::class, MetricaRpg::class, RevisionIdea::class, Proyecto::class, PaginaProyecto::class, ImagenPagina::class],
+    version = 8,
     exportSchema = true,
 )
 abstract class MindropDatabase : RoomDatabase() {
@@ -46,6 +46,7 @@ abstract class MindropDatabase : RoomDatabase() {
                     MIGRATION_4_5,
                     MIGRATION_5_6,
                     MIGRATION_6_7,
+                    MIGRATION_7_8,
                 )
                 .build()
     }

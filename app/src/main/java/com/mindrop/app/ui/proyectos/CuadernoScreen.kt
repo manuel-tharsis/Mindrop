@@ -1,11 +1,17 @@
 package com.mindrop.app.ui.proyectos
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -32,6 +39,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import com.mindrop.app.data.preferences.PreferenciasRpg
+import com.mindrop.app.data.local.entity.ImagenPagina
+import com.mindrop.app.ui.rpg.FormaPixel
+import com.mindrop.app.ui.rpg.movimientoPermitido
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 private val PapelCuaderno = Color(0xFFF5F1E9)
 private val TintaCuaderno = Color(0xFF292B3E)
@@ -39,6 +50,13 @@ private val TintaCuaderno = Color(0xFF292B3E)
 @Composable
 fun CuadernoRoute(vm: CuadernoViewModel, preferencias: PreferenciasRpg = PreferenciasRpg(), salir: () -> Unit) {
     val estado by vm.uiState.collectAsStateWithLifecycle()
+    val dibujo: DibujoViewModel = viewModel()
+    var paginaFoto by rememberSaveable { mutableStateOf<Long?>(null) }
+    val foto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        val pagina = paginaFoto
+        paginaFoto = null
+        if (uri != null && pagina != null) vm.importarImagen(pagina, uri)
+    }
     val propietario = LocalLifecycleOwner.current
     LaunchedEffect(vm) { vm.salidas.collect { salir() } }
     DisposableEffect(propietario, vm) {
@@ -50,7 +68,10 @@ fun CuadernoRoute(vm: CuadernoViewModel, preferencias: PreferenciasRpg = Prefere
     }
     BackHandler { vm.salir() }
     CuadernoScreen(estado, vm::seleccionar, vm::cambiarTitulo, vm::cambiarTexto, vm::editar,
-        vm::anadirPagina, vm::moverPagina, vm::eliminarPagina, vm::guardarAhora, vm::salir, preferencias)
+        vm::anadirPagina, vm::moverPagina, vm::eliminarPagina, vm::guardarAhora, vm::salir, preferencias,
+        anadirFoto = { id -> paginaFoto = id; foto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+        dibujar = { id -> vm.limpiarError(); dibujo.abrir(id) }, eliminarImagen = vm::eliminarImagen)
+    DibujoDialog(dibujo, estado.operando, estado.error) { paginaId, trazos -> vm.guardarDibujo(paginaId, trazos, dibujo::cerrar) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,9 +88,14 @@ fun CuadernoScreen(
     reintentar: () -> Unit,
     salir: () -> Unit,
     preferencias: PreferenciasRpg = PreferenciasRpg(),
+    anadirFoto: (Long) -> Unit = {},
+    dibujar: (Long) -> Unit = {},
+    eliminarImagen: (Long) -> Unit = {},
 ) {
     var indiceAbierto by rememberSaveable { mutableStateOf(false) }
     var borrarId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var borrarImagenId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val movimiento = movimientoPermitido()
     val foco = LocalFocusManager.current
     val teclado = LocalSoftwareKeyboardController.current
     fun terminarEdicion() { foco.clearFocus(); teclado?.hide(); editar(false) }
@@ -78,9 +104,9 @@ fun CuadernoScreen(
             navigationIcon = { IconButton(enabled = !estado.operando, onClick = salir) {
                 Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = "Volver a proyectos")
             } }, actions = {
-                TextButton(enabled = !estado.cargando && estado.proyecto != null && !estado.operando, onClick = {
+                IconButton(enabled = !estado.cargando && estado.proyecto != null && !estado.operando, onClick = {
                     terminarEdicion(); indiceAbierto = true
-                }) { Text("Índice") }
+                }) { Icon(painterResource(R.drawable.ic_list), "Índice") }
             }) },
     ) { espacio ->
         when {
@@ -104,9 +130,22 @@ fun CuadernoScreen(
                 }
                 Column(Modifier.fillMaxSize().padding(espacio).imePadding().padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Cuaderno personal", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("Página ${pager.currentPage + 1} de ${estado.paginas.size}", style = MaterialTheme.typography.labelLarge)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text("${pager.currentPage + 1} / ${estado.paginas.size}", style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f), maxLines = 1)
+                        AccionCuaderno(if (estado.editando) R.drawable.ic_check else R.drawable.ic_edit,
+                            if (estado.editando) "Terminar edición" else "Editar página", !estado.operando) {
+                            if (estado.editando) terminarEdicion() else editar(true)
+                        }
+                        AccionCuaderno(R.drawable.ic_page_add, "Añadir página", !estado.operando, MaterialTheme.colorScheme.secondary) {
+                            terminarEdicion(); anadir()
+                        }
+                        AccionCuaderno(R.drawable.ic_image_add, "Añadir imagen", !estado.operando) {
+                            terminarEdicion(); estado.paginaActualId?.let(anadirFoto)
+                        }
+                        AccionCuaderno(R.drawable.ic_draw_note, "Dibujar nota", !estado.operando, MaterialTheme.colorScheme.tertiary) {
+                            terminarEdicion(); estado.paginaActualId?.let(dibujar)
+                        }
                     }
                     HorizontalPager(state = pager, key = { estado.paginas[it].id },
                         userScrollEnabled = !estado.editando && !estado.operando,
@@ -115,25 +154,25 @@ fun CuadernoScreen(
                         val borrador = estado.borrador?.takeIf { it.id == pagina.id }
                         HojaCuaderno(pagina.copy(titulo = borrador?.titulo ?: pagina.titulo, texto = borrador?.texto ?: pagina.texto),
                             numero + 1, estado.editando && pagina.id == estado.paginaActualId, !estado.operando,
-                            cambiarTitulo, cambiarTexto, preferencias)
+                            cambiarTitulo, cambiarTexto, preferencias, estado.imagenes.filter { it.paginaId == pagina.id },
+                            eliminarImagen = { borrarImagenId = it })
                     }
-                    if (!estado.editando) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        TextButton(enabled = pager.currentPage > 0 && !estado.editando && !estado.operando,
-                            onClick = { ambito.launch { pager.animateScrollToPage(pager.currentPage - 1) } }) { Text("‹ Anterior") }
-                        TextButton(enabled = pager.currentPage < estado.paginas.lastIndex && !estado.editando && !estado.operando,
-                            onClick = { ambito.launch { pager.animateScrollToPage(pager.currentPage + 1) } }) { Text("Siguiente ›") }
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        TextButton(enabled = !estado.operando, onClick = {
-                            if (estado.editando) terminarEdicion() else editar(true)
-                        }) { Text(if (estado.editando) "Terminar edición" else "Editar página") }
-                        if (!estado.editando) TextButton(enabled = !estado.operando, onClick = anadir) { Text("＋ Añadir página") }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedIconButton(enabled = pager.currentPage > 0 && !estado.editando && !estado.operando, shape = CircleShape,
+                            onClick = { ambito.launch { if (movimiento) pager.animateScrollToPage(pager.currentPage - 1) else pager.scrollToPage(pager.currentPage - 1) } }) {
+                            Icon(painterResource(R.drawable.ic_arrow_back), "Página anterior")
+                        }
+                        Text(if (estado.guardando || estado.pendiente || estado.operando) "Guardando…" else "✓ Guardado",
+                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        OutlinedIconButton(enabled = pager.currentPage < estado.paginas.lastIndex && !estado.editando && !estado.operando, shape = CircleShape,
+                            onClick = { ambito.launch { if (movimiento) pager.animateScrollToPage(pager.currentPage + 1) else pager.scrollToPage(pager.currentPage + 1) } }) {
+                            Icon(painterResource(R.drawable.ic_arrow_back), "Página siguiente", modifier = Modifier.graphicsLayer { rotationZ = 180f })
+                        }
                     }
                     if (estado.error != null) Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(estado.error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                         TextButton(onClick = reintentar) { Text("Reintentar") }
-                    } else Text(if (estado.guardando || estado.pendiente) "Guardando…" else "Guardado automáticamente",
-                        style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }
@@ -157,15 +196,31 @@ fun CuadernoScreen(
     }
     borrarId?.let { id ->
         AlertDialog(onDismissRequest = { borrarId = null }, title = { Text("¿Eliminar esta página?") },
-            text = { Text("Se eliminará su texto. Tendrás unos segundos para deshacerlo. Si es la última página, quedará una hoja vacía.") },
+            text = { Text("Se eliminarán su texto, imágenes y bocetos. Tendrás unos segundos para deshacerlo. Si es la última página, quedará una hoja vacía.") },
             confirmButton = { TextButton(enabled = !estado.operando, onClick = { borrarId = null; eliminar(id) }) { Text("Eliminar página") } },
             dismissButton = { TextButton(onClick = { borrarId = null }) { Text("Cancelar") } })
+    }
+    borrarImagenId?.let { id ->
+        AlertDialog(onDismissRequest = { borrarImagenId = null }, title = { Text("¿Eliminar esta imagen?") },
+            text = { Text("La imagen o el boceto se eliminará de esta página definitivamente.") },
+            confirmButton = { TextButton(onClick = { borrarImagenId = null; eliminarImagen(id) }) { Text("Eliminar") } },
+            dismissButton = { TextButton(onClick = { borrarImagenId = null }) { Text("Cancelar") } })
+    }
+}
+
+@Composable
+private fun AccionCuaderno(icono: Int, descripcion: String, habilitada: Boolean,
+    tinte: Color = MaterialTheme.colorScheme.primary, accion: () -> Unit) {
+    OutlinedIconButton(onClick = accion, enabled = habilitada, shape = FormaPixel, border = BorderStroke(1.dp, tinte.copy(alpha = .3f)),
+        modifier = Modifier.size(48.dp)) {
+        Icon(painterResource(icono), descripcion, tint = if (habilitada) tinte else MaterialTheme.colorScheme.onSurface.copy(alpha = .38f), modifier = Modifier.size(22.dp))
     }
 }
 
 @Composable
 private fun HojaCuaderno(pagina: PaginaProyecto, numero: Int, editando: Boolean, habilitada: Boolean,
-    titulo: (Long, String) -> Unit, texto: (Long, String) -> Unit, preferencias: PreferenciasRpg) {
+    titulo: (Long, String) -> Unit, texto: (Long, String) -> Unit, preferencias: PreferenciasRpg,
+    imagenes: List<ImagenPagina>, eliminarImagen: (Long) -> Unit) {
     val tinta = if (preferencias.papelOscuro) Color(0xFFE9E4DB) else TintaCuaderno
     val papel = if (preferencias.papelOscuro) Color(0xFF242638) else PapelCuaderno
     val secundario = if (preferencias.papelOscuro) Color(0xFFBEB7CA) else Color(0xFF6B5C6B)
@@ -187,5 +242,6 @@ private fun HojaCuaderno(pagina: PaginaProyecto, numero: Int, editando: Boolean,
             item { Text(pagina.titulo.ifBlank { "Página $numero" }, style = MaterialTheme.typography.headlineSmall, color = tinta) }
             item { Text(pagina.texto.ifBlank { "Esta página está lista para tus ideas." }, style = estiloLectura, color = tinta) }
         }
+        items(imagenes, key = { "imagen-${it.id}" }) { imagen -> ImagenCuaderno(imagen, editando, habilitada, tinta, eliminarImagen) }
     }
 }

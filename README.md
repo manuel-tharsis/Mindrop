@@ -1,6 +1,6 @@
 # Mindrop
 
-Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con estética RPG de 16 bits, logros y recompensas cosméticas. La versión 2.1.0 añade ideas importantes y cuadernos de proyectos.
+Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con estética RPG de 16 bits, logros y recompensas cosméticas. La versión 2.2.0 amplía los cuadernos con fotos, bocetos y exportación a PDF.
 
 ## Funciones
 
@@ -19,6 +19,9 @@ Mindrop es una aplicación Android personal y completamente offline para guardar
 - Marcar ideas como importantes mediante una bandera y un borde amarillo, sin cambiar su orden.
 - Crear, renombrar y eliminar proyectos con cuadernos propios.
 - Escribir páginas de título opcional y texto libre, con guardado automático.
+- Añadir fotos o imágenes a cualquier página mediante el selector de Android. Se conservan en el almacenamiento privado de Mindrop aunque desaparezca el archivo original.
+- Dibujar notas sencillas con el dedo, deshacer trazos y guardarlas como imágenes en la página.
+- Exportar todas las páginas de un proyecto a PDF, en orden y con sus imágenes y bocetos.
 - Deslizar entre páginas, acceder al índice, cambiar su orden y recuperar la última página visitada.
 - Eliminar páginas con confirmación; un cuaderno siempre conserva una hoja vacía si se borra la última.
 - Consultar un calendario mensual y crear, editar o eliminar eventos, vinculados opcionalmente a ideas.
@@ -34,13 +37,21 @@ Los avisos son aproximados: Android puede retrasarlos por ahorro de batería. Pa
 
 ## Copias locales
 
-En **Ajustes → Copias de seguridad**, exporta un archivo ZIP mediante el selector de archivos de Android. La copia incluye ideas, carpetas, sugerencias, actualizaciones, proyectos, páginas, agenda, recordatorios, progreso e iconos personalizados. Los ajustes de lectura y notificaciones del dispositivo se conservan al restaurar.
+En **Ajustes → Copias de seguridad**, exporta un archivo ZIP mediante el selector de archivos de Android. La copia incluye ideas, carpetas, sugerencias, actualizaciones, proyectos, páginas, fotos, bocetos, agenda, recordatorios, progreso e iconos personalizados. Los ajustes de lectura y notificaciones del dispositivo se conservan al restaurar.
 
 Restaurar una copia **sustituye el contenido actual** y requiere confirmación. El archivo se valida antes de aplicar el reemplazo en una transacción de Room. Guarda primero otra copia si quieres conservar el contenido actual. No se fusionan datos.
 
-El archivo contiene datos privados y no está cifrado: guárdalo en un lugar de confianza. La app no lo sube a ningún servicio. El formato actual admite copias de esta versión de Room (7), hasta 32 MiB de datos de texto y 128 MiB descomprimidos, con iconos de hasta 256 × 256 píxeles.
+El archivo contiene datos privados y no está cifrado: guárdalo en un lugar de confianza. La app no lo sube a ningún servicio. Se admiten copias de Room 7 y 8, hasta 32 MiB de datos de texto y 128 MiB descomprimidos, con iconos de hasta 256 × 256 píxeles e imágenes de cuaderno de hasta 1600 píxeles por lado.
 
 Tras borrar una idea o página aparece **Deshacer**. El borrado definitivo se aplaza hasta que termina el aviso; si el proceso se cierra antes, el contenido se conserva. No es una papelera permanente.
+
+## Cuadernos y PDF
+
+Encima de la hoja están los botones para editar, añadir página, importar imagen y dibujar. Las flechas inferiores permiten pasar de página. Las fotos y los bocetos se muestran debajo del texto; para eliminarlos, edita la página y confirma el borrado.
+
+En **Proyectos**, pulsa **PDF** junto al cuaderno y elige dónde guardar el documento. Se incluyen sus páginas en el orden actual, con saltos de línea, fotos y bocetos. Cada página del cuaderno comienza en una hoja nueva; el texto largo continúa en las hojas necesarias, sin recortarse. El PDF usa papel blanco y no requiere conexión. Si falta una imagen, se indica en el documento y al terminar.
+
+Los bocetos usan un lápiz sencillo de un color y se guardan como imagen. Las fotos se reducen para evitar archivos excesivos; no se solicita acceso amplio al almacenamiento. El PDF admite hasta 1000 hojas físicas; si se supera ese límite, la operación falla sin exportar contenido parcial.
 
 ## Descargar APK
 
@@ -88,7 +99,7 @@ En macOS o Linux:
 ./gradlew exportReleaseApk
 ```
 
-La APK instalable se genera en `app/build/releases/Mindrop-v2.1.0.apk`.
+La APK instalable se genera en `app/build/releases/Mindrop-v2.2.0.apk`.
 
 Mindrop no solicita el permiso `INTERNET` y no utiliza cuentas, servidores, analíticas ni servicios externos.
 
@@ -99,5 +110,7 @@ La arquitectura y las reglas de persistencia se describen en [docs/ARQUITECTURA_
 Los cambios de prioridad y cuadernos están documentados en [docs/DESARROLLO_V2_1.md](docs/DESARROLLO_V2_1.md).
 
 Las mejoras de búsqueda, copias, deshacer, lectura y acabado visual están en [docs/MEJORAS_USABILIDAD.md](docs/MEJORAS_USABILIDAD.md).
+
+La migración de imágenes y la exportación PDF de 2.2.0 se describen en [docs/DESARROLLO_V2_2.md](docs/DESARROLLO_V2_2.md).
 
 Comprobaciones locales: `./gradlew assembleDebug test lint`. Los tests instrumentados se ejecutan con `./gradlew connectedDebugAndroidTest` en un dispositivo/emulador conectado.

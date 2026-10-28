@@ -37,7 +37,7 @@ class Migration5To6Test {
             vieja.execSQL("INSERT INTO idea_suggestions VALUES (1,1,'Actualización conservada',1,2,1)")
             vieja.version = 5
         }
-        val db = Room.databaseBuilder(contexto, MindropDatabase::class.java, nombre).allowMainThreadQueries().addMigrations(MIGRATION_5_6, MIGRATION_6_7).build()
+        val db = Room.databaseBuilder(contexto, MindropDatabase::class.java, nombre).allowMainThreadQueries().addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build()
         try {
             assertEquals("Contenido personal", db.ideaDao().findById(1)!!.fullDescription)
             assertTrue(db.ideaDao().findById(1)!!.isCompleted)

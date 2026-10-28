@@ -44,7 +44,7 @@ class Migration6To7Test {
             vieja.execSQL("INSERT INTO metricas_rpg VALUES ('racha_maxima',7)")
             vieja.version = 6
         }
-        val db = Room.databaseBuilder(contexto, MindropDatabase::class.java, nombre).addMigrations(MIGRATION_6_7).build()
+        val db = Room.databaseBuilder(contexto, MindropDatabase::class.java, nombre).addMigrations(MIGRATION_6_7, MIGRATION_7_8).build()
         try {
             val padre = db.ideaDao().findById(1)!!
             assertEquals("Contenido personal", padre.fullDescription)

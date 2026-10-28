@@ -3,6 +3,7 @@ package com.mindrop.app.data.local.dao
 import androidx.room.*
 import com.mindrop.app.data.local.entity.PaginaProyecto
 import com.mindrop.app.data.local.entity.Proyecto
+import com.mindrop.app.data.local.entity.ImagenPagina
 import kotlinx.coroutines.flow.Flow
 
 data class ResumenProyecto(
@@ -35,6 +36,17 @@ interface ProyectoDao {
     @Query("SELECT * FROM paginas_proyecto WHERE proyectoId = :proyectoId ORDER BY orden, id")
     suspend fun paginas(proyectoId: Long): List<PaginaProyecto>
     @Query("SELECT * FROM paginas_proyecto WHERE id = :id") suspend fun pagina(id: Long): PaginaProyecto?
+    @Query("""SELECT imagenes_pagina.* FROM imagenes_pagina JOIN paginas_proyecto ON paginas_proyecto.id = imagenes_pagina.paginaId
+        WHERE paginas_proyecto.proyectoId = :proyectoId ORDER BY imagenes_pagina.orden, imagenes_pagina.id""")
+    fun observarImagenes(proyectoId: Long): Flow<List<ImagenPagina>>
+    @Query("""SELECT imagenes_pagina.* FROM imagenes_pagina JOIN paginas_proyecto ON paginas_proyecto.id = imagenes_pagina.paginaId
+        WHERE paginas_proyecto.proyectoId = :proyectoId ORDER BY imagenes_pagina.orden, imagenes_pagina.id""")
+    suspend fun imagenesProyecto(proyectoId: Long): List<ImagenPagina>
+    @Query("SELECT * FROM imagenes_pagina WHERE paginaId = :paginaId ORDER BY orden, id")
+    suspend fun imagenesPagina(paginaId: Long): List<ImagenPagina>
+    @Query("SELECT * FROM imagenes_pagina WHERE id = :id") suspend fun imagen(id: Long): ImagenPagina?
+    @Insert suspend fun insertarImagen(imagen: ImagenPagina): Long
+    @Query("DELETE FROM imagenes_pagina WHERE id = :id") suspend fun borrarImagen(id: Long): Int
     @Insert suspend fun insertarProyecto(proyecto: Proyecto): Long
     @Insert suspend fun insertarPagina(pagina: PaginaProyecto): Long
     @Query("UPDATE proyectos SET nombre = :nombre WHERE id = :id") suspend fun renombrar(id: Long, nombre: String): Int

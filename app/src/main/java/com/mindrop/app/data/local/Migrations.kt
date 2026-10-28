@@ -158,3 +158,13 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
         db.execSQL("CREATE INDEX IF NOT EXISTS index_paginas_proyecto_proyectoId_orden ON paginas_proyecto(proyectoId, orden)")
     }
 }
+
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("""CREATE TABLE IF NOT EXISTS imagenes_pagina (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, paginaId INTEGER NOT NULL,
+            ruta TEXT NOT NULL, orden INTEGER NOT NULL,
+            FOREIGN KEY(paginaId) REFERENCES paginas_proyecto(id) ON UPDATE NO ACTION ON DELETE CASCADE)""")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_imagenes_pagina_paginaId_orden ON imagenes_pagina(paginaId, orden)")
+    }
+}

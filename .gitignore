@@ -48,6 +48,9 @@ google-services.json
 # Private images copied by the app
 **/custom_icons/
 **/custom-icons/
+**/imagenes_cuaderno/
+**/pdf_cuadernos/
+*.pdf
 
 # OS files
 .DS_Store

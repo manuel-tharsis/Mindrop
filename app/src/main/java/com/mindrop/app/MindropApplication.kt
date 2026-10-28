@@ -16,7 +16,9 @@ import kotlinx.coroutines.flow.first
 
 class MindropApplication : Application() {
     val borrados = com.mindrop.app.data.repository.BorradosRecuperables()
-    val proyectos by lazy { RepositorioProyectos(database, borrados) }
+    val imagenesCuaderno by lazy { com.mindrop.app.data.cuaderno.AlmacenImagenesCuaderno(applicationContext) }
+    val proyectos by lazy { RepositorioProyectos(database, borrados, imagenesCuaderno) }
+    val exportadorPdf by lazy { com.mindrop.app.data.cuaderno.ExportadorCuadernoPdf(applicationContext, proyectos, imagenesCuaderno) }
     val copias by lazy { com.mindrop.app.data.repository.RepositorioCopias(applicationContext, database, borrados) }
     private val ambito = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     val preferencias by lazy { RepositorioPreferencias(applicationContext) }

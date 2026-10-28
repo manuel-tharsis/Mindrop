@@ -31,6 +31,7 @@ class RepositorioCopias(private val contexto: Context, private val db: MindropDa
     private val borrados: BorradosRecuperables? = null) {
     private val cerrojo = Mutex()
     private val directorioIconos get() = File(contexto.filesDir, "custom_icons").apply { mkdirs() }.canonicalFile
+    private val directorioImagenes get() = File(contexto.filesDir, "imagenes_cuaderno").apply { mkdirs() }.canonicalFile
 
     suspend fun exportar(salida: OutputStream) = withContext(Dispatchers.IO) { cerrojo.withLock {
         comprobarBorrados()
@@ -64,12 +65,31 @@ class RepositorioCopias(private val contexto: Context, private val db: MindropDa
                         }
                         idea.put("custom_icon_path", nombre)
                     }
+                    val imagenes = tablas.getJSONArray("imagenes_pagina")
+                    val archivosImagenes = mutableMapOf<String, String>()
+                    for (indice in 0 until imagenes.length()) {
+                        val imagen = imagenes.getJSONObject(indice)
+                        val ruta = imagen.getString("ruta")
+                        val fuente = File(ruta).canonicalFile
+                        require(fuente.parentFile == directorioImagenes && fuente.isFile && fuente.extension in listOf("jpg", "png")) {
+                            "La copia no se puede completar: falta una imagen del cuaderno."
+                        }
+                        val nombre = archivosImagenes[ruta] ?: "imagenes/${UUID.randomUUID()}.${fuente.extension}".also { nombre ->
+                            require(fuente.length() <= MAX_IMAGEN) { "La copia contiene una imagen demasiado grande." }
+                            comprobarImagen(fuente, 1600)
+                            tamanoIconos += fuente.length()
+                            require(tamanoIconos <= 96L * 1024 * 1024 && archivosImagenes.size + iconos.size < 9999) { "La copia supera el tamaño permitido." }
+                            zip.putNextEntry(ZipEntry(nombre)); fuente.inputStream().use { it.copyTo(zip) }; zip.closeEntry()
+                            archivosImagenes[ruta] = nombre
+                        }
+                        imagen.put("ruta", nombre)
+                    }
                     val secuencias = JSONObject()
                     sqlite.query("SELECT name, seq FROM sqlite_sequence").use { c ->
                         while (c.moveToNext()) if (c.getString(0) in TABLAS) secuencias.put(c.getString(0), c.getLong(1))
                     }
                     val texto = JSONObject().put("aplicacion", "Mindrop").put("formato", 1)
-                        .put("versionRoom", 7).put("tablas", tablas).put("secuencias", secuencias).toString()
+                        .put("versionRoom", 8).put("tablas", tablas).put("secuencias", secuencias).toString()
                     comprobarEstructuraJson(texto)
                     val contenido = texto.toByteArray(Charsets.UTF_8)
                     require(contenido.size <= MAX_JSON) { "La copia supera el tamaño permitido." }
@@ -94,10 +114,14 @@ class RepositorioCopias(private val contexto: Context, private val db: MindropDa
             val texto = archivo.readText(Charsets.UTF_8)
             comprobarEstructuraJson(texto)
             val copia = JSONObject(texto)
-            require(copia.getString("aplicacion") == "Mindrop" && copia.getInt("formato") == 1 && copia.getInt("versionRoom") == 7) {
+            require(copia.getString("aplicacion") == "Mindrop" && copia.getInt("formato") == 1 && copia.getInt("versionRoom") in 7..8) {
                 "La copia no es compatible con esta versión de Mindrop."
             }
             val tablas = copia.getJSONObject("tablas")
+            if (copia.getInt("versionRoom") == 7) {
+                require(tablas.keys().asSequence().toSet() == TABLAS.filterNot { it == "imagenes_pagina" }.toSet()) { "La copia está incompleta." }
+                tablas.put("imagenes_pagina", JSONArray())
+            }
             val secuencias = copia.getJSONObject("secuencias")
             validarContenido(tablas)
             val ideas = tablas.getJSONArray("ideas")
@@ -118,6 +142,21 @@ class RepositorioCopias(private val contexto: Context, private val db: MindropDa
                 }
                 idea.put("custom_icon_path", destino)
             }
+            val imagenes = tablas.getJSONArray("imagenes_pagina")
+            for (i in 0 until imagenes.length()) {
+                val imagen = imagenes.getJSONObject(i)
+                val nombre = imagen.getString("ruta")
+                require(PATRON_IMAGEN.matches(nombre)) { "La copia contiene una referencia de imagen incorrecta." }
+                val fuente = File(temporal, nombre)
+                require(fuente.isFile) { "La copia no contiene todas las imágenes del cuaderno." }
+                comprobarImagen(fuente, 1600)
+                val destino = rutas.getOrPut(nombre) {
+                    File(directorioImagenes, "${UUID.randomUUID()}.${fuente.extension}").also { nuevo ->
+                        creados += nuevo; fuente.copyTo(nuevo, overwrite = false)
+                    }.absolutePath
+                }
+                imagen.put("ruta", destino)
+            }
             val prueba = Room.inMemoryDatabaseBuilder(contexto, MindropDatabase::class.java).build()
             try { prueba.withTransaction { reemplazar(prueba.openHelper.writableDatabase, tablas, secuencias) } }
             finally { prueba.close() }
@@ -131,12 +170,14 @@ class RepositorioCopias(private val contexto: Context, private val db: MindropDa
                 }
             })
             for (i in 0 until recordatorios.length()) recordatorios.getJSONObject(i).put("revision", revision)
-            val antiguos = db.withTransaction {
+            withContext(kotlinx.coroutines.NonCancellable) {
+             val antiguos = db.withTransaction {
                 val sqlite = db.openHelper.writableDatabase
                 val rutasAntiguas = mutableListOf<String>()
                 sqlite.query("SELECT custom_icon_path FROM ideas WHERE custom_icon_path IS NOT NULL").use { c ->
                     while (c.moveToNext()) rutasAntiguas += c.getString(0)
                 }
+                sqlite.query("SELECT ruta FROM imagenes_pagina").use { c -> while (c.moveToNext()) rutasAntiguas += c.getString(0) }
                 reemplazar(sqlite, tablas, secuencias)
                 rutasAntiguas
             }
@@ -145,8 +186,10 @@ class RepositorioCopias(private val contexto: Context, private val db: MindropDa
             antiguos.distinct().forEach { ruta ->
                 runCatching {
                     val viejo = File(ruta).canonicalFile
-                    if (viejo.parentFile == directorioIconos && viejo.extension == "png") viejo.delete()
+                    if ((viejo.parentFile == directorioIconos && viejo.extension == "png") ||
+                        (viejo.parentFile == directorioImagenes && viejo.extension in listOf("png", "jpg"))) viejo.delete()
                 }
+            }
             }
         } finally {
             if (!aplicada) creados.forEach { it.delete() }
@@ -228,7 +271,7 @@ class RepositorioCopias(private val contexto: Context, private val db: MindropDa
     private fun validarContenido(tablas: JSONObject) {
         require(tablas.keys().asSequence().toSet() == TABLAS.toSet()) { "La copia está incompleta." }
         fun filas(tabla: String): List<JSONObject> = tablas.getJSONArray(tabla).let { a -> List(a.length()) { a.getJSONObject(it) } }
-        listOf("folders", "ideas", "idea_suggestions", "eventos", "recordatorios", "proyectos", "paginas_proyecto").forEach { tabla ->
+        listOf("folders", "ideas", "idea_suggestions", "eventos", "recordatorios", "proyectos", "paginas_proyecto", "imagenes_pagina").forEach { tabla ->
             filas(tabla).forEach { require(it.getLong("id") in 1 until Long.MAX_VALUE) { "Identificador no válido." } }
         }
         fun jerarquia(tabla: String, campo: String) {
@@ -279,7 +322,7 @@ class RepositorioCopias(private val contexto: Context, private val db: MindropDa
             while (true) {
                 val entradaZip = zip.nextEntry ?: break
                 val nombre = entradaZip.name
-                require(!entradaZip.isDirectory && (nombre == "mindrop.json" || PATRON_ICONO.matches(nombre)) && nombres.add(nombre) && nombres.size <= 10_000) {
+                require(!entradaZip.isDirectory && (nombre == "mindrop.json" || PATRON_ICONO.matches(nombre) || PATRON_IMAGEN.matches(nombre)) && nombres.add(nombre) && nombres.size <= 10_000) {
                     "El archivo no es una copia válida de Mindrop."
                 }
                 val destino = File(temporal, nombre)
@@ -291,7 +334,8 @@ class RepositorioCopias(private val contexto: Context, private val db: MindropDa
                         val leidos = zip.read(buffer)
                         if (leidos < 0) break
                         tamano += leidos; total += leidos
-                        require(tamano <= (if (nombre == "mindrop.json") MAX_JSON.toLong() else MAX_ICONO) && total <= 128L * 1024 * 1024) {
+                        val maximo = when { nombre == "mindrop.json" -> MAX_JSON.toLong(); PATRON_IMAGEN.matches(nombre) -> MAX_IMAGEN; else -> MAX_ICONO }
+                        require(tamano <= maximo && total <= 128L * 1024 * 1024) {
                             "La copia supera el tamaño permitido."
                         }
                         salida.write(buffer, 0, leidos)
@@ -302,11 +346,12 @@ class RepositorioCopias(private val contexto: Context, private val db: MindropDa
         }
     }
 
-    private fun comprobarImagen(archivo: File) {
+    private fun comprobarImagen(archivo: File, maximo: Int = 256) {
+        val datos = archivo.readBytes()
         val limites = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        BitmapFactory.decodeFile(archivo.absolutePath, limites)
-        require(limites.outWidth in 1..256 && limites.outHeight in 1..256) { "La copia contiene un icono dañado o demasiado grande." }
-        val imagen = BitmapFactory.decodeFile(archivo.absolutePath)
+        BitmapFactory.decodeByteArray(datos, 0, datos.size, limites)
+        require(limites.outWidth in 1..maximo && limites.outHeight in 1..maximo) { "La copia contiene una imagen dañada o demasiado grande." }
+        val imagen = BitmapFactory.decodeByteArray(datos, 0, datos.size)
         require(imagen != null) { "La copia contiene un icono dañado." }
         imagen.recycle()
     }
@@ -332,9 +377,11 @@ class RepositorioCopias(private val contexto: Context, private val db: MindropDa
 
     private companion object {
         val TABLAS = listOf("folders", "ideas", "idea_suggestions", "eventos", "recordatorios", "logros",
-            "acciones_rpg", "metricas_rpg", "revisiones_ideas", "proyectos", "paginas_proyecto")
+            "acciones_rpg", "metricas_rpg", "revisiones_ideas", "proyectos", "paginas_proyecto", "imagenes_pagina")
         val PATRON_ICONO = Regex("iconos/[a-fA-F0-9-]{36}\\.png")
+        val PATRON_IMAGEN = Regex("imagenes/[a-fA-F0-9-]{36}\\.(jpg|png)")
         const val MAX_JSON = 32 * 1024 * 1024
         const val MAX_ICONO = 512L * 1024
+        const val MAX_IMAGEN = 3L * 1024 * 1024
     }
 }
