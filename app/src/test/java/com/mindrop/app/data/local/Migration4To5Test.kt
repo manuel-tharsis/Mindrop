@@ -40,7 +40,7 @@ class Migration4To5Test {
 
         val database = Room.databaseBuilder(context, MindropDatabase::class.java, databaseName)
             .allowMainThreadQueries()
-            .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
+            .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
             .build()
 
         try {

@@ -115,6 +115,20 @@ class HomeViewModel(
         savedStateHandle[SEARCH_QUERY_KEY] = query
     }
 
+    fun cambiarImportancia(idea: IdeaEntity) {
+        if (contentActionState.value.isRunning) return
+        contentActionState.value = ContentActionState(isRunning = true)
+        viewModelScope.launch {
+            try {
+                check(ideaRepository.cambiarImportancia(idea.id, !idea.esImportante))
+                contentActionState.value = ContentActionState()
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                contentActionState.value = ContentActionState(errorMessage = "No se pudo cambiar la prioridad.")
+            }
+        }
+    }
+
     fun clearContentActionError() {
         contentActionState.update { it.copy(errorMessage = null) }
     }

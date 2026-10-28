@@ -44,6 +44,8 @@ data class IdeaEntity(
     val parentIdeaId: Long? = null,
     @ColumnInfo(name = "is_completed", defaultValue = "0")
     val isCompleted: Boolean = false,
+    @ColumnInfo(name = "es_importante", defaultValue = "0")
+    val esImportante: Boolean = false,
     @ColumnInfo(name = "sort_order")
     val sortOrder: Long = 0,
     @ColumnInfo(name = "created_at")

@@ -145,3 +145,16 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
             FOREIGN KEY(ideaId) REFERENCES ideas(id) ON UPDATE NO ACTION ON DELETE CASCADE)""")
     }
 }
+
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE ideas ADD COLUMN es_importante INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS proyectos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, nombre TEXT NOT NULL, ultimaPaginaId INTEGER)""")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS paginas_proyecto (
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, proyectoId INTEGER NOT NULL,
+            titulo TEXT NOT NULL, texto TEXT NOT NULL, orden INTEGER NOT NULL,
+            FOREIGN KEY(proyectoId) REFERENCES proyectos(id) ON UPDATE NO ACTION ON DELETE CASCADE)""")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_paginas_proyecto_proyectoId_orden ON paginas_proyecto(proyectoId, orden)")
+    }
+}

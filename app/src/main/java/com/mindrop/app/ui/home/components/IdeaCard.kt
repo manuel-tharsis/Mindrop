@@ -28,6 +28,7 @@ import com.mindrop.app.ui.theme.MindropTheme
 import com.mindrop.app.ui.rpg.FormaPixel
 import com.mindrop.app.ui.rpg.marcoRpg
 import com.mindrop.app.ui.rpg.reboteRpg
+import com.mindrop.app.ui.idea.BanderaPrioridad
 import androidx.compose.runtime.remember
 import androidx.compose.foundation.interaction.MutableInteractionSource
 
@@ -38,6 +39,7 @@ fun IdeaCard(
     modifier: Modifier = Modifier,
     onMoveClick: (() -> Unit)? = null,
     hierarchyDepth: Int = 0,
+    onToggleImportant: (() -> Unit)? = null,
 ) {
     val depth = hierarchyDepth.coerceAtLeast(0)
     val indentation = (depth.coerceAtMost(8) * 18).dp
@@ -73,7 +75,7 @@ fun IdeaCard(
                 .fillMaxWidth()
                 .padding(start = indentation)
                 .reboteRpg(interacciones)
-                .marcoRpg(MaterialTheme.colorScheme.primary),
+                .marcoRpg(if (idea.esImportante) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary),
             shape = FormaPixel,
             colors = CardDefaults.elevatedCardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -109,6 +111,7 @@ fun IdeaCard(
                         )
                     }
                 }
+                BanderaPrioridad(idea.esImportante, cambiar = { onToggleImportant?.invoke() }, habilitada = onToggleImportant != null)
                 if (onMoveClick != null) {
                     ContentActionsMenu(onMoveClick = onMoveClick)
                 }

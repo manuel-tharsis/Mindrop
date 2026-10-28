@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Mindrop</string>
+    <string name="marcar_importancia">Marcar como importante</string>
+    <string name="quitar_importancia">Quitar importancia</string>
     <string name="home_title">Mis ideas</string>
     <string name="search_ideas_hint">Buscar ideas…</string>
     <string name="folders_section_title">Carpetas</string>

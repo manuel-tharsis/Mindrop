@@ -28,6 +28,9 @@ class IdeaRepository(
 
     fun observeCompletedCount(): Flow<Int> = ideaDao.observeCompletedCount()
 
+    suspend fun cambiarImportancia(id: Long, importante: Boolean): Boolean =
+        ideaDao.cambiarImportancia(id, importante) == 1
+
     fun observeById(id: Long): Flow<IdeaEntity?> = ideaDao.observeById(id)
 
     suspend fun findById(id: Long): IdeaEntity? = ideaDao.findById(id)

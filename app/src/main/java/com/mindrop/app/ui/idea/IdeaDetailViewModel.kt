@@ -28,6 +28,7 @@ data class IdeaDetailUiState(
     val deletingSuggestionId: Long? = null,
     val validationErrorMessage: String? = null,
     val isUpdatingCompletion: Boolean = false,
+    val isUpdatingPriority: Boolean = false,
     val isDeleting: Boolean = false,
     val errorMessage: String? = null,
 )
@@ -46,6 +47,23 @@ class IdeaDetailViewModel(
 
     private val eventChannel = Channel<IdeaDetailEvent>(capacity = Channel.BUFFERED)
     val events: Flow<IdeaDetailEvent> = eventChannel.receiveAsFlow()
+
+    fun cambiarImportancia() {
+        val state = _uiState.value
+        val idea = state.idea ?: return
+        if (state.isUpdatingPriority || state.isUpdatingCompletion || state.isDeleting ||
+            state.validatingSuggestionId != null || state.deletingSuggestionId != null) return
+        _uiState.update { it.copy(isUpdatingPriority = true, errorMessage = null) }
+        viewModelScope.launch {
+            try {
+                check(ideaRepository.cambiarImportancia(ideaId, !idea.esImportante))
+                _uiState.update { it.copy(isUpdatingPriority = false) }
+            } catch (error: Exception) {
+                if (error is CancellationException) throw error
+                _uiState.update { it.copy(isUpdatingPriority = false, errorMessage = "No se pudo cambiar la prioridad.") }
+            }
+        }
+    }
 
     init {
         viewModelScope.launch { ideaRepository.registrarRevision(ideaId) }

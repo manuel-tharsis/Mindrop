@@ -103,6 +103,7 @@ fun IdeaEditorRoute(
     IdeaEditorScreen(
         uiState = uiState,
         onNameChange = viewModel::updateName,
+        onToggleImportant = viewModel::cambiarImportancia,
         onShortDescriptionChange = viewModel::updateShortDescription,
         onFullDescriptionChange = viewModel::updateFullDescription,
         onSuggestionTextChange = viewModel::updateNewSuggestion,
@@ -186,6 +187,7 @@ fun IdeaEditorScreen(
     onSave: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
+    onToggleImportant: () -> Unit = {},
 ) {
     val formEnabled = !uiState.isSaving &&
         !uiState.isImportingIcon &&
@@ -214,6 +216,7 @@ fun IdeaEditorScreen(
                         fontWeight = FontWeight.Bold,
                     )
                 },
+                actions = { BanderaPrioridad(uiState.esImportante, onToggleImportant, formEnabled) },
                 navigationIcon = {
                     IconButton(
                         onClick = {

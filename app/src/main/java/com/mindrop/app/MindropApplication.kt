@@ -8,12 +8,14 @@ import com.mindrop.app.data.repository.IdeaRepository
 import com.mindrop.app.data.repository.IdeaSuggestionRepository
 import com.mindrop.app.data.repository.RepositorioAgenda
 import com.mindrop.app.data.repository.RepositorioLogros
+import com.mindrop.app.data.repository.RepositorioProyectos
 import com.mindrop.app.data.preferences.RepositorioPreferencias
 import com.mindrop.app.notifications.ProgramadorRecordatorios
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 
 class MindropApplication : Application() {
+    val proyectos by lazy { RepositorioProyectos(database) }
     private val ambito = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     val preferencias by lazy { RepositorioPreferencias(applicationContext) }
     val logros by lazy { RepositorioLogros(database, preferencias) }

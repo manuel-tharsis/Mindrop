@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.CancellationException
 
 data class CompletedIdeasUiState(
     val ideas: List<IdeaEntity> = emptyList(),
@@ -22,10 +25,26 @@ data class CompletedIdeasUiState(
 
 class CompletedIdeasViewModel(
     savedStateHandle: SavedStateHandle,
-    ideaRepository: IdeaRepository,
+    private val ideaRepository: IdeaRepository,
 ) : ViewModel() {
     private val searchQuery = savedStateHandle.getStateFlow(SEARCH_QUERY_KEY, "")
     private val savedStateHandle = savedStateHandle
+    val error = MutableStateFlow<String?>(null)
+    private var cambiando = false
+
+    fun cambiarImportancia(idea: IdeaEntity) {
+        if (cambiando) return
+        cambiando = true
+        viewModelScope.launch {
+            try {
+                check(ideaRepository.cambiarImportancia(idea.id, !idea.esImportante))
+                error.value = null
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                error.value = "No se pudo cambiar la prioridad."
+            } finally { cambiando = false }
+        }
+    }
 
     val uiState: StateFlow<CompletedIdeasUiState> = combine(
         ideaRepository.observeCompleted(),

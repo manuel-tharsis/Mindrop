@@ -12,15 +12,17 @@ import com.mindrop.app.data.local.entity.IdeaEntity
 import com.mindrop.app.data.local.entity.IdeaSuggestionEntity
 import com.mindrop.app.data.local.entity.*
 import com.mindrop.app.data.local.dao.DaoRpg
+import com.mindrop.app.data.local.dao.ProyectoDao
 
 @Database(
     entities = [FolderEntity::class, IdeaEntity::class, IdeaSuggestionEntity::class,
         EventoAgenda::class, RecordatorioLocal::class, LogroDesbloqueado::class,
-        AccionRpg::class, MetricaRpg::class, RevisionIdea::class],
-    version = 6,
+        AccionRpg::class, MetricaRpg::class, RevisionIdea::class, Proyecto::class, PaginaProyecto::class],
+    version = 7,
     exportSchema = true,
 )
 abstract class MindropDatabase : RoomDatabase() {
+    abstract fun proyectoDao(): ProyectoDao
     abstract fun daoRpg(): DaoRpg
     abstract fun folderDao(): FolderDao
 
@@ -43,6 +45,7 @@ abstract class MindropDatabase : RoomDatabase() {
                     MIGRATION_3_4,
                     MIGRATION_4_5,
                     MIGRATION_5_6,
+                    MIGRATION_6_7,
                 )
                 .build()
     }

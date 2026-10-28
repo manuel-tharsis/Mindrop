@@ -40,11 +40,14 @@ fun CompletedIdeasRoute(
     onIdeaClick: (Long) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
     CompletedIdeasScreen(
         uiState = uiState,
         onSearchQueryChange = viewModel::updateSearchQuery,
         onBack = onBack,
         onIdeaClick = onIdeaClick,
+        onToggleImportant = viewModel::cambiarImportancia,
+        error = error,
     )
 }
 
@@ -56,6 +59,8 @@ fun CompletedIdeasScreen(
     onBack: () -> Unit,
     onIdeaClick: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    onToggleImportant: (IdeaEntity) -> Unit = {},
+    error: String? = null,
 ) {
     val hierarchicalIdeas = remember(uiState.ideas) { buildIdeaHierarchy(uiState.ideas) }
 
@@ -106,6 +111,7 @@ fun CompletedIdeasScreen(
                 )
             }
 
+            error?.let { message -> item(span = { GridItemSpan(maxLineSpan) }) { Text(message, color = MaterialTheme.colorScheme.error) } }
             if (hierarchicalIdeas.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     EmptyState(
@@ -138,6 +144,7 @@ fun CompletedIdeasScreen(
                         idea = item.idea,
                         hierarchyDepth = item.depth,
                         onClick = { onIdeaClick(item.idea.id) },
+                        onToggleImportant = { onToggleImportant(item.idea) },
                     )
                 }
             }

@@ -46,6 +46,7 @@ data class IdeaEditorUiState(
     val customIconPath: String? = null,
     val folderId: Long? = null,
     val parentIdeaId: Long? = null,
+    val esImportante: Boolean = false,
     val locationOptions: List<IdeaLocationOption> = emptyList(),
     val nameError: Boolean = false,
     val errorMessage: String? = null,
@@ -109,6 +110,8 @@ class IdeaEditorViewModel(
     }
 
     fun updateName(value: String) = updateIdeaForm { copy(name = value, nameError = false) }
+
+    fun cambiarImportancia() = updateIdeaForm { copy(esImportante = !esImportante) }
 
     fun updateShortDescription(value: String) = updateIdeaForm { copy(shortDescription = value) }
 
@@ -344,6 +347,7 @@ class IdeaEditorViewModel(
                             customIconPath = current.customIconPath,
                             folderId = current.folderId,
                             parentIdeaId = current.parentIdeaId,
+                            esImportante = current.esImportante,
                             sortOrder = 0,
                         ),
                         pendingSuggestionTexts = suggestions,
@@ -358,6 +362,7 @@ class IdeaEditorViewModel(
                             customIconPath = current.customIconPath,
                             folderId = current.folderId,
                             parentIdeaId = current.parentIdeaId,
+                            esImportante = current.esImportante,
                         ),
                         pendingSuggestionTexts = suggestions,
                     )
@@ -415,6 +420,7 @@ class IdeaEditorViewModel(
                     customIconPath = idea.customIconPath,
                     folderId = idea.folderId,
                     parentIdeaId = idea.parentIdeaId,
+                    esImportante = idea.esImportante,
                     hasIdeaChanges = false,
                     hasUnsavedChanges = false,
                 )

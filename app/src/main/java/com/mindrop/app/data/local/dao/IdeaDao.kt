@@ -59,6 +59,9 @@ interface IdeaDao {
     )
     suspend fun setCompleted(id: Long, isCompleted: Boolean, updatedAt: Long): Int
 
+    @Query("UPDATE ideas SET es_importante = :importante WHERE id = :id")
+    suspend fun cambiarImportancia(id: Long, importante: Boolean): Int
+
     @Query("DELETE FROM ideas WHERE id = :id")
     suspend fun deleteById(id: Long): Int
 }

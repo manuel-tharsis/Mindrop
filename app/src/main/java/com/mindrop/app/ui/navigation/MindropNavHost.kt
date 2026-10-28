@@ -37,6 +37,10 @@ import com.mindrop.app.ui.idea.IdeaDetailRoute
 import com.mindrop.app.ui.idea.IdeaDetailViewModel
 import com.mindrop.app.ui.idea.IdeaEditorRoute
 import com.mindrop.app.ui.idea.IdeaEditorViewModel
+import com.mindrop.app.ui.proyectos.*
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 
 private const val ROOT_FOLDER_ID = -1L
 
@@ -79,7 +83,7 @@ fun MindropNavHost(
     val preferencias by rpg.preferencias.collectAsStateWithLifecycle()
     val entrada by navController.currentBackStackEntryAsState()
     val ruta = entrada?.destination?.route.orEmpty()
-    val principal = ruta in listOf("home", "agenda", "logros", "ajustes", "completed", "browse/{folderId}")
+    val principal = ruta in listOf("home", "proyectos", "agenda", "logros", "ajustes", "completed", "browse/{folderId}")
     LaunchedEffect(destinoNotificacion) {
         destinoNotificacion?.let { destino ->
             when {
@@ -102,6 +106,18 @@ fun MindropNavHost(
         navController = navController,
         startDestination = Destination.HOME,
     ) {
+        composable("proyectos") {
+            val vm: ProyectosViewModel = viewModel(factory = remember(app) { fabricaRpg { ProyectosViewModel(app.proyectos) } })
+            ProyectosRoute(vm) { id -> navController.navigate("proyectos/$id/cuaderno") }
+        }
+        composable("proyectos/{proyectoId}/cuaderno", arguments = listOf(navArgument("proyectoId") { type = NavType.LongType })) { entradaProyecto ->
+            val id = entradaProyecto.arguments?.getLong("proyectoId") ?: return@composable
+            val factory = remember(id, app) { viewModelFactory {
+                initializer { CuadernoViewModel(id, app.proyectos, createSavedStateHandle()) }
+            } }
+            val vm: CuadernoViewModel = viewModel(factory = factory)
+            CuadernoRoute(vm) { navController.popBackStack() }
+        }
         composable("agenda") {
             val ideas by rpg.ideas.collectAsStateWithLifecycle()
             val vm: AgendaViewModel = viewModel(factory = remember(app) { fabricaRpg { AgendaViewModel(app.agenda) } })
@@ -273,13 +289,13 @@ fun MindropNavHost(
     }
     }
     if (principal) NavigationBar {
-        listOf("home" to "Inicio", "agenda" to "Agenda", "logros" to "Logros", "ajustes" to "Ajustes").forEachIndexed { indice, (destino, nombre) ->
+        listOf("home" to "Inicio", "proyectos" to "Proyectos", "agenda" to "Agenda", "logros" to "Logros", "ajustes" to "Ajustes").forEachIndexed { indice, (destino, nombre) ->
             NavigationBarItem(selected = if (destino == "home") ruta in listOf("home", "completed", "browse/{folderId}") else ruta == destino,
                 onClick = { navController.navigate(destino) {
                     popUpTo("home") { saveState = true }
                     launchSingleTop = true
                     restoreState = true
-                } }, icon = { Text(listOf("⌂", "▦", "★", "⚙")[indice]) }, label = { Text(nombre) })
+                } }, icon = { Text(listOf("⌂", "▤", "▦", "★", "⚙")[indice]) }, label = { Text(nombre) })
         }
     }
     }

@@ -113,6 +113,7 @@ fun HomeRoute(
     HomeScreen(
         uiState = uiState,
         onSearchQueryChange = viewModel::updateSearchQuery,
+        onToggleImportant = viewModel::cambiarImportancia,
         onFolderClick = onFolderClick,
         onIdeaClick = onIdeaClick,
         onEditFolder = onEditFolder,
@@ -249,6 +250,7 @@ fun HomeScreen(
     onAddClick: () -> Unit,
     onCompletedClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onToggleImportant: (IdeaEntity) -> Unit = {},
 ) {
     val hierarchicalIdeas = remember(uiState.ideas) { buildIdeaHierarchy(uiState.ideas) }
 
@@ -397,6 +399,7 @@ fun HomeScreen(
                             hierarchyDepth = item.depth,
                             onClick = { onIdeaClick(item.idea.id) },
                             onMoveClick = { onMoveIdea(item.idea) },
+                            onToggleImportant = { if (!uiState.isContentActionRunning) onToggleImportant(item.idea) },
                         )
                         }
                     }

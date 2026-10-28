@@ -103,6 +103,7 @@ fun IdeaDetailRoute(
         onValidateSuggestion = viewModel::validateSuggestion,
         onDeleteSuggestion = { suggestionId -> suggestionToDelete = suggestionId },
         onRecordatorio = onRecordatorio,
+        onToggleImportant = viewModel::cambiarImportancia,
     )
     if (celebracion) DestelloPixel(uiState.idea?.id ?: 0, alTerminar = { celebracion = false })
     confirmacion?.let { mensaje ->
@@ -193,8 +194,10 @@ fun IdeaDetailScreen(
     onDeleteSuggestion: (Long) -> Unit,
     modifier: Modifier = Modifier,
     onRecordatorio: () -> Unit = {},
+    onToggleImportant: () -> Unit = {},
 ) {
     val isBusy = uiState.isDeleting ||
+        uiState.isUpdatingPriority ||
         uiState.isUpdatingCompletion ||
         uiState.validatingSuggestionId != null ||
         uiState.deletingSuggestionId != null
@@ -214,6 +217,7 @@ fun IdeaDetailScreen(
                     }
                 },
                 actions = {
+                    BanderaPrioridad(uiState.idea?.esImportante == true, onToggleImportant, uiState.idea != null && !isBusy)
                     TextButton(onClick = onRecordatorio, enabled = uiState.idea != null && !isBusy) {
                         Text("Recordatorio")
                     }
