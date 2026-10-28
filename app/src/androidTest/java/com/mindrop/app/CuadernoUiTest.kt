@@ -9,6 +9,7 @@ import com.mindrop.app.data.local.entity.Proyecto
 import com.mindrop.app.ui.idea.BanderaPrioridad
 import com.mindrop.app.ui.proyectos.*
 import com.mindrop.app.ui.theme.MindropTheme
+import com.mindrop.app.data.preferences.PreferenciasRpg
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -54,5 +55,19 @@ class CuadernoUiTest {
         assertTrue(importante)
         compose.onNodeWithContentDescription("Quitar importancia").performClick()
         assertFalse(importante)
+    }
+
+    @Test fun lecturaOscuraConTextoGrandePermiteDesplazarUnaPaginaLarga() {
+        val estado = EstadoCuaderno(cargando = false, proyecto = Proyecto(1, "Cuaderno", 1), paginaActualId = 1,
+            paginas = listOf(PaginaProyecto(1, 1, "Texto largo", "Línea de lectura\n\n".repeat(500))))
+        compose.setContent { MindropTheme {
+            CuadernoScreen(estado, seleccionar = {}, cambiarTitulo = { _, _ -> }, cambiarTexto = { _, _ -> }, editar = {},
+                anadir = {}, mover = { _, _ -> }, eliminar = {}, reintentar = {}, salir = {},
+                preferencias = PreferenciasRpg(tamanoLectura = 24, papelOscuro = true))
+        } }
+        compose.onNodeWithText("PÁGINA 1").assertIsDisplayed()
+        compose.onNodeWithTag("hoja_cuaderno_1").performTouchInput { swipeUp() }
+        compose.onNodeWithText("PÁGINA 1").assertIsNotDisplayed()
+        compose.onNodeWithText("Guardado automáticamente").assertIsDisplayed()
     }
 }

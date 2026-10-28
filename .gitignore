@@ -60,3 +60,7 @@ Thumbs.db
 *.swp
 *.hprof
 captures/
+
+# Private local backup archives
+Mindrop-copia-*.zip
+**/copias_privadas/

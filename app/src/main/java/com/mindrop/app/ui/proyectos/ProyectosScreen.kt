@@ -14,6 +14,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mindrop.app.R
 import com.mindrop.app.ui.rpg.FormaPixel
 import com.mindrop.app.ui.rpg.marcoRpg
+import com.mindrop.app.ui.rpg.IconoPixel
+import com.mindrop.app.ui.home.components.EmptyState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,19 +50,18 @@ fun ProyectosRoute(vm: ProyectosViewModel, abrir: (Long) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(14.dp)) {
             item { Text("Un cuaderno para desarrollar cada proyecto.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
             if (proyectos.isEmpty()) item {
-                Text("Todavía no tienes proyectos. Crea uno para empezar tu primer cuaderno.", Modifier.padding(vertical = 24.dp))
+                EmptyState("Tu próximo proyecto empieza aquí", "Crea un cuaderno y desarrolla una idea en cada página.", compact = true)
             }
             items(proyectos, key = { it.proyecto.id }) { resumen ->
                 val proyecto = resumen.proyecto
                 Card(onClick = { abrir(proyecto.id) }, shape = FormaPixel,
                     modifier = Modifier.fillMaxWidth().marcoRpg(MaterialTheme.colorScheme.outlineVariant)) {
                     Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text("▤", color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.headlineMedium)
+                        IconoPixel("documento", Modifier.size(44.dp))
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(proyecto.nombre, style = MaterialTheme.typography.titleLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Text(proyecto.nombre, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             Text(if (resumen.numeroPaginas == 1) "1 página" else "${resumen.numeroPaginas} páginas",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("Abrir cuaderno →", color = MaterialTheme.colorScheme.primary)
                         }
                         var menu by remember { mutableStateOf(false) }
                         Box {

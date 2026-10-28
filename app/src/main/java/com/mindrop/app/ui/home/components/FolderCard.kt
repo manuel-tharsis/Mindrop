@@ -97,7 +97,7 @@ fun FolderCard(
             }
                 ContentActionsMenu(onEditClick = onEditClick, onMoveClick = onMoveClick, onDeleteClick = onDeleteClick)
             }
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = folderSummary.folder.name,
                     style = MaterialTheme.typography.titleSmall,

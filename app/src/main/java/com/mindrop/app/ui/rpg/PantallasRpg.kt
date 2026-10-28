@@ -64,7 +64,7 @@ fun PantallaLogros(vm: RpgViewModel) {
 }
 
 @Composable
-fun PantallaAjustes(vm: RpgViewModel) {
+fun PantallaAjustes(vm: RpgViewModel, copias: @Composable () -> Unit = {}) {
     val p by vm.preferencias.collectAsStateWithLifecycle()
     val logros by vm.logros.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
@@ -82,6 +82,21 @@ fun PantallaAjustes(vm: RpgViewModel) {
     val disponibles = remember(logros) { logros.map { it.clave }.toSet() }
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { Text("Ajustes", style = MaterialTheme.typography.headlineMedium) }
+        item { copias() }
+        item { HorizontalDivider() }
+        item { Text("Lectura del cuaderno", style = MaterialTheme.typography.titleLarge) }
+        item { SelectorSimple("Tamaño del texto", "${p.tamanoLectura}", listOf(16, 18, 20, 22, 24).map { it to "$it" }) {
+            vm.lectura(it, p.papelOscuro)
+        } }
+        item { Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Papel oscuro", style = MaterialTheme.typography.titleMedium)
+                Text("Una lectura más suave con poca luz", style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Switch(p.papelOscuro, { vm.lectura(p.tamanoLectura, it) })
+        } }
+        item { HorizontalDivider() }
         item { Text("Notificaciones", style = MaterialTheme.typography.titleLarge) }
         item { Text(if (permiso) "Notificaciones permitidas" else "Notificaciones desactivadas")
             OutlinedButton(onClick = {

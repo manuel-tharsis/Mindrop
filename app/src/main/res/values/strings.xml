@@ -33,7 +33,7 @@
     <string name="delete_folder_title">¿Eliminar “%1$s”?</string>
     <string name="delete_folder_message">Solo se eliminará si está vacía. Si contiene ideas o subcarpetas, no se borrará nada: mueve o elimina primero su contenido.</string>
     <string name="delete_idea_confirmation_title">¿Eliminar esta idea?</string>
-    <string name="delete_idea_confirmation_message">Esta acción no se puede deshacer.</string>
+    <string name="delete_idea_confirmation_message">Se eliminarán la idea y sus sugerencias. Sus subideas se conservarán. Tendrás unos segundos para deshacer el borrado.</string>
     <string name="idea_not_found">No se encontró la idea.</string>
     <string name="edit_folder">Editar carpeta</string>
     <string name="name_label">Nombre</string>

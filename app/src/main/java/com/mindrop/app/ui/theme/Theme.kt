@@ -3,7 +3,6 @@ package com.mindrop.app.ui.theme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
@@ -41,9 +40,9 @@ private val tipografia = Typography().let { base ->
     Typography(
         headlineMedium = base.headlineMedium.copy(fontWeight = FontWeight.Bold, lineHeight = 36.sp),
         headlineSmall = base.headlineSmall.copy(fontWeight = FontWeight.Bold, lineHeight = 31.sp),
-        titleLarge = base.titleLarge.copy(fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold),
+        titleLarge = base.titleLarge.copy(fontWeight = FontWeight.SemiBold, lineHeight = 28.sp),
         titleMedium = base.titleMedium.copy(fontWeight = FontWeight.SemiBold, lineHeight = 22.sp),
-        bodyLarge = base.bodyLarge.copy(lineHeight = 25.sp),
+        bodyLarge = base.bodyLarge.copy(lineHeight = 26.sp),
         bodyMedium = base.bodyMedium.copy(lineHeight = 21.sp),
     )
 }

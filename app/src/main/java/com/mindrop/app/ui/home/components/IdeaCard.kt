@@ -83,8 +83,8 @@ fun IdeaCard(
             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
         ) {
             Row(
-                modifier = Modifier.padding(14.dp),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 MindropIdeaIcon(
@@ -93,12 +93,12 @@ fun IdeaCard(
                     contentDescription = stringResource(R.string.idea_icon_content_description),
                 )
 
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = idea.title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
                     if (idea.shortDescription.isNotBlank()) {

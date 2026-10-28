@@ -108,7 +108,7 @@ fun DestelloPixel(clave: Any, modifier: Modifier = Modifier, alTerminar: () -> U
     }
 }
 
-fun Modifier.marcoRpg(color: Color) = border(1.dp, color.copy(alpha = .55f), FormaPixel)
+fun Modifier.marcoRpg(color: Color) = border(1.dp, color.copy(alpha = .38f), FormaPixel)
 
 fun Modifier.fondoRpg(tema: String, color: Color) = drawBehind {
     // Decoración estática y escasa: no mantiene ningún bucle de animación.

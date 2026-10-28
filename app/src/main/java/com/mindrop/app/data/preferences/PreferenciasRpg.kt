@@ -12,6 +12,7 @@ data class PreferenciasRpg(
     val tema: String = "clasico", val diseno: String = "clasico", val efecto: String = "chispa",
     val reducirMovimiento: Boolean = false, val diasRedescubrimiento: Int = 0,
     val silencioDesde: Int = 22, val silencioHasta: Int = 9,
+    val tamanoLectura: Int = 18, val papelOscuro: Boolean = false,
 )
 
 class RepositorioPreferencias(contexto: Context, private val almacen: DataStore<Preferences> = contexto.almacenRpg) {
@@ -21,6 +22,8 @@ class RepositorioPreferencias(contexto: Context, private val almacen: DataStore<
             p[stringPreferencesKey("efecto")] ?: "chispa", p[booleanPreferencesKey("reducir_movimiento")] ?: false,
             p[intPreferencesKey("dias")] ?: 0, p[intPreferencesKey("silencio_desde")] ?: 22,
             p[intPreferencesKey("silencio_hasta")] ?: 9,
+            p[intPreferencesKey("tamano_lectura")]?.coerceIn(16, 24) ?: 18,
+            p[booleanPreferencesKey("papel_oscuro")] ?: false,
         )
     }
     // La selección cosmética se valida en RepositorioLogros, no desde las vistas.
@@ -29,6 +32,13 @@ class RepositorioPreferencias(contexto: Context, private val almacen: DataStore<
         almacen.edit { it[stringPreferencesKey(categoria)] = clave }
     }
     suspend fun movimiento(reducir: Boolean) { almacen.edit { it[booleanPreferencesKey("reducir_movimiento")] = reducir } }
+    suspend fun lectura(tamano: Int, oscuro: Boolean) {
+        require(tamano in listOf(16, 18, 20, 22, 24))
+        almacen.edit {
+            it[intPreferencesKey("tamano_lectura")] = tamano
+            it[booleanPreferencesKey("papel_oscuro")] = oscuro
+        }
+    }
     suspend fun redescubrimiento(dias: Int, desde: Int, hasta: Int) {
         require(dias in listOf(0, 1, 3, 7, 14) && desde in 0..23 && hasta in 0..23 && desde != hasta)
         almacen.edit {

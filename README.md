@@ -11,7 +11,7 @@ Mindrop es una aplicación Android personal y completamente offline para guardar
 - Organizar carpetas en varios niveles.
 - Mover ideas y carpetas a otra carpeta o a la raíz.
 - Navegar mediante el botón Atrás y una ruta de carpetas.
-- Buscar ideas dentro de la ubicación actual.
+- Buscar ideas de cualquier carpeta, incluidas las completadas, y páginas de proyectos por su título o texto.
 - Conservar toda la información en el almacenamiento local del dispositivo.
 - Añadir sugerencias a una idea y convertirlas en actualizaciones numeradas al validarlas.
 - Relacionar ideas y subideas en varios niveles sin sustituir su organización por carpetas.
@@ -26,8 +26,21 @@ Mindrop es una aplicación Android personal y completamente offline para guardar
 - Activar el redescubrimiento periódico de ideas antiguas, con horario de silencio.
 - Conseguir logros persistentes y desbloquear temas, diseños de carpetas y efectos.
 - Personalizar el aspecto y reducir las animaciones desde Ajustes.
+- Deshacer durante el aviso el borrado de una idea o página.
+- Ajustar el tamaño del texto del cuaderno y elegir papel claro u oscuro.
+- Exportar y restaurar copias locales del contenido, el progreso y los iconos desde Ajustes.
 
 Los avisos son aproximados: Android puede retrasarlos por ahorro de batería. Para recibirlos hay que permitir las notificaciones. El redescubrimiento viene desactivado. La racha cuenta días con cambios reales de contenido; abrir la aplicación no cuenta.
+
+## Copias locales
+
+En **Ajustes → Copias de seguridad**, exporta un archivo ZIP mediante el selector de archivos de Android. La copia incluye ideas, carpetas, sugerencias, actualizaciones, proyectos, páginas, agenda, recordatorios, progreso e iconos personalizados. Los ajustes de lectura y notificaciones del dispositivo se conservan al restaurar.
+
+Restaurar una copia **sustituye el contenido actual** y requiere confirmación. El archivo se valida antes de aplicar el reemplazo en una transacción de Room. Guarda primero otra copia si quieres conservar el contenido actual. No se fusionan datos.
+
+El archivo contiene datos privados y no está cifrado: guárdalo en un lugar de confianza. La app no lo sube a ningún servicio. El formato actual admite copias de esta versión de Room (7), hasta 32 MiB de datos de texto y 128 MiB descomprimidos, con iconos de hasta 256 × 256 píxeles.
+
+Tras borrar una idea o página aparece **Deshacer**. El borrado definitivo se aplaza hasta que termina el aviso; si el proceso se cierra antes, el contenido se conserva. No es una papelera permanente.
 
 ## Descargar APK
 
@@ -84,5 +97,7 @@ Mindrop no solicita el permiso `INTERNET` y no utiliza cuentas, servidores, anal
 La arquitectura y las reglas de persistencia se describen en [docs/ARQUITECTURA_V2.md](docs/ARQUITECTURA_V2.md). La memoria de fases, validaciones y limitaciones está en [docs/DESARROLLO_V2.md](docs/DESARROLLO_V2.md).
 
 Los cambios de prioridad y cuadernos están documentados en [docs/DESARROLLO_V2_1.md](docs/DESARROLLO_V2_1.md).
+
+Las mejoras de búsqueda, copias, deshacer, lectura y acabado visual están en [docs/MEJORAS_USABILIDAD.md](docs/MEJORAS_USABILIDAD.md).
 
 Comprobaciones locales: `./gradlew assembleDebug test lint`. Los tests instrumentados se ejecutan con `./gradlew connectedDebugAndroidTest` en un dispositivo/emulador conectado.

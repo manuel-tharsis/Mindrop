@@ -6,6 +6,9 @@ import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
+import com.mindrop.app.R
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.ViewModel
@@ -41,6 +44,8 @@ import com.mindrop.app.ui.proyectos.*
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.mindrop.app.ui.busqueda.*
+import com.mindrop.app.ui.copias.*
 
 private const val ROOT_FOLDER_ID = -1L
 
@@ -81,6 +86,28 @@ fun MindropNavHost(
     val navController = rememberNavController()
     val rpg: RpgViewModel = viewModel(factory = remember(app) { fabricaRpg { RpgViewModel(app) } })
     val preferencias by rpg.preferencias.collectAsStateWithLifecycle()
+    val copiasVm: CopiasViewModel = viewModel(factory = remember(app) { fabricaRpg { CopiasViewModel(app) } })
+    val estadoCopias by copiasVm.uiState.collectAsStateWithLifecycle()
+    val avisos = remember { SnackbarHostState() }
+    LaunchedEffect(estadoCopias.restauraciones, estadoCopias.trabajando) {
+        if (!estadoCopias.trabajando && estadoCopias.restauraciones > copiasVm.ultimaRestauracionMostrada) {
+            copiasVm.ultimaRestauracionMostrada = estadoCopias.restauraciones
+            listOf("home", "proyectos", "agenda", "logros", "ajustes").forEach { navController.clearBackStack(it) }
+            navController.navigate("home") { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
+            avisos.showSnackbar(estadoCopias.mensaje ?: "Copia restaurada.")
+        }
+    }
+    val pendientes by app.borrados.pendientes.collectAsStateWithLifecycle()
+    val errorBorrado by app.borrados.error.collectAsStateWithLifecycle()
+    LaunchedEffect(pendientes.firstOrNull()?.clave) {
+        pendientes.firstOrNull()?.let { pendiente ->
+            val resultado = avisos.showSnackbar(pendiente.mensaje, "Deshacer", withDismissAction = true, duration = SnackbarDuration.Long)
+            app.borrados.resolver(pendiente.clave, resultado == SnackbarResult.ActionPerformed)
+        }
+    }
+    LaunchedEffect(errorBorrado) {
+        errorBorrado?.let { avisos.showSnackbar(it); app.borrados.error.value = null }
+    }
     val entrada by navController.currentBackStackEntryAsState()
     val ruta = entrada?.destination?.route.orEmpty()
     val principal = ruta in listOf("home", "proyectos", "agenda", "logros", "ajustes", "completed", "browse/{folderId}")
@@ -106,17 +133,28 @@ fun MindropNavHost(
         navController = navController,
         startDestination = Destination.HOME,
     ) {
+        composable("buscar") {
+            val vm: BusquedaViewModel = viewModel(factory = remember(app) { viewModelFactory {
+                initializer { BusquedaViewModel(app.folderRepository, app.ideaRepository, app.proyectos, createSavedStateHandle()) }
+            } })
+            BusquedaScreen(vm, volver = { navController.popBackStack() },
+                abrirIdea = { navController.navigate(Destination.ideaDetail(it)) },
+                abrirPagina = { proyecto, pagina -> navController.navigate("proyectos/$proyecto/cuaderno?pagina=$pagina") })
+        }
         composable("proyectos") {
             val vm: ProyectosViewModel = viewModel(factory = remember(app) { fabricaRpg { ProyectosViewModel(app.proyectos) } })
             ProyectosRoute(vm) { id -> navController.navigate("proyectos/$id/cuaderno") }
         }
-        composable("proyectos/{proyectoId}/cuaderno", arguments = listOf(navArgument("proyectoId") { type = NavType.LongType })) { entradaProyecto ->
+        composable("proyectos/{proyectoId}/cuaderno?pagina={pagina}", arguments = listOf(
+            navArgument("proyectoId") { type = NavType.LongType },
+            navArgument("pagina") { type = NavType.LongType; defaultValue = -1L },
+        )) { entradaProyecto ->
             val id = entradaProyecto.arguments?.getLong("proyectoId") ?: return@composable
             val factory = remember(id, app) { viewModelFactory {
                 initializer { CuadernoViewModel(id, app.proyectos, createSavedStateHandle()) }
             } }
             val vm: CuadernoViewModel = viewModel(factory = factory)
-            CuadernoRoute(vm) { navController.popBackStack() }
+            CuadernoRoute(vm, preferencias) { navController.popBackStack() }
         }
         composable("agenda") {
             val ideas by rpg.ideas.collectAsStateWithLifecycle()
@@ -124,7 +162,7 @@ fun MindropNavHost(
             AgendaScreen(vm, ideas) { navController.navigate(Destination.ideaDetail(it)) }
         }
         composable("logros") { PantallaLogros(rpg) }
-        composable("ajustes") { PantallaAjustes(rpg) }
+        composable("ajustes") { PantallaAjustes(rpg) { OpcionesCopias(copiasVm) } }
         composable("ideas/{ideaId}/recordatorio", arguments = listOf(navArgument("ideaId") { type = NavType.LongType })) { entradaRecordatorio ->
             val id = entradaRecordatorio.arguments?.getLong("ideaId") ?: return@composable
             DialogoRecordatorio(id, app, salir = { navController.popBackStack() })
@@ -288,18 +326,24 @@ fun MindropNavHost(
         }
     }
     }
-    if (principal) NavigationBar {
+    SnackbarHost(avisos, Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp)
+        .then(if (principal) Modifier else Modifier.navigationBarsPadding()))
+    if (principal) NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest, tonalElevation = 0.dp) {
         listOf("home" to "Inicio", "proyectos" to "Proyectos", "agenda" to "Agenda", "logros" to "Logros", "ajustes" to "Ajustes").forEachIndexed { indice, (destino, nombre) ->
             NavigationBarItem(selected = if (destino == "home") ruta in listOf("home", "completed", "browse/{folderId}") else ruta == destino,
                 onClick = { navController.navigate(destino) {
                     popUpTo("home") { saveState = true }
                     launchSingleTop = true
                     restoreState = true
-                } }, icon = { Text(listOf("⌂", "▤", "▦", "★", "⚙")[indice]) }, label = { Text(nombre) })
+                } }, icon = { Icon(painterResource(listOf(R.drawable.ic_home, R.drawable.ic_document,
+                    R.drawable.ic_calendar, R.drawable.ic_star, R.drawable.ic_tools)[indice]), contentDescription = null,
+                    modifier = Modifier.size(24.dp)) }, label = { Text(nombre, maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, style = MaterialTheme.typography.labelMedium) })
         }
     }
     }
-    CelebracionLogro(rpg)
+    if (!estadoCopias.trabajando) CelebracionLogro(rpg)
+    OperacionCopiaEnCurso(estadoCopias.trabajando)
     }
     }
     }
@@ -353,5 +397,6 @@ private fun FolderBrowserDestination(
         onCompletedClick = {
             navController.navigate(Destination.COMPLETED)
         },
+        onGlobalSearch = { navController.navigate("buscar") },
     )
 }

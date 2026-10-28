@@ -10,8 +10,21 @@ data class ResumenProyecto(
     val numeroPaginas: Int,
 )
 
+data class PaginaEncontrada(
+    val id: Long, val proyectoId: Long, val titulo: String, val nombreProyecto: String,
+    val numero: Int,
+)
+
 @Dao
 interface ProyectoDao {
+    @Query("""SELECT p.id, p.proyectoId, p.titulo, proyectos.nombre AS nombreProyecto,
+        (SELECT COUNT(*) FROM paginas_proyecto h WHERE h.proyectoId = p.proyectoId
+            AND (h.orden < p.orden OR (h.orden = p.orden AND h.id <= p.id))) AS numero
+        FROM paginas_proyecto p JOIN proyectos ON proyectos.id = p.proyectoId
+        WHERE replace(replace(replace(replace(replace(replace(replace(p.titulo || char(10) || p.texto,
+            'Á','á'),'É','é'),'Í','í'),'Ó','ó'),'Ú','ú'),'Ü','ü'),'Ñ','ñ') LIKE :patron ESCAPE '\' COLLATE NOCASE
+        ORDER BY proyectos.nombre COLLATE NOCASE, p.orden, p.id LIMIT 100""")
+    fun buscar(patron: String): Flow<List<PaginaEncontrada>>
     @Query("""SELECT proyectos.*, (SELECT COUNT(*) FROM paginas_proyecto WHERE proyectoId = proyectos.id) AS numeroPaginas
         FROM proyectos ORDER BY nombre COLLATE NOCASE, id""")
     fun observarProyectos(): Flow<List<ResumenProyecto>>

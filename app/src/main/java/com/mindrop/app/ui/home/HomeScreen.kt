@@ -95,6 +95,7 @@ fun HomeRoute(
     onCreateIdea: () -> Unit,
     onCreateFolder: () -> Unit,
     onCompletedClick: () -> Unit,
+    onGlobalSearch: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showAddOptions by rememberSaveable { mutableStateOf(false) }
@@ -141,6 +142,7 @@ fun HomeRoute(
         onBreadcrumbClick = onBreadcrumbClick,
         onAddClick = { showAddOptions = true },
         onCompletedClick = onCompletedClick,
+        onGlobalSearch = onGlobalSearch,
     )
 
     if (showAddOptions) {
@@ -251,6 +253,7 @@ fun HomeScreen(
     onCompletedClick: () -> Unit,
     modifier: Modifier = Modifier,
     onToggleImportant: (IdeaEntity) -> Unit = {},
+    onGlobalSearch: (() -> Unit)? = null,
 ) {
     val hierarchicalIdeas = remember(uiState.ideas) { buildIdeaHierarchy(uiState.ideas) }
 
@@ -271,6 +274,8 @@ fun HomeScreen(
                             ),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
                 },
                 navigationIcon = {
@@ -337,10 +342,20 @@ fun HomeScreen(
                 }
             }
             item(span = { GridItemSpan(maxLineSpan) }) {
+                if (onGlobalSearch != null) {
+                    androidx.compose.material3.Surface(onClick = onGlobalSearch, shape = RoundedCornerShape(24.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                        Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Icon(painterResource(R.drawable.ic_search), null)
+                            Text("Buscar ideas y páginas…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                } else {
                 SearchField(
                     query = uiState.searchQuery,
                     onQueryChange = onSearchQueryChange,
                 )
+                }
             }
 
             if (

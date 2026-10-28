@@ -4,14 +4,31 @@ import androidx.room.withTransaction
 import com.mindrop.app.data.local.MindropDatabase
 import com.mindrop.app.data.local.entity.PaginaProyecto
 import com.mindrop.app.data.local.entity.Proyecto
+import kotlinx.coroutines.flow.combine
 
-class RepositorioProyectos(private val db: MindropDatabase) {
+class RepositorioProyectos(private val db: MindropDatabase, private val borrados: BorradosRecuperables? = null) {
     private val dao = db.proyectoDao()
     fun observarProyectos() = dao.observarProyectos()
     fun observarProyecto(id: Long) = dao.observarProyecto(id)
-    fun observarPaginas(id: Long) = dao.observarPaginas(id)
+    fun buscar(patron: String) = borrados?.let { gestor -> combine(dao.buscar(patron), gestor.pendientes) { paginas, pendientes ->
+        val ocultas = pendientes.map { it.clave }.toSet()
+        paginas.filterNot { "pagina:${it.id}" in ocultas }
+    } } ?: dao.buscar(patron)
+    fun observarPaginas(id: Long) = borrados?.let { gestor -> combine(dao.observarPaginas(id), gestor.pendientes) { paginas, pendientes ->
+        val ocultas = pendientes.map { it.clave }.toSet()
+        paginas.filterNot { "pagina:${it.id}" in ocultas }
+    } } ?: dao.observarPaginas(id)
     suspend fun pagina(id: Long) = dao.pagina(id)
-    suspend fun paginas(id: Long) = dao.paginas(id)
+    suspend fun paginas(id: Long) = dao.paginas(id).filterNot { p -> borrados?.pendientes?.value?.any { it.clave == "pagina:${p.id}" } == true }
+
+    suspend fun eliminarPaginaConDeshacer(proyectoId: Long, paginaId: Long) {
+        check(dao.pagina(paginaId)?.proyectoId == proyectoId) { "La página no pertenece al proyecto." }
+        val gestor = borrados ?: return eliminarPagina(proyectoId, paginaId)
+        gestor.proponer("pagina:$paginaId", "Página eliminada") {
+            // Puede haberse eliminado el proyecto durante el aviso.
+            if (dao.pagina(paginaId) != null) eliminarPagina(proyectoId, paginaId)
+        }
+    }
 
     suspend fun crear(nombre: String): Long = db.withTransaction {
         require(nombre.isNotBlank()) { "Escribe un nombre para el proyecto." }
@@ -49,14 +66,20 @@ class RepositorioProyectos(private val db: MindropDatabase) {
 
     suspend fun moverPagina(proyectoId: Long, paginaId: Long, desplazamiento: Int) = db.withTransaction {
         require(desplazamiento == -1 || desplazamiento == 1)
-        val paginas = dao.paginas(proyectoId)
+        val todas = dao.paginas(proyectoId)
+        val paginas = paginas(proyectoId)
         val origen = paginas.indexOfFirst { it.id == paginaId }
         check(origen >= 0) { "La página ya no existe." }
         val destino = origen + desplazamiento
-        if (destino !in paginas.indices) return@withTransaction
+        if (destino !in paginas.indices) {
+            return@withTransaction
+        }
         val ids = paginas.map { it.id }.toMutableList()
         ids.add(destino, ids.removeAt(origen))
-        ids.forEachIndexed { orden, id -> dao.ordenar(id, orden.toLong()) }
+        val visibles = paginas.map { it.id }.toSet()
+        val posiciones = ids.iterator()
+        todas.map { if (it.id in visibles) posiciones.next() else it.id }
+            .forEachIndexed { orden, id -> dao.ordenar(id, orden.toLong()) }
     }
 
     suspend fun eliminarPagina(proyectoId: Long, paginaId: Long) = db.withTransaction {

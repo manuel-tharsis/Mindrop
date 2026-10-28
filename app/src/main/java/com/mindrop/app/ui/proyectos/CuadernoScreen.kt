@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -30,12 +31,13 @@ import com.mindrop.app.data.local.entity.PaginaProyecto
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
+import com.mindrop.app.data.preferences.PreferenciasRpg
 
 private val PapelCuaderno = Color(0xFFF5F1E9)
 private val TintaCuaderno = Color(0xFF292B3E)
 
 @Composable
-fun CuadernoRoute(vm: CuadernoViewModel, salir: () -> Unit) {
+fun CuadernoRoute(vm: CuadernoViewModel, preferencias: PreferenciasRpg = PreferenciasRpg(), salir: () -> Unit) {
     val estado by vm.uiState.collectAsStateWithLifecycle()
     val propietario = LocalLifecycleOwner.current
     LaunchedEffect(vm) { vm.salidas.collect { salir() } }
@@ -48,7 +50,7 @@ fun CuadernoRoute(vm: CuadernoViewModel, salir: () -> Unit) {
     }
     BackHandler { vm.salir() }
     CuadernoScreen(estado, vm::seleccionar, vm::cambiarTitulo, vm::cambiarTexto, vm::editar,
-        vm::anadirPagina, vm::moverPagina, vm::eliminarPagina, vm::guardarAhora, vm::salir)
+        vm::anadirPagina, vm::moverPagina, vm::eliminarPagina, vm::guardarAhora, vm::salir, preferencias)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,6 +66,7 @@ fun CuadernoScreen(
     eliminar: (Long) -> Unit,
     reintentar: () -> Unit,
     salir: () -> Unit,
+    preferencias: PreferenciasRpg = PreferenciasRpg(),
 ) {
     var indiceAbierto by rememberSaveable { mutableStateOf(false) }
     var borrarId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -83,7 +86,9 @@ fun CuadernoScreen(
         when {
             estado.cargando -> Box(Modifier.fillMaxSize().padding(espacio), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             estado.proyecto == null -> Box(Modifier.fillMaxSize().padding(espacio), contentAlignment = Alignment.Center) { Text("El proyecto ya no existe.") }
-            estado.paginas.isEmpty() -> Box(Modifier.fillMaxSize().padding(espacio), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            estado.paginas.isEmpty() -> Box(Modifier.fillMaxSize().padding(espacio).padding(24.dp), contentAlignment = Alignment.Center) {
+                Text("Página eliminada. Puedes deshacer el borrado desde el aviso inferior.")
+            }
             else -> {
                 val posicion = estado.paginas.indexOfFirst { it.id == estado.paginaActualId }.coerceAtLeast(0)
                 val pager = rememberPagerState(initialPage = posicion, pageCount = { estado.paginas.size })
@@ -110,12 +115,11 @@ fun CuadernoScreen(
                         val borrador = estado.borrador?.takeIf { it.id == pagina.id }
                         HojaCuaderno(pagina.copy(titulo = borrador?.titulo ?: pagina.titulo, texto = borrador?.texto ?: pagina.texto),
                             numero + 1, estado.editando && pagina.id == estado.paginaActualId, !estado.operando,
-                            cambiarTitulo, cambiarTexto)
+                            cambiarTitulo, cambiarTexto, preferencias)
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    if (!estado.editando) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         TextButton(enabled = pager.currentPage > 0 && !estado.editando && !estado.operando,
                             onClick = { ambito.launch { pager.animateScrollToPage(pager.currentPage - 1) } }) { Text("‹ Anterior") }
-                        Text("${pager.currentPage + 1} / ${estado.paginas.size}", style = MaterialTheme.typography.labelMedium)
                         TextButton(enabled = pager.currentPage < estado.paginas.lastIndex && !estado.editando && !estado.operando,
                             onClick = { ambito.launch { pager.animateScrollToPage(pager.currentPage + 1) } }) { Text("Siguiente ›") }
                     }
@@ -123,7 +127,7 @@ fun CuadernoScreen(
                         TextButton(enabled = !estado.operando, onClick = {
                             if (estado.editando) terminarEdicion() else editar(true)
                         }) { Text(if (estado.editando) "Terminar edición" else "Editar página") }
-                        TextButton(enabled = !estado.operando && !estado.editando, onClick = anadir) { Text("＋ Añadir página") }
+                        if (!estado.editando) TextButton(enabled = !estado.operando, onClick = anadir) { Text("＋ Añadir página") }
                     }
                     if (estado.error != null) Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(estado.error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
@@ -153,7 +157,7 @@ fun CuadernoScreen(
     }
     borrarId?.let { id ->
         AlertDialog(onDismissRequest = { borrarId = null }, title = { Text("¿Eliminar esta página?") },
-            text = { Text("Su texto se borrará y no se podrá recuperar. Si es la última página, el cuaderno conservará una hoja vacía.") },
+            text = { Text("Se eliminará su texto. Tendrás unos segundos para deshacerlo. Si es la última página, quedará una hoja vacía.") },
             confirmButton = { TextButton(enabled = !estado.operando, onClick = { borrarId = null; eliminar(id) }) { Text("Eliminar página") } },
             dismissButton = { TextButton(onClick = { borrarId = null }) { Text("Cancelar") } })
     }
@@ -161,22 +165,27 @@ fun CuadernoScreen(
 
 @Composable
 private fun HojaCuaderno(pagina: PaginaProyecto, numero: Int, editando: Boolean, habilitada: Boolean,
-    titulo: (Long, String) -> Unit, texto: (Long, String) -> Unit) {
-    val campos = OutlinedTextFieldDefaults.colors(focusedTextColor = TintaCuaderno, unfocusedTextColor = TintaCuaderno,
-        disabledTextColor = TintaCuaderno, cursorColor = TintaCuaderno, focusedBorderColor = Color(0xFF86728E),
-        unfocusedBorderColor = Color(0xFFBEB1C2), focusedLabelColor = TintaCuaderno, unfocusedLabelColor = TintaCuaderno)
-    LazyColumn(modifier = Modifier.fillMaxSize().background(PapelCuaderno, RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp))
-        .border(1.dp, Color(0xFFD5C9BA), RoundedCornerShape(4.dp, 12.dp, 12.dp, 4.dp)),
-        contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        item { Text("PÁGINA $numero", style = MaterialTheme.typography.labelMedium, color = Color(0xFF6B5C6B)) }
+    titulo: (Long, String) -> Unit, texto: (Long, String) -> Unit, preferencias: PreferenciasRpg) {
+    val tinta = if (preferencias.papelOscuro) Color(0xFFE9E4DB) else TintaCuaderno
+    val papel = if (preferencias.papelOscuro) Color(0xFF242638) else PapelCuaderno
+    val secundario = if (preferencias.papelOscuro) Color(0xFFBEB7CA) else Color(0xFF6B5C6B)
+    val estiloLectura = MaterialTheme.typography.bodyLarge.copy(fontSize = preferencias.tamanoLectura.sp,
+        lineHeight = (preferencias.tamanoLectura * 1.6f).sp)
+    val campos = OutlinedTextFieldDefaults.colors(focusedTextColor = tinta, unfocusedTextColor = tinta,
+        disabledTextColor = tinta, cursorColor = tinta, focusedBorderColor = secundario,
+        unfocusedBorderColor = secundario.copy(alpha = .6f), focusedLabelColor = tinta, unfocusedLabelColor = tinta)
+    LazyColumn(modifier = Modifier.fillMaxSize().testTag("hoja_cuaderno_$numero").background(papel, RoundedCornerShape(6.dp, 18.dp, 18.dp, 6.dp))
+        .border(1.dp, secundario.copy(alpha = .25f), RoundedCornerShape(6.dp, 18.dp, 18.dp, 6.dp)),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 28.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        item { Text("PÁGINA $numero", style = MaterialTheme.typography.labelMedium, color = secundario) }
         if (editando) {
             item { OutlinedTextField(pagina.titulo, { titulo(pagina.id, it) }, modifier = Modifier.fillMaxWidth(), enabled = habilitada,
                 label = { Text("Título (opcional)") }, colors = campos, textStyle = MaterialTheme.typography.titleLarge) }
             item { OutlinedTextField(pagina.texto, { texto(pagina.id, it) }, modifier = Modifier.fillMaxWidth().heightIn(min = 240.dp, max = 480.dp), enabled = habilitada,
-                label = { Text("Escribe aquí…") }, minLines = 8, colors = campos) }
+                label = { Text("Escribe aquí…") }, minLines = 8, colors = campos, textStyle = estiloLectura) }
         } else {
-            item { Text(pagina.titulo.ifBlank { "Página $numero" }, style = MaterialTheme.typography.headlineSmall, color = TintaCuaderno) }
-            item { Text(pagina.texto.ifBlank { "Esta página está lista para tus ideas." }, style = MaterialTheme.typography.bodyLarge, color = TintaCuaderno) }
+            item { Text(pagina.titulo.ifBlank { "Página $numero" }, style = MaterialTheme.typography.headlineSmall, color = tinta) }
+            item { Text(pagina.texto.ifBlank { "Esta página está lista para tus ideas." }, style = estiloLectura, color = tinta) }
         }
     }
 }

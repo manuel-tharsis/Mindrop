@@ -16,6 +16,7 @@ class RpgViewModel(private val app: MindropApplication) : ViewModel() {
     val error = MutableStateFlow<String?>(null)
     fun aplicar(categoria: String, clave: String) = ejecutar { app.logros.aplicar(categoria, clave) }
     fun movimiento(reducir: Boolean) = ejecutar { app.preferencias.movimiento(reducir) }
+    fun lectura(tamano: Int, oscuro: Boolean) = ejecutar { app.preferencias.lectura(tamano, oscuro) }
     fun redescubrir(dias: Int, desde: Int, hasta: Int) = ejecutar {
         app.preferencias.redescubrimiento(dias, desde, hasta)
         if (dias == 0) app.programador.desactivarRedescubrimiento() else app.programador.activarRedescubrimiento()

@@ -10,6 +10,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.mindrop.app.data.local.MindropDatabase
 import com.mindrop.app.data.repository.RepositorioProyectos
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -81,5 +82,43 @@ class CuadernoViewModelTest {
         val nuevo = vm(id)
         esperar { nuevo.uiState.value.paginaActualId == segunda }
         assertEquals("Escrito justo antes de salir", nuevo.uiState.value.paginas.single { it.id == segunda }.texto)
+    }
+
+    @Test fun abrirDesdeBusquedaSeleccionaPaginaSolicitadaYRecuerdaLosCambios() {
+        val id = runBlocking { repo.crear("Cuaderno") }
+        val primera = runBlocking { repo.paginas(id).single().id }
+        val segunda = runBlocking { repo.anadirPagina(id) }
+        val guardado = SavedStateHandle(mapOf("pagina" to primera))
+        val modelo = vm(id, guardado)
+        esperar { modelo.uiState.value.paginaActualId == primera }
+        modelo.seleccionar(segunda)
+        esperar { !modelo.uiState.value.operando && modelo.uiState.value.paginaActualId == segunda }
+        assertEquals(segunda, guardado.get<Long>("pagina"))
+        val recreado = vm(id, guardado)
+        esperar { recreado.uiState.value.paginaActualId == segunda }
+    }
+
+    @Test fun argumentoPorDefectoDeNavegacionNoOcultaLaUltimaPaginaVisitada() {
+        val id = runBlocking { repo.crear("Cuaderno") }
+        val segunda = runBlocking { repo.anadirPagina(id) }
+        val modelo = vm(id, SavedStateHandle(mapOf("pagina" to -1L)))
+        esperar { !modelo.uiState.value.cargando }
+        assertEquals(segunda, modelo.uiState.value.paginaActualId)
+    }
+
+    @Test fun anadirVariasPaginasMantieneSeleccionadaLaNuevaConEmisionesDeRoom() {
+        val id = runBlocking { repo.crear("Cuaderno") }
+        val modelo = vm(id)
+        esperar { !modelo.uiState.value.cargando }
+        repeat(8) { indice ->
+            val anterior = modelo.uiState.value.paginaActualId
+            modelo.anadirPagina()
+            esperar { !modelo.uiState.value.operando && modelo.uiState.value.paginas.size == indice + 2 }
+            val nueva = modelo.uiState.value.paginaActualId
+            assertNotEquals(anterior, nueva)
+            assertEquals(nueva, runBlocking { repo.observarProyecto(id).first() }!!.ultimaPaginaId)
+            shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(100))
+            assertEquals(nueva, modelo.uiState.value.paginaActualId)
+        }
     }
 }

@@ -8,6 +8,7 @@ import com.mindrop.app.data.local.entity.IdeaEntity
 import com.mindrop.app.data.local.entity.IdeaSuggestionEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
 import com.mindrop.app.data.rpg.ProgresoRpg
 
@@ -15,16 +16,23 @@ class IdeaRepository(
     private val database: MindropDatabase,
     private val ideaDao: IdeaDao,
     private val customIconFileStore: CustomIconFileStore? = null,
+    private val borrados: BorradosRecuperables? = null,
     private val currentTimeMillis: () -> Long = System::currentTimeMillis,
 ) {
     private val progreso = ProgresoRpg(database)
     var alCancelarRecordatorio: (Long) -> Unit = {}
-    fun observeAll(): Flow<List<IdeaEntity>> = ideaDao.observeAll()
+    private fun Flow<List<IdeaEntity>>.sinBorrados(): Flow<List<IdeaEntity>> =
+        borrados?.let { gestor -> combine(this, gestor.pendientes) { ideas, pendientes ->
+            val ocultas = pendientes.map { it.clave }.toSet()
+            ideas.filterNot { "idea:${it.id}" in ocultas }
+        } } ?: this
+    fun buscar(patron: String): Flow<List<IdeaEntity>> = ideaDao.buscar(patron).sinBorrados()
+    fun observeAll(): Flow<List<IdeaEntity>> = ideaDao.observeAll().sinBorrados()
 
     fun observeInFolder(folderId: Long?): Flow<List<IdeaEntity>> =
-        ideaDao.observeInFolder(folderId)
+        ideaDao.observeInFolder(folderId).sinBorrados()
 
-    fun observeCompleted(): Flow<List<IdeaEntity>> = ideaDao.observeCompleted()
+    fun observeCompleted(): Flow<List<IdeaEntity>> = ideaDao.observeCompleted().sinBorrados()
 
     fun observeCompletedCount(): Flow<Int> = ideaDao.observeCompletedCount()
 
@@ -151,6 +159,13 @@ class IdeaRepository(
         }
         if (deleted) deleteCustomIcon(customIconPath)
         return deleted
+    }
+
+    suspend fun eliminarConDeshacer(id: Long): Boolean {
+        val idea = ideaDao.findById(id) ?: return false
+        val gestor = borrados ?: return deleteById(id)
+        gestor.proponer("idea:$id", "Idea eliminada") { check(deleteById(idea.id)) }
+        return true
     }
 
     private suspend fun deleteCustomIcon(path: String?) {

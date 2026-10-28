@@ -212,7 +212,7 @@ class IdeaDetailViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isDeleting = true, errorMessage = null) }
             try {
-                check(ideaRepository.deleteById(ideaId)) { "La idea ya no existe." }
+                check(ideaRepository.eliminarConDeshacer(ideaId)) { "La idea ya no existe." }
                 eventChannel.send(IdeaDetailEvent.Deleted)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error

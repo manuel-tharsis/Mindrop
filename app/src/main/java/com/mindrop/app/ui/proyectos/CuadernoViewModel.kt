@@ -43,7 +43,8 @@ class CuadernoViewModel(
             combine(repositorio.observarProyecto(proyectoId), repositorio.observarPaginas(proyectoId)) { p, hojas -> p to hojas }
                 .collect { (proyecto, hojas) ->
                     estado.update { anterior ->
-                        val preferida = anterior.paginaActualId ?: estadoGuardado.get<Long>("pagina") ?: proyecto?.ultimaPaginaId
+                        // La selección explícita prevalece aunque Room entregue una emisión anterior mientras se añade una hoja.
+                        val preferida = estadoGuardado.get<Long>("pagina")?.takeIf { it > 0 } ?: anterior.paginaActualId ?: proyecto?.ultimaPaginaId
                         val actual = preferida?.takeIf { id -> hojas.any { it.id == id } } ?: hojas.firstOrNull()?.id
                         anterior.copy(cargando = false, proyecto = proyecto, paginas = hojas, paginaActualId = actual)
                     }
@@ -119,7 +120,7 @@ class CuadernoViewModel(
     fun moverPagina(id: Long, desplazamiento: Int) = ejecutar { repositorio.moverPagina(proyectoId, id, desplazamiento) }
 
     fun eliminarPagina(id: Long) = ejecutar {
-        repositorio.eliminarPagina(proyectoId, id)
+        repositorio.eliminarPaginaConDeshacer(proyectoId, id)
         val paginas = repositorio.paginas(proyectoId)
         val actual = if (estado.value.paginaActualId == id) paginas.firstOrNull()?.id else estado.value.paginaActualId
         actual?.let { repositorio.recordarPagina(proyectoId, it) }

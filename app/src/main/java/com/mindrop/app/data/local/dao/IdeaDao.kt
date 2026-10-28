@@ -10,6 +10,14 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface IdeaDao {
+    // LIKE/NOCASE de SQLite solo convierten ASCII; normalizamos también las mayúsculas del castellano.
+    @Query("""SELECT * FROM ideas WHERE
+        replace(replace(replace(replace(replace(replace(replace(
+            title || char(10) || short_description || char(10) || full_description,
+            'Á','á'),'É','é'),'Í','í'),'Ó','ó'),'Ú','ú'),'Ü','ü'),'Ñ','ñ')
+        LIKE :patron ESCAPE '\' COLLATE NOCASE
+        ORDER BY es_importante DESC, title COLLATE NOCASE, id LIMIT 100""")
+    fun buscar(patron: String): Flow<List<IdeaEntity>>
     @Query("SELECT * FROM ideas ORDER BY sort_order ASC, title COLLATE NOCASE ASC, id ASC")
     fun observeAll(): Flow<List<IdeaEntity>>
 
