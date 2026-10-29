@@ -75,7 +75,8 @@ fun IdeaCard(
                 .fillMaxWidth()
                 .padding(start = indentation)
                 .reboteRpg(interacciones)
-                .marcoRpg(if (idea.esImportante) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary),
+                .marcoRpg(if (idea.esImportante) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant,
+                    if (idea.esImportante) .8f else .22f),
             shape = FormaPixel,
             colors = CardDefaults.elevatedCardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -83,7 +84,7 @@ fun IdeaCard(
             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 16.dp),
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

@@ -48,7 +48,7 @@ fun PantallaLogros(vm: RpgViewModel) {
                 if (logro.dificil) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        IconoPixel("estrella")
+                        IconoRpg("estrella")
                         Column { Text(logro.nombre, style = MaterialTheme.typography.titleMedium)
                             Text(if (conseguido) "Desbloqueado" else if (logro.dificil) "TRYHARD · Bloqueado" else "Bloqueado") }
                     }
@@ -118,7 +118,7 @@ fun PantallaAjustes(vm: RpgViewModel, copias: @Composable () -> Unit = {}) {
             Text("Reducir movimiento", Modifier.weight(1f)); Switch(checked = p.reducirMovimiento, onCheckedChange = vm::movimiento)
         } }
         item { Text("Personalización", style = MaterialTheme.typography.titleLarge) }
-        listOf("tema" to "Temas y fondos", "diseno" to "Diseños de carpetas", "efecto" to "Animaciones").forEach { (categoria, titulo) ->
+        listOf("tema" to "Temas y fondos", "diseno" to "Packs de iconos", "efecto" to "Animaciones").forEach { (categoria, titulo) ->
             item { Text(titulo, style = MaterialTheme.typography.titleMedium) }
             items(recompensas.filter { it.categoria == categoria }, key = { "$categoria:${it.clave}" }) { recompensa ->
                 val permitido = recompensaPermitida(categoria, recompensa.clave, disponibles)
@@ -129,8 +129,8 @@ fun PantallaAjustes(vm: RpgViewModel, copias: @Composable () -> Unit = {}) {
                             Surface(Modifier.fillMaxWidth().height(52.dp), color = MaterialTheme.colorScheme.background) {
                                 Text("✦ ${recompensa.nombre}", color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(12.dp))
                             }
-                        } else if (categoria == "diseno") CompositionLocalProvider(LocalDiseno provides recompensa.clave) { IconoPixel("carpeta") }
-                        else Text(if (recompensa.clave == "dorado") "✦ ✧ ★" else if (recompensa.clave == "magia") "✧ ✧ ✧" else "✦", color = MaterialTheme.colorScheme.secondary)
+                        } else if (categoria == "diseno") MuestraPackIconos(recompensa.clave)
+                        else MuestraEfecto(recompensa.clave)
                         Text(recompensa.nombre, style = MaterialTheme.typography.titleMedium)
                         Text(recompensa.detalle)
                         if (!permitido) Text("Necesita: ${catalogoLogros.first { it.clave == recompensa.logro }.nombre}")
@@ -142,7 +142,7 @@ fun PantallaAjustes(vm: RpgViewModel, copias: @Composable () -> Unit = {}) {
             }
         }
         error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
-        item { Text("Mindrop 2.2.0 · datos privados en este dispositivo. Los avisos pueden retrasarse por el ahorro de batería. No hay sincronización.", style = MaterialTheme.typography.bodySmall) }
+        item { Text("Mindrop 2.3.0 · datos privados en este dispositivo. Los avisos pueden retrasarse por el ahorro de batería. No hay sincronización.", style = MaterialTheme.typography.bodySmall) }
     }
 }
 
@@ -158,7 +158,7 @@ fun CelebracionLogro(vm: RpgViewModel) {
     }
     val definicion = catalogoLogros.firstOrNull { it.clave == activa } ?: return
     AlertDialog(onDismissRequest = { activa = null },
-        icon = { Box(Modifier.size(80.dp)) { IconoPixel("estrella", Modifier.size(64.dp)); DestelloPixel(definicion.clave) } },
+        icon = { Box(Modifier.size(80.dp)) { IconoRpg("estrella", Modifier.size(64.dp)); DestelloPixel(definicion.clave) } },
         title = { Text("¡Logro desbloqueado!\n${definicion.nombre}") },
         text = { Column { Text(definicion.descripcion); recompensas.filter { it.logro == definicion.clave }.forEach { Text("Recompensa: ${it.nombre}") } } },
         confirmButton = { TextButton(onClick = { activa = null }) { Text("Continuar") } })

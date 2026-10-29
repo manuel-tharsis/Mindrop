@@ -6,7 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -21,11 +21,13 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import com.mindrop.app.R
+import com.mindrop.app.ui.icons.ThemedIcon
 
 val LocalMovimiento = staticCompositionLocalOf { true }
 val LocalEfecto = staticCompositionLocalOf { "chispa" }
 val LocalDiseno = staticCompositionLocalOf { "clasico" }
-val FormaPixel = CutCornerShape(8.dp)
+val FormaPixel = RoundedCornerShape(14.dp)
 
 @Composable
 fun movimientoPermitido(): Boolean {
@@ -43,33 +45,15 @@ fun Modifier.reboteRpg(interacciones: MutableInteractionSource): Modifier {
 }
 
 @Composable
-fun IconoPixel(tipo: String, modifier: Modifier = Modifier, abierto: Boolean = false) {
-    val dorado = MaterialTheme.colorScheme.secondary
-    val luz = MaterialTheme.colorScheme.primary
-    val diseno = LocalDiseno.current
-    Canvas(modifier.size(42.dp)) {
-        val p = size.minDimension / 16f
-        fun bloque(x: Int, y: Int, ancho: Int, alto: Int, color: Color) {
-            drawRect(color, Offset(x * p, y * p), Size(ancho * p, alto * p))
-        }
-        if (tipo == "carpeta") {
-            val color = when (diseno) {
-                "runa" -> luz
-                "cofre" -> Color(0xFFBE8350)
-                else -> dorado
-            }
-            bloque(1, 4, 6, 2, color)
-            bloque(1, 6, 14, 8, color.copy(alpha = .65f))
-            bloque(2, if (abierto) 8 else 7, 13, if (abierto) 6 else 7, color)
-            bloque(3, 8, 10, 1, Color.White.copy(alpha = .35f))
-            if (diseno == "cofre") bloque(7, 9, 2, 3, dorado)
-        } else {
-            // Estrella original en una cuadrícula de 16×16.
-            val filas = listOf(7 to 2, 6 to 4, 2 to 12, 4 to 8, 5 to 6, 4 to 8, 3 to 4, 9 to 4)
-            filas.forEachIndexed { y, (x, ancho) -> bloque(x, y + 3, ancho, 1, dorado) }
-            bloque(7, 5, 2, 3, Color.White.copy(alpha = .65f))
-        }
-    }
+fun IconoRpg(tipo: String, modifier: Modifier = Modifier, abierto: Boolean = false) {
+    ThemedIcon(when (tipo) {
+        "carpeta" -> R.drawable.ic_folder
+        "proyecto" -> R.drawable.ic_project
+        "idea" -> R.drawable.ic_idea
+        "codigo" -> R.drawable.ic_code
+        "ajustes" -> R.drawable.ic_settings
+        else -> R.drawable.ic_trophy
+    }, null, modifier.size(42.dp).graphicsLayer { translationY = if (abierto) -1.dp.toPx() else 0f })
 }
 
 @Composable
@@ -89,26 +73,31 @@ fun EntradaPixel(clave: Any, modifier: Modifier = Modifier, contenido: @Composab
 fun DestelloPixel(clave: Any, modifier: Modifier = Modifier, alTerminar: () -> Unit = {}) {
     val permitido = movimientoPermitido()
     val efecto = LocalEfecto.current
-    val color = if (efecto == "dorado") Color(0xFFFFD56A) else MaterialTheme.colorScheme.primary
     val progreso = remember(clave) { Animatable(0f) }
     LaunchedEffect(clave) {
         if (permitido) progreso.animateTo(1f, tween(650)) else delay(200)
         alTerminar()
     }
-    if (permitido) Canvas(modifier.fillMaxSize()) {
+    if (permitido) DibujoDestello(progreso.value, efecto, modifier.fillMaxSize())
+}
+
+@Composable
+fun DibujoDestello(progreso: Float, efecto: String, modifier: Modifier = Modifier) {
+    val color = if (efecto == "dorado") Color(0xFFFFD56A) else MaterialTheme.colorScheme.primary
+    Canvas(modifier) {
         val cantidad = when (efecto) { "dorado" -> 16; "magia" -> 12; else -> 6 }
         repeat(cantidad) { indice ->
             val angulo = indice * kotlin.math.PI * 2 / cantidad
-            val distancia = size.minDimension * .35f * progreso.value
+            val distancia = size.minDimension * .44f * progreso
             val x = center.x + kotlin.math.cos(angulo).toFloat() * distancia
             val y = center.y + kotlin.math.sin(angulo).toFloat() * distancia
             val lado = if (efecto == "magia") (3 + indice % 3).dp.toPx() else 4.dp.toPx()
-            drawRect(color.copy(alpha = 1f - progreso.value), Offset(x, y), Size(lado, lado))
+            drawRect(color.copy(alpha = 1f - progreso), Offset(x, y), Size(lado, lado))
         }
     }
 }
 
-fun Modifier.marcoRpg(color: Color) = border(1.dp, color.copy(alpha = .38f), FormaPixel)
+fun Modifier.marcoRpg(color: Color, intensidad: Float = .18f) = border(1.dp, color.copy(alpha = intensidad), FormaPixel)
 
 fun Modifier.fondoRpg(tema: String, color: Color) = drawBehind {
     // Decoración estática y escasa: no mantiene ningún bucle de animación.

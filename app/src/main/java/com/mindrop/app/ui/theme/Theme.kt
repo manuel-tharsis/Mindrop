@@ -29,7 +29,7 @@ fun coloresRpg(tema: String): ColorScheme {
         tertiaryContainer = Color(0xFF473263), onTertiaryContainer = Color(0xFFF2E6FF),
         background = fondo, onBackground = Color(0xFFF1EEFF),
         surface = fondo, onSurface = Color(0xFFF1EEFF),
-        surfaceContainerLowest = fondo.copy(red = (fondo.red + .04f).coerceAtMost(1f)),
+        surfaceContainerLowest = androidx.compose.ui.graphics.lerp(fondo, Color(0xFF39415F), .18f),
         surfaceContainerLow = Color(0xFF20243C), surfaceContainer = Color(0xFF282D49),
         surfaceVariant = Color(0xFF343A58), onSurfaceVariant = Color(0xFFCACCE0),
         outlineVariant = Color(0xFF555E83), error = Color(0xFFFFB4BA),

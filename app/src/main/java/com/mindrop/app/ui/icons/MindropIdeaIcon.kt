@@ -6,7 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
+import com.mindrop.app.ui.icons.PackIcon as Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import com.mindrop.app.ui.icons.packPainterResource as painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -25,7 +25,7 @@ fun MindropIdeaIcon(
     customIconPath: String?,
     contentDescription: String,
     modifier: Modifier = Modifier,
-    size: Dp = 56.dp,
+    size: Dp = 44.dp,
 ) {
     val customIconState by rememberCustomIcon(customIconPath)
     val appearance = iconAppearance(icon)
@@ -35,7 +35,7 @@ fun MindropIdeaIcon(
         modifier = modifier
             .size(size)
             .clip(RoundedCornerShape(cornerSize))
-            .background(appearance.background),
+            .background(if (customIconState is CustomIconLoadState.Available) appearance.background else Color.Transparent),
         contentAlignment = Alignment.Center,
     ) {
         if (customIconState is CustomIconLoadState.Available) {
@@ -49,7 +49,7 @@ fun MindropIdeaIcon(
             Icon(
                 painter = painterResource(appearance.drawableRes),
                 contentDescription = contentDescription,
-                modifier = Modifier.size(size * 0.54f),
+                modifier = Modifier.size(size * 0.9f),
                 tint = appearance.tint,
             )
         }

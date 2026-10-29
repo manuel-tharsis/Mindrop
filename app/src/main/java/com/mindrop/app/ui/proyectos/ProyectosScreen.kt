@@ -1,5 +1,7 @@
 package com.mindrop.app.ui.proyectos
 
+import com.mindrop.app.ui.icons.PackIcon as Icon
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,14 +9,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import com.mindrop.app.ui.icons.packPainterResource as painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mindrop.app.R
 import com.mindrop.app.ui.rpg.FormaPixel
 import com.mindrop.app.ui.rpg.marcoRpg
-import com.mindrop.app.ui.rpg.IconoPixel
+import com.mindrop.app.ui.rpg.IconoRpg
 import com.mindrop.app.ui.home.components.EmptyState
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -68,7 +70,7 @@ fun ProyectosRoute(vm: ProyectosViewModel, pdf: ExportarPdfViewModel? = null, ab
                 Card(onClick = { if (!exportacion.trabajando) abrir(proyecto.id) }, shape = FormaPixel,
                     modifier = Modifier.fillMaxWidth().marcoRpg(MaterialTheme.colorScheme.outlineVariant)) {
                     Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        IconoPixel("documento", Modifier.size(32.dp))
+                        IconoRpg("proyecto", Modifier.size(38.dp))
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(proyecto.nombre, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                             Text(if (resumen.numeroPaginas == 1) "1 página" else "${resumen.numeroPaginas} páginas",

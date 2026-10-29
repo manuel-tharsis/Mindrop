@@ -1,5 +1,7 @@
 package com.mindrop.app.ui.proyectos
 
+import com.mindrop.app.ui.icons.PackIcon as Icon
+
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -12,7 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import com.mindrop.app.ui.icons.packPainterResource as painterResource
 import androidx.compose.ui.unit.dp
 import com.mindrop.app.R
 import com.mindrop.app.data.local.entity.ImagenPagina

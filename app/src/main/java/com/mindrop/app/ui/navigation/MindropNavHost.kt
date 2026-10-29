@@ -1,5 +1,7 @@
 package com.mindrop.app.ui.navigation
 
+import com.mindrop.app.ui.icons.PackIcon as Icon
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.*
@@ -7,7 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.res.painterResource
+import com.mindrop.app.ui.icons.packPainterResource as painterResource
 import com.mindrop.app.R
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -338,8 +340,8 @@ fun MindropNavHost(
                     popUpTo("home") { saveState = true }
                     launchSingleTop = true
                     restoreState = true
-                } }, icon = { Icon(painterResource(listOf(R.drawable.ic_home, R.drawable.ic_document,
-                    R.drawable.ic_calendar, R.drawable.ic_star, R.drawable.ic_tools)[indice]), contentDescription = null,
+                } }, icon = { Icon(painterResource(listOf(R.drawable.ic_idea, R.drawable.ic_project,
+                    R.drawable.ic_calendar, R.drawable.ic_trophy, R.drawable.ic_settings)[indice]), contentDescription = null,
                     modifier = Modifier.size(24.dp)) }, label = { Text(nombre, maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, style = MaterialTheme.typography.labelMedium) })
         }

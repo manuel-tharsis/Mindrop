@@ -11,7 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.Icon
+import com.mindrop.app.ui.icons.PackIcon as Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,7 +25,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
+import com.mindrop.app.ui.icons.packPainterResource as painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -37,7 +37,7 @@ import com.mindrop.app.data.local.entity.FolderEntity
 import com.mindrop.app.data.local.model.FolderSummary
 import com.mindrop.app.ui.icons.mindropIcon
 import com.mindrop.app.ui.theme.MindropTheme
-import com.mindrop.app.ui.rpg.IconoPixel
+import com.mindrop.app.ui.rpg.IconoRpg
 import com.mindrop.app.ui.rpg.FormaPixel
 import com.mindrop.app.ui.rpg.marcoRpg
 
@@ -64,7 +64,7 @@ fun FolderCard(
                 abriendo = false
             }
         },
-        modifier = modifier.fillMaxWidth().reboteRpg(interacciones).marcoRpg(MaterialTheme.colorScheme.secondary),
+        modifier = modifier.fillMaxWidth().reboteRpg(interacciones).marcoRpg(MaterialTheme.colorScheme.outlineVariant),
         shape = FormaPixel,
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
@@ -72,7 +72,7 @@ fun FolderCard(
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 16.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
@@ -81,10 +81,10 @@ fun FolderCard(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                    .background(androidx.compose.ui.graphics.Color.Transparent),
                 contentAlignment = Alignment.Center,
             ) {
-                IconoPixel(tipo = "carpeta", abierto = abriendo)
+                IconoRpg(tipo = "carpeta", abierto = abriendo)
                 if (folderSummary.folder.icon.isNotBlank() && folderSummary.folder.icon != "folder") {
                     Icon(
                         painterResource(mindropIcon(folderSummary.folder.icon).drawableRes),

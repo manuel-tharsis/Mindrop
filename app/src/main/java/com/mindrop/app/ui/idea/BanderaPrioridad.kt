@@ -1,8 +1,10 @@
 package com.mindrop.app.ui.idea
 
+import com.mindrop.app.ui.icons.PackIcon as Icon
+
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.painterResource
+import com.mindrop.app.ui.icons.packPainterResource as painterResource
 import androidx.compose.ui.res.stringResource
 import com.mindrop.app.R
 

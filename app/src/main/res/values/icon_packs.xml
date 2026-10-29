@@ -1,0 +1,7 @@
+<resources>
+    <string name="project_icon_option">Cuaderno</string>
+    <string name="calendar_icon_option">Calendario</string>
+    <string name="camera_icon_option">Cámara</string>
+    <string name="image_icon_option">Imagen</string>
+    <string name="drawing_icon_option">Pincel</string>
+</resources>

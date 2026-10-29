@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-val releaseVersionName = "2.2.0"
+val releaseVersionName = "2.3.0"
 val releaseSigningPropertiesFile = rootProject.file("keystore.properties")
 val releaseSigningProperties = Properties().apply {
     if (releaseSigningPropertiesFile.isFile) {
@@ -23,7 +23,7 @@ android {
         applicationId = "com.mindrop.app"
         minSdk = 23
         targetSdk = 36
-        versionCode = 7
+        versionCode = 8
         versionName = releaseVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

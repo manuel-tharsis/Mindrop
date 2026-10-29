@@ -10,7 +10,7 @@ class MindropIconCatalogTest {
         val keys = mindropIconOptions.map(MindropIconOption::key)
 
         assertEquals(keys.size, keys.toSet().size)
-        assertTrue(keys.size in 12..20)
+        assertTrue(keys.size in 12..24)
         assertTrue(
             keys.containsAll(
                 listOf(

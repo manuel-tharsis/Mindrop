@@ -27,6 +27,11 @@ val mindropIconOptions = listOf(
     MindropIconOption("money", R.drawable.ic_money, R.string.money_icon_option),
     MindropIconOption("sport", R.drawable.ic_sport, R.string.sport_icon_option),
     MindropIconOption("terminal", R.drawable.ic_terminal, R.string.terminal_icon_option),
+    MindropIconOption("project", R.drawable.ic_project, R.string.project_icon_option),
+    MindropIconOption("calendar", R.drawable.ic_calendar, R.string.calendar_icon_option),
+    MindropIconOption("camera", R.drawable.ic_camera, R.string.camera_icon_option),
+    MindropIconOption("image", R.drawable.ic_image, R.string.image_icon_option),
+    MindropIconOption("drawing", R.drawable.ic_draw_note, R.string.drawing_icon_option),
 )
 
 fun mindropIcon(key: String): MindropIconOption {

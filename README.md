@@ -1,6 +1,6 @@
 # Mindrop
 
-Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con estética RPG de 16 bits, logros y recompensas cosméticas. La versión 2.2.0 amplía los cuadernos con fotos, bocetos y exportación a PDF.
+Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con estética RPG sencilla, logros y recompensas cosméticas. La versión 2.3.0 incorpora packs completos de iconos 2D y un acabado visual más limpio.
 
 ## Funciones
 
@@ -27,7 +27,8 @@ Mindrop es una aplicación Android personal y completamente offline para guardar
 - Consultar un calendario mensual y crear, editar o eliminar eventos, vinculados opcionalmente a ideas.
 - Programar recordatorios de eventos o ideas mediante notificaciones locales.
 - Activar el redescubrimiento periódico de ideas antiguas, con horario de silencio.
-- Conseguir logros persistentes y desbloquear temas, diseños de carpetas y efectos.
+- Conseguir logros persistentes y desbloquear temas, packs de iconos y efectos.
+- Elegir entre los packs Básico, Aventurero, Bosque, Arcano y Cyberpunk para categorías, navegación y acciones. Arcano adapta sus acentos al tema elegido.
 - Personalizar el aspecto y reducir las animaciones desde Ajustes.
 - Deshacer durante el aviso el borrado de una idea o página.
 - Ajustar el tamaño del texto del cuaderno y elegir papel claro u oscuro.
@@ -99,7 +100,7 @@ En macOS o Linux:
 ./gradlew exportReleaseApk
 ```
 
-La APK instalable se genera en `app/build/releases/Mindrop-v2.2.0.apk`.
+La APK instalable se genera en `app/build/releases/Mindrop-v2.3.0.apk`.
 
 Mindrop no solicita el permiso `INTERNET` y no utiliza cuentas, servidores, analíticas ni servicios externos.
 
@@ -112,5 +113,7 @@ Los cambios de prioridad y cuadernos están documentados en [docs/DESARROLLO_V2_
 Las mejoras de búsqueda, copias, deshacer, lectura y acabado visual están en [docs/MEJORAS_USABILIDAD.md](docs/MEJORAS_USABILIDAD.md).
 
 La migración de imágenes y la exportación PDF de 2.2.0 se describen en [docs/DESARROLLO_V2_2.md](docs/DESARROLLO_V2_2.md).
+
+Los packs 2D y las comprobaciones visuales de 2.3.0 se describen en [docs/DESARROLLO_V2_3.md](docs/DESARROLLO_V2_3.md).
 
 Comprobaciones locales: `./gradlew assembleDebug test lint`. Los tests instrumentados se ejecutan con `./gradlew connectedDebugAndroidTest` en un dispositivo/emulador conectado.
