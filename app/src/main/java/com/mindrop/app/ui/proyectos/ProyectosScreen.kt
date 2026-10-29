@@ -52,7 +52,7 @@ fun ProyectosRoute(vm: ProyectosViewModel, pdf: ExportarPdfViewModel? = null, ab
         if (nombre != nombreInicial) descartar = true else editarId = null
     }
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Proyectos") }) },
+        topBar = { MediumTopAppBar(title = { Text("Proyectos", style = MaterialTheme.typography.headlineMedium) }) },
         floatingActionButton = {
             FloatingActionButton(onClick = {
                 nombre = ""; nombreInicial = ""; vm.error.value = null; editarId = 0
@@ -68,6 +68,7 @@ fun ProyectosRoute(vm: ProyectosViewModel, pdf: ExportarPdfViewModel? = null, ab
             items(proyectos, key = { it.proyecto.id }) { resumen ->
                 val proyecto = resumen.proyecto
                 Card(onClick = { if (!exportacion.trabajando) abrir(proyecto.id) }, shape = FormaPixel,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                     modifier = Modifier.fillMaxWidth().marcoRpg(MaterialTheme.colorScheme.outlineVariant)) {
                     Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         IconoRpg("proyecto", Modifier.size(38.dp))

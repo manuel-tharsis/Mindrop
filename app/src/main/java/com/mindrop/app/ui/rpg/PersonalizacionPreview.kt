@@ -13,9 +13,15 @@ import com.mindrop.app.ui.icons.ThemedIcon
 import kotlinx.coroutines.launch
 
 @Composable
-fun MuestraPackIconos(clave: String) {
+fun MuestraPackIconos(clave: String, compacto: Boolean = false) {
     CompositionLocalProvider(LocalDiseno provides clave) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (compacto) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                listOf(R.drawable.ic_folder, R.drawable.ic_idea, R.drawable.ic_project, R.drawable.ic_settings).chunked(2).forEach { fila ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) { fila.forEach { ThemedIcon(it, null, Modifier.size(28.dp)) } }
+                }
+            }
+        } else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             listOf(R.drawable.ic_folder, R.drawable.ic_idea, R.drawable.ic_project,
                 R.drawable.ic_mobile, R.drawable.ic_code, R.drawable.ic_settings).forEach {
                 ThemedIcon(it, null, Modifier.size(30.dp))

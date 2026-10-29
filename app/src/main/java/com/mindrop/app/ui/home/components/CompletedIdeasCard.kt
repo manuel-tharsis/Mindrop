@@ -38,11 +38,11 @@ fun CompletedIdeasCard(
     ElevatedCard(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 16.dp),

@@ -7,6 +7,8 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,6 +29,7 @@ import com.mindrop.app.ui.home.HomeUiState
 import com.mindrop.app.ui.rpg.LocalDiseno
 import com.mindrop.app.ui.rpg.LocalMovimiento
 import com.mindrop.app.ui.rpg.MuestraEfecto
+import com.mindrop.app.ui.rpg.OpcionesAspecto
 import com.mindrop.app.ui.theme.MindropTheme
 import org.junit.Assert.*
 import org.junit.Test
@@ -69,6 +72,18 @@ class IconPackRenderTest {
 
     @Test fun inicioRealConJerarquiaYPrioridad() { inicio(390, 844, 1f, "inicio-basico") }
     @Test fun inicioRealEstrechoConTextoGrande() { inicio(320, 740, 1.3f, "inicio-estrecho") }
+
+    @Test fun personalizacionConPanelesDeLaReferencia() { aspecto(390, 1f, "aspecto-referencia") }
+    @Test fun personalizacionEstrechaConTextoGrande() { aspecto(320, 1.3f, "aspecto-estrecho") }
+
+    private fun aspecto(width: Int, fontScale: Float, name: String) {
+        capturar(name, width = width, height = 1100, fontScale = fontScale) {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                Text("Personalización", style = MaterialTheme.typography.headlineMedium)
+                OpcionesAspecto("clasico", "clasico", "chispa", setOf("carpetas_5", "subideas_10")) { _, _ -> }
+            }
+        }
+    }
 
     @Test fun efectosSonVisiblesSinReproducirAnimacion() {
         capturar("efectos") {

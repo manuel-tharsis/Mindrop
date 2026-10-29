@@ -223,9 +223,9 @@ private fun AccionCuaderno(icono: Int, descripcion: String, habilitada: Boolean,
 private fun HojaCuaderno(pagina: PaginaProyecto, numero: Int, editando: Boolean, habilitada: Boolean,
     titulo: (Long, String) -> Unit, texto: (Long, String) -> Unit, preferencias: PreferenciasRpg,
     imagenes: List<ImagenPagina>, eliminarImagen: (Long) -> Unit) {
-    val tinta = if (preferencias.papelOscuro) Color(0xFFE9E4DB) else TintaCuaderno
-    val papel = if (preferencias.papelOscuro) Color(0xFF242638) else PapelCuaderno
-    val secundario = if (preferencias.papelOscuro) Color(0xFFBEB7CA) else Color(0xFF6B5C6B)
+    val tinta = if (preferencias.papelOscuro) Color(0xFFF1F1F1) else TintaCuaderno
+    val papel = if (preferencias.papelOscuro) Color(0xFF232323) else PapelCuaderno
+    val secundario = if (preferencias.papelOscuro) Color(0xFFB3B3B3) else Color(0xFF6B5C6B)
     val estiloLectura = MaterialTheme.typography.bodyLarge.copy(fontSize = preferencias.tamanoLectura.sp,
         lineHeight = (preferencias.tamanoLectura * 1.6f).sp)
     val campos = OutlinedTextFieldDefaults.colors(focusedTextColor = tinta, unfocusedTextColor = tinta,

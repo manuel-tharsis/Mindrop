@@ -26,3 +26,13 @@ La compilación, la batería completa de tests y lint se ejecutan antes de entre
 No se publica una GitHub Release como parte de esta implementación.
 
 Resultados locales: 143 tests debug y 143 release aprobados, sin fallos ni errores. Las pruebas instrumentadas se compilan; no se ejecutan porque no hay un dispositivo conectado. Lint conserva únicamente los 17 avisos anteriores de versiones de herramientas o dependencias. Se corrigieron los atributos de recursos incompatibles con API 23 y se comprobó el contraste de las acciones sobre papel claro mediante una prueba gráfica. La APK utiliza la misma firma que la versión anterior y no contiene el permiso INTERNET.
+
+## Refinamiento 2.3.1
+
+Versión 2.3.1, código 9. La interfaz adopta la referencia visual aportada por el usuario: negro puro, paneles gris oscuro sin sombras, esquinas de 24 dp, encabezados amplios de peso normal y selección con contorno de acento. Se retiran las decoraciones pixeladas del fondo. Los temas conservan sus colores de acento y los packs se mantienen independientes; Arcano sigue el tema.
+
+Los ajustes agrupan lectura, avisos y copias en paneles. Las opciones de aspecto conservan los mismos requisitos y pasan a tarjetas seleccionables accesibles con previsualización, indicador de estado y requisito de desbloqueo. No se incorporan funciones de sonido ni otras funciones de la aplicación de referencia.
+
+Room, archivos privados y lógica de contenido no cambian. Se mantienen la bandera amarilla, Completadas verde y la opción de papel claro u oscuro. Las capturas nativas incluyen inicio, cuaderno y personalización en anchuras de 390 y 320 dp con texto grande.
+
+Validación de 2.3.1: 145 tests por variante aprobados y compilación de las pruebas instrumentadas. No hay dispositivo conectado para ejecutar estas últimas. Lint conserva los 17 avisos anteriores de versiones; no aparecen errores. Se genera una APK firmada con el código de versión incrementado para actualizar la instalación existente. La foto de referencia se mantiene fuera de Git.

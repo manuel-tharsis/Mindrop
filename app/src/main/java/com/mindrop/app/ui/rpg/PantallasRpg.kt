@@ -20,7 +20,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mindrop.app.data.rpg.*
 import com.mindrop.app.ui.agenda.SelectorSimple
 import com.mindrop.app.notifications.puedeNotificar
-import com.mindrop.app.ui.theme.coloresRpg
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -82,67 +81,43 @@ fun PantallaAjustes(vm: RpgViewModel, copias: @Composable () -> Unit = {}) {
     val disponibles = remember(logros) { logros.map { it.clave }.toSet() }
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { Text("Ajustes", style = MaterialTheme.typography.headlineMedium) }
-        item { copias() }
-        item { HorizontalDivider() }
+        item { PanelAjustes { copias() } }
         item { Text("Lectura del cuaderno", style = MaterialTheme.typography.titleLarge) }
-        item { SelectorSimple("Tamaño del texto", "${p.tamanoLectura}", listOf(16, 18, 20, 22, 24).map { it to "$it" }) {
+        item { PanelAjustes { SelectorSimple("Tamaño del texto", "${p.tamanoLectura}", listOf(16, 18, 20, 22, 24).map { it to "$it" }) {
             vm.lectura(it, p.papelOscuro)
-        } }
-        item { Row(verticalAlignment = Alignment.CenterVertically) {
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Papel oscuro", style = MaterialTheme.typography.titleMedium)
                 Text("Una lectura más suave con poca luz", style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Switch(p.papelOscuro, { vm.lectura(p.tamanoLectura, it) })
-        } }
-        item { HorizontalDivider() }
+        } } }
         item { Text("Notificaciones", style = MaterialTheme.typography.titleLarge) }
-        item { Text(if (permiso) "Notificaciones permitidas" else "Notificaciones desactivadas")
+        item { PanelAjustes { Text(if (permiso) "Notificaciones permitidas" else "Notificaciones desactivadas")
             OutlinedButton(onClick = {
                 if (Build.VERSION.SDK_INT >= 33 && !permiso) solicitar.launch(Manifest.permission.POST_NOTIFICATIONS)
                 else contexto.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                     "package:${contexto.packageName}".toUri()))
-            }) { Text("Permitir / configurar notificaciones") } }
-        item { SelectorSimple("Redescubrir ideas antiguas", when(p.diasRedescubrimiento) { 0 -> "Desactivado"; 1 -> "Diario"; else -> "Cada ${p.diasRedescubrimiento} días" },
+            }) { Text("Permitir / configurar notificaciones") }
+        SelectorSimple("Redescubrir ideas antiguas", when(p.diasRedescubrimiento) { 0 -> "Desactivado"; 1 -> "Diario"; else -> "Cada ${p.diasRedescubrimiento} días" },
             listOf(0 to "Desactivado", 1 to "Diario", 3 to "Cada 3 días", 7 to "Semanal", 14 to "Cada 2 semanas")) {
             vm.redescubrir(it, p.silencioDesde, p.silencioHasta)
-        } }
-        item { SelectorSimple("Silencio desde", "${p.silencioDesde}:00", (0..23).filter { it != p.silencioHasta }.map { it to "$it:00" }) {
-            vm.redescubrir(p.diasRedescubrimiento, it, p.silencioHasta)
-        } }
-        item { SelectorSimple("Silencio hasta", "${p.silencioHasta}:00", (0..23).filter { it != p.silencioDesde }.map { it to "$it:00" }) {
-            vm.redescubrir(p.diasRedescubrimiento, p.silencioDesde, it)
-        } }
-        item { Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Reducir movimiento", Modifier.weight(1f)); Switch(checked = p.reducirMovimiento, onCheckedChange = vm::movimiento)
-        } }
-        item { Text("Personalización", style = MaterialTheme.typography.titleLarge) }
-        listOf("tema" to "Temas y fondos", "diseno" to "Packs de iconos", "efecto" to "Animaciones").forEach { (categoria, titulo) ->
-            item { Text(titulo, style = MaterialTheme.typography.titleMedium) }
-            items(recompensas.filter { it.categoria == categoria }, key = { "$categoria:${it.clave}" }) { recompensa ->
-                val permitido = recompensaPermitida(categoria, recompensa.clave, disponibles)
-                val seleccionado = when(categoria) { "tema" -> p.tema; "diseno" -> p.diseno; else -> p.efecto } == recompensa.clave
-                Card(shape = FormaPixel, modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (categoria == "tema") MaterialTheme(colorScheme = coloresRpg(recompensa.clave)) {
-                            Surface(Modifier.fillMaxWidth().height(52.dp), color = MaterialTheme.colorScheme.background) {
-                                Text("✦ ${recompensa.nombre}", color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(12.dp))
-                            }
-                        } else if (categoria == "diseno") MuestraPackIconos(recompensa.clave)
-                        else MuestraEfecto(recompensa.clave)
-                        Text(recompensa.nombre, style = MaterialTheme.typography.titleMedium)
-                        Text(recompensa.detalle)
-                        if (!permitido) Text("Necesita: ${catalogoLogros.first { it.clave == recompensa.logro }.nombre}")
-                        Button(enabled = permitido && !seleccionado, onClick = { vm.aplicar(categoria, recompensa.clave) }) {
-                            Text(if (seleccionado) "Aplicado" else if (permitido) "Aplicar" else "Bloqueado")
-                        }
-                    }
-                }
-            }
         }
+        SelectorSimple("Silencio desde", "${p.silencioDesde}:00", (0..23).filter { it != p.silencioHasta }.map { it to "$it:00" }) {
+            vm.redescubrir(p.diasRedescubrimiento, it, p.silencioHasta)
+        }
+        SelectorSimple("Silencio hasta", "${p.silencioHasta}:00", (0..23).filter { it != p.silencioDesde }.map { it to "$it:00" }) {
+            vm.redescubrir(p.diasRedescubrimiento, p.silencioDesde, it)
+        } } }
+        item { PanelAjustes { Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Reducir movimiento", Modifier.weight(1f)); Switch(checked = p.reducirMovimiento, onCheckedChange = vm::movimiento)
+        } } }
+        item { Text("Personalización", style = MaterialTheme.typography.titleLarge) }
+        item { OpcionesAspecto(p.tema, p.diseno, p.efecto, disponibles, vm::aplicar) }
         error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
-        item { Text("Mindrop 2.3.0 · datos privados en este dispositivo. Los avisos pueden retrasarse por el ahorro de batería. No hay sincronización.", style = MaterialTheme.typography.bodySmall) }
+        item { Text("Mindrop 2.3.1 · datos privados en este dispositivo. Los avisos pueden retrasarse por el ahorro de batería. No hay sincronización.", style = MaterialTheme.typography.bodySmall) }
     }
 }
 

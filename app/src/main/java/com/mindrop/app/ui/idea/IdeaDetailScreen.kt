@@ -365,7 +365,7 @@ private fun IdeaHeader(
         Text(
             text = idea.title,
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.Normal,
             textAlign = TextAlign.Center,
         )
         if (idea.shortDescription.isNotBlank()) {

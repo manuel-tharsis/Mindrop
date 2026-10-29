@@ -31,7 +31,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,7 +42,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import com.mindrop.app.ui.icons.packPainterResource as painterResource
 import androidx.compose.ui.res.stringResource
@@ -261,7 +260,7 @@ fun HomeScreen(
         modifier = modifier,
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
-            TopAppBar(
+            MediumTopAppBar(
                 title = {
                     Text(
                         text = uiState.currentFolder?.name
@@ -272,8 +271,8 @@ fun HomeScreen(
                                     R.string.folders_section_title
                                 },
                             ),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Normal,
                         maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
@@ -331,7 +330,7 @@ fun HomeScreen(
                 bottom = 104.dp,
             ),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             if (uiState.folderId != null) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
@@ -505,8 +504,7 @@ fun SearchField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
-            .fillMaxWidth()
-            .shadow(elevation = 1.dp, shape = shape),
+            .fillMaxWidth(),
         placeholder = { Text(text = stringResource(R.string.search_ideas_hint)) },
         leadingIcon = {
             Icon(
@@ -520,7 +518,7 @@ fun SearchField(
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
-            focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.36f),
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
             unfocusedBorderColor = Color.Transparent,
         ),
     )
@@ -533,10 +531,10 @@ fun SectionTitle(
 ) {
     Text(
         text = text,
-        modifier = modifier.padding(top = 8.dp),
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onBackground,
+        modifier = modifier.padding(top = 12.dp, bottom = 2.dp),
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
 

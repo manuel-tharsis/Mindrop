@@ -65,5 +65,6 @@ Thumbs.db
 captures/
 
 # Private local backup archives
+.codex-remote-attachments/
 Mindrop-copia-*.zip
 **/copias_privadas/

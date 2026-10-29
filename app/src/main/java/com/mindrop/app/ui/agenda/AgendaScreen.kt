@@ -87,9 +87,9 @@ fun AgendaScreen(vm: AgendaViewModel, ideas: List<IdeaEntity>, abrirIdea: (Long)
                                     if (dia in 1..mesActual.lengthOfMonth()) {
                                         val valor = mesActual.atDay(dia).toString()
                                         TextButton(onClick = { fecha = valor }, contentPadding = PaddingValues(0.dp),
-                                            modifier = Modifier.fillMaxWidth().then(if (fecha == valor) Modifier.marcoRpg(MaterialTheme.colorScheme.primary) else Modifier)) {
+                                            modifier = Modifier.fillMaxWidth().then(if (fecha == valor) Modifier.marcoRpg(MaterialTheme.colorScheme.primary, .9f) else Modifier)) {
                                             Column {
-                                                Text(dia.toString(), color = if (valor == LocalDate.now().toString()) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurface)
+                                                Text(dia.toString(), color = if (valor == LocalDate.now().toString()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
                                                 if (dia in diasConEventos) Text("•", color = MaterialTheme.colorScheme.primary)
                                             }
                                         }

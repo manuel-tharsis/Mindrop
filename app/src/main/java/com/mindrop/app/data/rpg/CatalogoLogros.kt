@@ -25,11 +25,11 @@ val catalogoLogros = buildList {
 
 data class Recompensa(val clave: String, val categoria: String, val nombre: String, val logro: String?, val detalle: String)
 val recompensas = listOf(
-    Recompensa("clasico", "tema", "Clásico", null, "Azul noche y oro"),
-    Recompensa("bosque", "tema", "Bosque encantado", "carpetas_5", "Verdes de bosque"),
-    Recompensa("nocturno", "tema", "Nocturno", "racha_7", "Estrellas y luna"),
-    Recompensa("cyberpunk", "tema", "Cyberpunk", "ideas_100", "Cian y violeta"),
-    Recompensa("dorado", "tema", "Dorado", "completadas_100", "Oro legendario"),
+    Recompensa("clasico", "tema", "Clásico", null, "Negro, gris y acentos azules"),
+    Recompensa("bosque", "tema", "Bosque encantado", "carpetas_5", "Acentos verdes sobre negro"),
+    Recompensa("nocturno", "tema", "Nocturno", "racha_7", "Acentos lilas sobre negro"),
+    Recompensa("cyberpunk", "tema", "Cyberpunk", "ideas_100", "Acentos cian sobre negro"),
+    Recompensa("dorado", "tema", "Dorado", "completadas_100", "Acentos dorados sobre negro"),
     Recompensa("clasico", "diseno", "Básico", null, "Iconos 2D sencillos para toda la app"),
     Recompensa("cofre", "diseno", "Aventurero", "subideas_10", "Cofres, cuadernos y detalles de latón"),
     Recompensa("bosque", "diseno", "Bosque", "carpetas_5", "Formas naturales y un pequeño detalle de hoja"),

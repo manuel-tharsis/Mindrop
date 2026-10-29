@@ -76,12 +76,12 @@ fun IdeaCard(
                 .padding(start = indentation)
                 .reboteRpg(interacciones)
                 .marcoRpg(if (idea.esImportante) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant,
-                    if (idea.esImportante) .8f else .22f),
+                    if (idea.esImportante) .8f else 0f),
             shape = FormaPixel,
             colors = CardDefaults.elevatedCardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
             ),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),

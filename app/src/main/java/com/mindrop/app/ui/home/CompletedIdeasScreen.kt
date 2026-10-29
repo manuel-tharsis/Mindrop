@@ -73,7 +73,7 @@ fun CompletedIdeasScreen(
                     Text(
                         text = stringResource(R.string.completed_ideas_title),
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
+                        fontWeight = FontWeight.Normal,
                     )
                 },
                 navigationIcon = {

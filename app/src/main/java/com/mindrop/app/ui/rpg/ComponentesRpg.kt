@@ -15,7 +15,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -27,7 +26,7 @@ import com.mindrop.app.ui.icons.ThemedIcon
 val LocalMovimiento = staticCompositionLocalOf { true }
 val LocalEfecto = staticCompositionLocalOf { "chispa" }
 val LocalDiseno = staticCompositionLocalOf { "clasico" }
-val FormaPixel = RoundedCornerShape(14.dp)
+val FormaPixel = RoundedCornerShape(24.dp)
 
 @Composable
 fun movimientoPermitido(): Boolean {
@@ -97,19 +96,5 @@ fun DibujoDestello(progreso: Float, efecto: String, modifier: Modifier = Modifie
     }
 }
 
-fun Modifier.marcoRpg(color: Color, intensidad: Float = .18f) = border(1.dp, color.copy(alpha = intensidad), FormaPixel)
-
-fun Modifier.fondoRpg(tema: String, color: Color) = drawBehind {
-    // Decoración estática y escasa: no mantiene ningún bucle de animación.
-    repeat(14) { i ->
-        val x = ((i * 137 + 37) % 997) / 997f * size.width
-        val y = ((i * 73 + 19) % 751) / 751f * size.height
-        drawRect(color.copy(alpha = .12f), Offset(x, y), Size(3.dp.toPx(), 3.dp.toPx()))
-    }
-    if (tema == "nocturno") drawCircle(color.copy(alpha = .12f), 28.dp.toPx(), Offset(size.width - 50.dp.toPx(), 70.dp.toPx()))
-    if (tema == "bosque") repeat(3) { i ->
-        val x = (i + 1) * size.width / 4
-        drawRect(color.copy(alpha = .08f), Offset(x - 15.dp.toPx(), size.height - 80.dp.toPx()), Size(30.dp.toPx(), 40.dp.toPx()))
-        drawRect(color.copy(alpha = .08f), Offset(x - 3.dp.toPx(), size.height - 40.dp.toPx()), Size(6.dp.toPx(), 25.dp.toPx()))
-    }
-}
+fun Modifier.marcoRpg(color: Color, intensidad: Float = 0f) =
+    if (intensidad <= 0f) this else border(1.dp, color.copy(alpha = intensidad), FormaPixel)

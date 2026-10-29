@@ -128,7 +128,7 @@ fun MindropNavHost(
     CompositionLocalProvider(LocalMovimiento provides !preferencias.reducirMovimiento,
         LocalEfecto provides preferencias.efecto, LocalDiseno provides preferencias.diseno) {
     Surface(color = MaterialTheme.colorScheme.background) {
-    Column(Modifier.fillMaxSize().fondoRpg(preferencias.tema, MaterialTheme.colorScheme.primary)) {
+    Column(Modifier.fillMaxSize()) {
     Box(Modifier.weight(1f)) {
 
     NavHost(
@@ -333,9 +333,12 @@ fun MindropNavHost(
     }
     SnackbarHost(avisos, Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp)
         .then(if (principal) Modifier else Modifier.navigationBarsPadding()))
-    if (principal) NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest, tonalElevation = 0.dp) {
+    if (principal) NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
         listOf("home" to "Inicio", "proyectos" to "Proyectos", "agenda" to "Agenda", "logros" to "Logros", "ajustes" to "Ajustes").forEachIndexed { indice, (destino, nombre) ->
             NavigationBarItem(selected = if (destino == "home") ruta in listOf("home", "completed", "browse/{folderId}") else ruta == destino,
+                colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant, unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant),
                 onClick = { navController.navigate(destino) {
                     popUpTo("home") { saveState = true }
                     launchSingleTop = true
