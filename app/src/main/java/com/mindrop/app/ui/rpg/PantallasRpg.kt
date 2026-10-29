@@ -117,7 +117,7 @@ fun PantallaAjustes(vm: RpgViewModel, copias: @Composable () -> Unit = {}) {
         item { Text("Personalización", style = MaterialTheme.typography.titleLarge) }
         item { OpcionesAspecto(p.tema, p.diseno, p.efecto, disponibles, vm::aplicar) }
         error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
-        item { Text("Mindrop 2.3.1 · datos privados en este dispositivo. Los avisos pueden retrasarse por el ahorro de batería. No hay sincronización.", style = MaterialTheme.typography.bodySmall) }
+        item { Text("Mindrop 2.3.2 · datos privados en este dispositivo. Los avisos pueden retrasarse por el ahorro de batería. No hay sincronización.", style = MaterialTheme.typography.bodySmall) }
     }
 }
 

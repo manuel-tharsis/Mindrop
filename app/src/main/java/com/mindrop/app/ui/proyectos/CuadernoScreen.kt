@@ -23,7 +23,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -168,7 +167,7 @@ fun CuadernoScreen(
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         OutlinedIconButton(enabled = pager.currentPage < estado.paginas.lastIndex && !estado.editando && !estado.operando, shape = CircleShape,
                             onClick = { ambito.launch { if (movimiento) pager.animateScrollToPage(pager.currentPage + 1) else pager.scrollToPage(pager.currentPage + 1) } }) {
-                            Icon(painterResource(R.drawable.ic_arrow_back), "Página siguiente", modifier = Modifier.graphicsLayer { rotationZ = 180f })
+                            Icon(painterResource(R.drawable.ic_arrow_next), "Página siguiente")
                         }
                     }
                     if (estado.error != null) Row(verticalAlignment = Alignment.CenterVertically) {

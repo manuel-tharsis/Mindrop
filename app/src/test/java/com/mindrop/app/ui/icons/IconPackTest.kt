@@ -16,9 +16,12 @@ class IconPackTest {
     @Test fun arcanoSigueElTemaEnTodasSusVariantes() {
         listOf(0xFF92BEFF, 0xFF8DE4A8, 0xFFC7BEFF, 0xFF55F4E6, 0xFFFFD56A).forEach {
             val color = Color(it)
-            assertEquals(color, packPalette(IconPack.ARCANE, color).accent)
+            assertNotNull(packAssetId(IconPack.ARCANE, "folder", color))
         }
-        assertEquals(packPalette(IconPack.BASIC, Color.Blue), packPalette(IconPack.BASIC, Color.Green))
+        assertEquals(packAssetId(IconPack.BASIC, "folder", Color.Blue), packAssetId(IconPack.BASIC, "folder", Color.Green))
+        val variants = listOf(Color.Blue, Color(0xFF8DE4A8), Color(0xFFC7BEFF), Color(0xFF55F4E6), Color(0xFFFFD56A))
+            .map { packAssetId(IconPack.ARCANE, "folder", it) }
+        assertEquals(5, variants.toSet().size)
     }
 
     @Test fun losPacksConservanLosRequisitosDeDesbloqueo() {
@@ -31,6 +34,12 @@ class IconPackTest {
 
     @Test fun todasLasCategoriasDelSelectorTienenDibujoEnLosPacks() {
         assertEquals(21, mindropIconOptions.size)
-        mindropIconOptions.forEach { assertNotNull(it.key, iconRole(it.drawableRes)) }
+        IconPack.entries.forEach { pack ->
+            mindropIconOptions.forEach { option ->
+                val role = iconRole(option.drawableRes)
+                assertNotNull(option.key, role)
+                assertNotNull("$pack: ${option.key}", packAssetId(pack, role!!, Color.Blue))
+            }
+        }
     }
 }

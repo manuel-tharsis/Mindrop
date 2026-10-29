@@ -73,6 +73,17 @@ class IconPackRenderTest {
     @Test fun inicioRealConJerarquiaYPrioridad() { inicio(390, 844, 1f, "inicio-basico") }
     @Test fun inicioRealEstrechoConTextoGrande() { inicio(320, 740, 1.3f, "inicio-estrecho") }
 
+    @Test fun materialNoRepintaLosColoresDelArchivoAprobado() {
+        capturar("fidelidad-icono", verificar = { pixels ->
+            assertTrue("Debe verse el amarillo original incluso con otro tinte de contenido", pixels.any {
+                val red = (it ushr 16) and 255; val green = (it ushr 8) and 255; val blue = it and 255
+                red > 220 && green > 140 && blue < 120
+            })
+        }) {
+            Box(Modifier.fillMaxSize().padding(24.dp)) { ThemedIcon(R.drawable.ic_folder, "Carpeta", Modifier.size(96.dp), tint = Color.Magenta) }
+        }
+    }
+
     @Test fun personalizacionConPanelesDeLaReferencia() { aspecto(390, 1f, "aspecto-referencia") }
     @Test fun personalizacionEstrechaConTextoGrande() { aspecto(320, 1.3f, "aspecto-estrecho") }
 
