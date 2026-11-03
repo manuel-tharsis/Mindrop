@@ -120,7 +120,7 @@ fun PantallaAjustes(vm: RpgViewModel, copias: @Composable () -> Unit = {}) {
         item { Text("Personalización", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         item { OpcionesAspecto(p.tema, p.diseno, p.efecto, disponibles, vm::aplicar) }
         error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
-        item { Text("Mindrop 2.6.0 · Datos guardados en este dispositivo.", style = MaterialTheme.typography.bodySmall,
+        item { Text("Mindrop 2.6.1 · Datos guardados en este dispositivo.", style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }

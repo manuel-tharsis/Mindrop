@@ -1,6 +1,6 @@
 # Mindrop
 
-Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con logros y recompensas cosméticas. La versión 2.6.0 incorpora transiciones al abrir ideas, una confirmación táctil discreta y accesos rápidos desde el icono del escritorio. Conserva la interfaz sobria, los packs de iconos y la compatibilidad con Android 6.0 o posterior.
+Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con logros y recompensas cosméticas. La versión 2.6.1 refina las tarjetas, la navegación, los menús del detalle y el espacio de lectura del cuaderno. Incorpora transiciones al abrir ideas, una confirmación táctil discreta y accesos rápidos desde el icono del escritorio. Conserva la interfaz sobria, los packs de iconos y la compatibilidad con Android 6.0 o posterior.
 
 ## Funciones
 
@@ -117,7 +117,7 @@ En macOS o Linux:
 ./gradlew exportReleaseApk
 ```
 
-La APK instalable se genera en `app/build/releases/Mindrop-v2.6.0.apk`.
+La APK instalable se genera en `app/build/releases/Mindrop-v2.6.1.apk`.
 
 Mindrop no solicita el permiso `INTERNET` y no utiliza cuentas, servidores, analíticas ni servicios externos.
 
