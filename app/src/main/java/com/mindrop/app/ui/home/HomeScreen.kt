@@ -311,13 +311,12 @@ fun HomeScreen(
             columns = GridCells.Adaptive(minSize = 148.dp),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .padding(bottom = 80.dp),
+                .padding(innerPadding),
             contentPadding = PaddingValues(
                 start = 20.dp,
                 top = 8.dp,
                 end = 20.dp,
-                bottom = 24.dp,
+                bottom = 112.dp,
             ),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),

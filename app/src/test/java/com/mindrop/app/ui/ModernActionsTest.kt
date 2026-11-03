@@ -90,4 +90,29 @@ class ModernActionsTest {
         compose.onNodeWithText("Marcar como importante").performClick()
         assertTrue(importante)
     }
+
+    @Test fun inicioNoRecortaLaListaYPermiteLeerElFinalPorEncimaDelBoton() {
+        val cantidad = mutableStateOf(1)
+        controller.get().setContent { MindropTheme { Surface {
+            com.mindrop.app.ui.home.HomeScreen(
+                com.mindrop.app.ui.home.HomeUiState(hasAnyContent = true,
+                    ideas = (1..cantidad.value).map { com.mindrop.app.data.local.entity.IdeaEntity(
+                        id = it.toLong(), title = "Idea $it", shortDescription = "Descripción", fullDescription = "", icon = "idea") }),
+                onSearchQueryChange = {}, onFolderClick = {}, onIdeaClick = {}, onEditFolder = {},
+                onMoveFolder = {}, onDeleteFolder = {}, onMoveIdea = {}, onBack = {},
+                onBreadcrumbClick = {}, onAddClick = {}, onCompletedClick = {})
+        } } }
+        for (numero in listOf(1, 40)) {
+            compose.runOnIdle { cantidad.value = numero }
+            val lista = compose.onNode(hasScrollToIndexAction())
+            val boton = compose.onNodeWithContentDescription("Añadir")
+            assertTrue("La lista debe usar también la zona detrás del FAB",
+                lista.getUnclippedBoundsInRoot().bottom > boton.getUnclippedBoundsInRoot().let { (it.top + it.bottom) / 2 })
+            lista.performScrollToNode(hasText("Completadas"))
+            lista.performTouchInput { swipeUp() }
+            compose.onNodeWithText("Completadas").assertIsDisplayed()
+            assertTrue("El último elemento debe poder quedar por encima del FAB",
+                compose.onNodeWithText("Completadas").getUnclippedBoundsInRoot().bottom < boton.getUnclippedBoundsInRoot().top)
+        }
+    }
 }
