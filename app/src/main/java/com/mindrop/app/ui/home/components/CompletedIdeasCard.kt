@@ -25,7 +25,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mindrop.app.R
 import com.mindrop.app.ui.theme.MindropTheme
-import com.mindrop.app.ui.icons.ThemedIcon
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
 
 @Composable
 fun CompletedIdeasCard(
@@ -56,7 +57,7 @@ fun CompletedIdeasCard(
                     .background(completedGreen.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center,
             ) {
-                ThemedIcon(R.drawable.ic_completed, null, Modifier.size(36.dp))
+                Icon(painterResource(R.drawable.ic_completed), null, Modifier.size(30.dp), tint = completedGreen)
             }
             androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
                 Text(

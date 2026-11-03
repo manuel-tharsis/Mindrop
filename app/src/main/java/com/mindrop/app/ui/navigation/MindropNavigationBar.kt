@@ -9,8 +9,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mindrop.app.R
-import com.mindrop.app.ui.icons.PackIcon
-import com.mindrop.app.ui.icons.packPainterResource
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
 
 @Composable
 fun MindropNavigationBar(currentRoute: String, onNavigate: (String) -> Unit) {
@@ -25,9 +25,10 @@ fun MindropNavigationBar(currentRoute: String, onNavigate: (String) -> Unit) {
                     onClick = { onNavigate(route) },
                     colors = NavigationBarItemDefaults.colors(
                         indicatorColor = androidx.compose.ui.graphics.lerp(MaterialTheme.colorScheme.surfaceContainerLow, MaterialTheme.colorScheme.primary, .22f),
-                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
                         unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant),
-                    icon = { PackIcon(packPainterResource(icons[index]), null, Modifier.size(22.dp)) },
+                    icon = { Icon(painterResource(icons[index]), null, Modifier.size(22.dp)) },
                     label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp)) },
                 )
             }

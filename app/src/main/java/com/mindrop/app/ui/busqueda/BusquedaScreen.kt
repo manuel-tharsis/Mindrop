@@ -1,6 +1,6 @@
 package com.mindrop.app.ui.busqueda
 
-import com.mindrop.app.ui.icons.PackIcon as Icon
+import androidx.compose.material3.Icon
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,7 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import com.mindrop.app.ui.icons.packPainterResource as painterResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.SavedStateHandle

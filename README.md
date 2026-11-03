@@ -1,6 +1,6 @@
 # Mindrop
 
-Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con logros y recompensas cosméticas. La versión 2.6.1 refina las tarjetas, la navegación, los menús del detalle y el espacio de lectura del cuaderno. Incorpora transiciones al abrir ideas, una confirmación táctil discreta y accesos rápidos desde el icono del escritorio. Conserva la interfaz sobria, los packs de iconos y la compatibilidad con Android 6.0 o posterior.
+Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con logros y recompensas cosméticas. La versión 2.7.0 incorpora el nuevo icono MD, portadas artísticas de proyectos, un índice de cuaderno más claro y controles de estilo Android. Conserva los iconos ilustrados de las ideas, las funciones offline y Android 6.0 o posterior.
 
 ## Funciones
 
@@ -29,7 +29,7 @@ Mindrop es una aplicación Android personal y completamente offline para guardar
 - Crear un evento con recordatorio desde el widget del escritorio.
 - Activar el redescubrimiento periódico de ideas antiguas, con horario de silencio.
 - Conseguir logros persistentes y desbloquear temas, packs de iconos y efectos.
-- Elegir entre los packs Básico, Aventurero, Bosque, Arcano y Cyberpunk para categorías, navegación y acciones. Arcano adapta sus acentos al tema elegido.
+- Elegir entre los packs Básico, Aventurero, Bosque, Arcano y Cyberpunk para los iconos de ideas y carpetas. Los controles y la navegación utilizan símbolos Android. Arcano adapta sus acentos al tema elegido.
 - Personalizar el aspecto y reducir las animaciones desde Ajustes.
 - Deshacer durante el aviso el borrado de una idea o página.
 - Ajustar el tamaño del texto del cuaderno y elegir papel claro u oscuro.
@@ -117,7 +117,7 @@ En macOS o Linux:
 ./gradlew exportReleaseApk
 ```
 
-La APK instalable se genera en `app/build/releases/Mindrop-v2.6.1.apk`.
+La APK instalable se genera en `app/build/releases/Mindrop-v2.7.0.apk`.
 
 Mindrop no solicita el permiso `INTERNET` y no utiliza cuentas, servidores, analíticas ni servicios externos.
 
@@ -144,3 +144,5 @@ Comprobaciones locales: `./gradlew assembleDebug test lint`. Los tests instrumen
 ## Icono de la aplicación
 
 El icono oficial es el monograma MD con forma de gota, trazo fluido y unión de color ondulada. El original aprobado y el proceso de preparación para Android están en [artwork/branding](artwork/branding/README.md). Los packs de iconos internos se conservan.
+
+Los cambios del cuaderno y la navegación de 2.7.0 están en [docs/DESARROLLO_V2_7.md](docs/DESARROLLO_V2_7.md).

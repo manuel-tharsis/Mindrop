@@ -1,6 +1,6 @@
 package com.mindrop.app.ui.proyectos
 
-import com.mindrop.app.ui.icons.PackIcon as Icon
+import androidx.compose.material3.Icon
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -22,11 +22,12 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
-import com.mindrop.app.ui.icons.packPainterResource as painterResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -131,20 +132,18 @@ fun CuadernoScreen(
                 }
                 Column(Modifier.fillMaxSize().padding(espacio).imePadding().padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("${pager.currentPage + 1} / ${estado.paginas.size}", style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f), maxLines = 1)
+                    Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(20.dp)).padding(horizontal = 8.dp, vertical = 4.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                         AccionCuaderno(if (estado.editando) R.drawable.ic_check else R.drawable.ic_edit,
                             if (estado.editando) "Terminar edición" else "Editar página", !estado.operando) {
                             if (estado.editando) terminarEdicion() else editar(true)
                         }
-                        AccionCuaderno(R.drawable.ic_page_add, "Añadir página", !estado.operando, MaterialTheme.colorScheme.primary) {
+                        AccionCuaderno(R.drawable.ic_page_add, "Añadir página", !estado.operando) {
                             terminarEdicion(); anadir()
                         }
                         AccionCuaderno(R.drawable.ic_image_add, "Añadir imagen", !estado.operando) {
                             terminarEdicion(); estado.paginaActualId?.let(anadirFoto)
                         }
-                        AccionCuaderno(R.drawable.ic_draw_note, "Dibujar nota", !estado.operando, MaterialTheme.colorScheme.primary) {
+                        AccionCuaderno(R.drawable.ic_draw_note, "Dibujar nota", !estado.operando) {
                             terminarEdicion(); estado.paginaActualId?.let(dibujar)
                         }
                     }
@@ -158,18 +157,21 @@ fun CuadernoScreen(
                             cambiarTitulo, cambiarTexto, preferencias, estado.imagenes.filter { it.paginaId == pagina.id },
                             eliminarImagen = { borrarImagenId = it })
                     }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerLow, CircleShape).padding(horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         OutlinedIconButton(enabled = pager.currentPage > 0 && !estado.editando && !estado.operando, shape = CircleShape,
                             onClick = { ambito.launch { if (movimiento) pager.animateScrollToPage(pager.currentPage - 1) else pager.scrollToPage(pager.currentPage - 1) } }) {
                             Icon(painterResource(R.drawable.ic_arrow_back), "Página anterior")
                         }
-                        Text(if (estado.guardando || estado.pendiente || estado.operando) "Guardando…" else "✓ Guardado",
-                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${pager.currentPage + 1} de ${estado.paginas.size}",
+                            style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         OutlinedIconButton(enabled = pager.currentPage < estado.paginas.lastIndex && !estado.editando && !estado.operando, shape = CircleShape,
                             onClick = { ambito.launch { if (movimiento) pager.animateScrollToPage(pager.currentPage + 1) else pager.scrollToPage(pager.currentPage + 1) } }) {
                             Icon(painterResource(R.drawable.ic_arrow_next), "Página siguiente")
                         }
                     }
+                    Text(if (estado.guardando || estado.pendiente || estado.operando) "Guardando…" else "✓ Guardado",
+                        modifier = Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (estado.error != null) Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(estado.error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                         TextButton(onClick = reintentar) { Text("Reintentar") }
@@ -178,23 +180,12 @@ fun CuadernoScreen(
             }
         }
     }
-    if (indiceAbierto) ModalBottomSheet(onDismissRequest = { indiceAbierto = false }) {
-        LazyColumn(contentPadding = PaddingValues(20.dp, 0.dp, 20.dp, 32.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            item { Text("Índice", style = MaterialTheme.typography.titleLarge) }
-            itemsIndexed(estado.paginas, key = { _, p -> p.id }) { numero, pagina ->
-                Column {
-                    TextButton(enabled = !estado.operando, onClick = { seleccionar(pagina.id); indiceAbierto = false }, modifier = Modifier.fillMaxWidth()) {
-                        Text("${numero + 1}. ${pagina.titulo.ifBlank { "Página ${numero + 1}" }}", modifier = Modifier.fillMaxWidth(), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(enabled = numero > 0 && !estado.operando, onClick = { mover(pagina.id, -1) }) { Text("Subir") }
-                        TextButton(enabled = numero < estado.paginas.lastIndex && !estado.operando, onClick = { mover(pagina.id, 1) }) { Text("Bajar") }
-                        TextButton(enabled = !estado.operando, onClick = { borrarId = pagina.id }) { Text("Eliminar") }
-                    }
-                }
-            }
-        }
-    }
+    if (indiceAbierto) IndiceCuaderno(
+        paginas = estado.paginas, actual = estado.paginaActualId, operando = estado.operando || estado.cargando || estado.proyecto == null,
+        seleccionar = { seleccionar(it); indiceAbierto = false }, mover = mover,
+        eliminar = { borrarId = it },
+        anadir = { indiceAbierto = false; terminarEdicion(); anadir() }, cerrar = { indiceAbierto = false },
+    )
     borrarId?.let { id ->
         AlertDialog(onDismissRequest = { borrarId = null }, title = { Text("¿Eliminar esta página?") },
             text = { Text("Se eliminarán su texto, imágenes y bocetos. Tendrás unos segundos para deshacerlo. Si es la última página, quedará una hoja vacía.") },
@@ -211,7 +202,7 @@ fun CuadernoScreen(
 
 @Composable
 private fun AccionCuaderno(icono: Int, descripcion: String, habilitada: Boolean,
-    tinte: Color = MaterialTheme.colorScheme.primary, accion: () -> Unit) {
+    tinte: Color = MaterialTheme.colorScheme.onSurfaceVariant, accion: () -> Unit) {
     OutlinedIconButton(onClick = accion, enabled = habilitada, shape = FormaPixel, border = BorderStroke(1.dp, tinte.copy(alpha = .3f)),
         modifier = Modifier.size(48.dp)) {
         Icon(painterResource(icono), descripcion, tint = if (habilitada) tinte else MaterialTheme.colorScheme.onSurface.copy(alpha = .38f), modifier = Modifier.size(22.dp))
@@ -230,9 +221,9 @@ private fun HojaCuaderno(pagina: PaginaProyecto, numero: Int, editando: Boolean,
     val campos = OutlinedTextFieldDefaults.colors(focusedTextColor = tinta, unfocusedTextColor = tinta,
         disabledTextColor = tinta, cursorColor = tinta, focusedBorderColor = secundario,
         unfocusedBorderColor = secundario.copy(alpha = .6f), focusedLabelColor = tinta, unfocusedLabelColor = tinta)
-    LazyColumn(modifier = Modifier.fillMaxSize().testTag("hoja_cuaderno_$numero").background(papel, RoundedCornerShape(6.dp, 18.dp, 18.dp, 6.dp))
-        .border(1.dp, secundario.copy(alpha = .25f), RoundedCornerShape(6.dp, 18.dp, 18.dp, 6.dp)),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    LazyColumn(modifier = Modifier.fillMaxSize().testTag("hoja_cuaderno_$numero").clip(RoundedCornerShape(24.dp)).background(papel, RoundedCornerShape(24.dp))
+        .border(1.dp, secundario.copy(alpha = .25f), RoundedCornerShape(24.dp)).acentoPapel(),
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 28.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { Text("PÁGINA $numero", style = MaterialTheme.typography.labelMedium, color = secundario) }
         if (editando) {
             item { OutlinedTextField(pagina.titulo, { titulo(pagina.id, it) }, modifier = Modifier.fillMaxWidth(), enabled = habilitada,

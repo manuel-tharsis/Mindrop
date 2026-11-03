@@ -7,6 +7,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.mindrop.app.R
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mindrop.app.ui.home.components.EmptyState
@@ -44,7 +48,7 @@ fun ProyectosRoute(vm: ProyectosViewModel, pdf: ExportarPdfViewModel? = null, ab
         if (nombre != nombreInicial) descartar = true else editarId = null
     }
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Proyectos", style = MaterialTheme.typography.headlineMedium) }) },
+        topBar = { TopAppBar(title = { ProyectosTitle() }) },
         floatingActionButton = {
             MindropAddButton("Nuevo proyecto", onClick = {
                 nombre = ""; nombreInicial = ""; vm.error.value = null; editarId = 0
@@ -99,4 +103,12 @@ fun ProyectosRoute(vm: ProyectosViewModel, pdf: ExportarPdfViewModel? = null, ab
     }
     if (exportacion.trabajando) AlertDialog(onDismissRequest = {}, title = { Text("Exportando cuaderno…") },
         text = { Column(verticalArrangement = Arrangement.spacedBy(16.dp)) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text("Preparando todas las páginas, imágenes y bocetos.") } }, confirmButton = {})
+}
+
+@Composable
+internal fun ProyectosTitle() {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Image(painterResource(R.drawable.ic_launcher_foreground), null, Modifier.size(52.dp))
+        Text("Proyectos", style = MaterialTheme.typography.headlineMedium)
+    }
 }

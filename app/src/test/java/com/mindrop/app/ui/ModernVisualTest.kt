@@ -48,7 +48,7 @@ class ModernVisualTest {
     private fun proyectos(ancho: Int, alto: Int, escala: Float, nombre: String) = capturar(ancho, alto, escala, nombre) {
         Column(Modifier.fillMaxSize()) {
             Box(Modifier.weight(1f)) {
-                Scaffold(topBar = { TopAppBar(title = { Text("Proyectos", style = MaterialTheme.typography.headlineMedium) }) },
+                Scaffold(topBar = { TopAppBar(title = { com.mindrop.app.ui.proyectos.ProyectosTitle() }) },
                     floatingActionButton = { MindropAddButton("Nuevo proyecto") { } }) { espacio ->
                     Column(Modifier.padding(espacio).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         Text("Un cuaderno para desarrollar cada proyecto.", color = MaterialTheme.colorScheme.onSurfaceVariant)

@@ -32,7 +32,7 @@ class ModernActionsTest {
         controller.get().setContent { MindropTheme { Surface {
             ProyectoCard("BioGestor", 8, abrir = { aperturas++ }, editar = { ediciones++ }, eliminar = {}, exportar = { exportaciones++ })
         } } }
-        compose.onNodeWithText("PDF").performClick()
+        compose.onNodeWithContentDescription("Exportar BioGestor a PDF").performClick()
         assertEquals(1, exportaciones)
         assertEquals(0, aperturas)
         compose.onNodeWithContentDescription("Opciones de BioGestor").performClick()
