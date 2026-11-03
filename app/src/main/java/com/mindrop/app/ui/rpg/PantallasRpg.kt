@@ -43,18 +43,21 @@ fun PantallaLogros(vm: RpgViewModel) {
         items(visibles, key = { it.clave }) { logro ->
             val progreso = (valores[logro.metrica] ?: 0).coerceAtMost(logro.objetivo)
             val conseguido = logro.clave in desbloqueados
-            Card(shape = FormaPixel, modifier = Modifier.fillMaxWidth().marcoRpg(
-                if (logro.dificil) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary)) {
+            Card(shape = FormaPixel, modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        IconoRpg("estrella")
-                        Column { Text(logro.nombre, style = MaterialTheme.typography.titleMedium)
-                            Text(if (conseguido) "Desbloqueado" else if (logro.dificil) "TRYHARD · Bloqueado" else "Bloqueado") }
+                        IconoRpg("estrella", Modifier.size(36.dp))
+                        Column(Modifier.weight(1f)) { Text(logro.nombre, style = MaterialTheme.typography.titleMedium)
+                            Text(if (conseguido) "Desbloqueado" else if (logro.dificil) "Reto avanzado · Bloqueado" else "Bloqueado",
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     }
-                    Text(logro.descripcion)
-                    LinearProgressIndicator(progress = { if (conseguido) 1f else progreso.toFloat() / logro.objetivo }, modifier = Modifier.fillMaxWidth())
-                    Text("${if (conseguido) logro.objetivo else progreso} / ${logro.objetivo}")
-                    recompensas.filter { it.logro == logro.clave }.forEach { Text("Recompensa: ${it.nombre}", color = MaterialTheme.colorScheme.secondary) }
+                    Text(logro.descripcion, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    LinearProgressIndicator(progress = { if (conseguido) 1f else progreso.toFloat() / logro.objetivo }, modifier = Modifier.fillMaxWidth().height(4.dp))
+                    Text("${if (conseguido) logro.objetivo else progreso} / ${logro.objetivo}", style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.align(Alignment.End))
+                    recompensas.filter { it.logro == logro.clave }.forEach { Text("Recompensa: ${it.nombre}", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 }
             }
         }
@@ -82,7 +85,7 @@ fun PantallaAjustes(vm: RpgViewModel, copias: @Composable () -> Unit = {}) {
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { Text("Ajustes", style = MaterialTheme.typography.headlineMedium) }
         item { PanelAjustes { copias() } }
-        item { Text("Lectura del cuaderno", style = MaterialTheme.typography.titleLarge) }
+        item { Text("Lectura del cuaderno", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         item { PanelAjustes { SelectorSimple("Tamaño del texto", "${p.tamanoLectura}", listOf(16, 18, 20, 22, 24).map { it to "$it" }) {
             vm.lectura(it, p.papelOscuro)
         }
@@ -94,7 +97,7 @@ fun PantallaAjustes(vm: RpgViewModel, copias: @Composable () -> Unit = {}) {
             }
             Switch(p.papelOscuro, { vm.lectura(p.tamanoLectura, it) })
         } } }
-        item { Text("Notificaciones", style = MaterialTheme.typography.titleLarge) }
+        item { Text("Notificaciones", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         item { PanelAjustes { Text(if (permiso) "Notificaciones permitidas" else "Notificaciones desactivadas")
             OutlinedButton(onClick = {
                 if (Build.VERSION.SDK_INT >= 33 && !permiso) solicitar.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -114,10 +117,11 @@ fun PantallaAjustes(vm: RpgViewModel, copias: @Composable () -> Unit = {}) {
         item { PanelAjustes { Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Reducir movimiento", Modifier.weight(1f)); Switch(checked = p.reducirMovimiento, onCheckedChange = vm::movimiento)
         } } }
-        item { Text("Personalización", style = MaterialTheme.typography.titleLarge) }
+        item { Text("Personalización", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         item { OpcionesAspecto(p.tema, p.diseno, p.efecto, disponibles, vm::aplicar) }
         error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
-        item { Text("Mindrop 2.4.1 · datos privados en este dispositivo. Los avisos pueden retrasarse por el ahorro de batería. No hay sincronización.", style = MaterialTheme.typography.bodySmall) }
+        item { Text("Mindrop 2.5.0 · Datos guardados en este dispositivo.", style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
 
@@ -133,8 +137,9 @@ fun CelebracionLogro(vm: RpgViewModel) {
     }
     val definicion = catalogoLogros.firstOrNull { it.clave == activa } ?: return
     AlertDialog(onDismissRequest = { activa = null },
-        icon = { Box(Modifier.size(80.dp)) { IconoRpg("estrella", Modifier.size(64.dp)); DestelloPixel(definicion.clave) } },
-        title = { Text("¡Logro desbloqueado!\n${definicion.nombre}") },
-        text = { Column { Text(definicion.descripcion); recompensas.filter { it.logro == definicion.clave }.forEach { Text("Recompensa: ${it.nombre}") } } },
+        icon = { Box(Modifier.size(56.dp)) { IconoRpg("estrella", Modifier.size(40.dp).align(Alignment.Center)); DestelloPixel(definicion.clave) } },
+        title = { Text("Logro desbloqueado") },
+        text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { Text(definicion.nombre, style = MaterialTheme.typography.titleMedium)
+            Text(definicion.descripcion); recompensas.filter { it.logro == definicion.clave }.forEach { Text("Recompensa: ${it.nombre}") } } },
         confirmButton = { TextButton(onClick = { activa = null }) { Text("Continuar") } })
 }

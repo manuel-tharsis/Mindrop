@@ -42,7 +42,7 @@ fun IdeaCard(
     onToggleImportant: (() -> Unit)? = null,
 ) {
     val depth = hierarchyDepth.coerceAtLeast(0)
-    val indentation = (depth.coerceAtMost(8) * 18).dp
+    val indentation = (depth.coerceAtMost(8) * 14).dp
     val connectorColor = MaterialTheme.colorScheme.outlineVariant
     val interacciones = remember { MutableInteractionSource() }
 
@@ -76,29 +76,32 @@ fun IdeaCard(
                 .padding(start = indentation)
                 .reboteRpg(interacciones)
                 .marcoRpg(if (idea.esImportante) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outlineVariant,
-                    if (idea.esImportante) .8f else 0f),
+                    if (idea.esImportante) .55f else 0f),
             shape = FormaPixel,
             colors = CardDefaults.elevatedCardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                containerColor = if (idea.esImportante) androidx.compose.ui.graphics.lerp(
+                    MaterialTheme.colorScheme.surfaceContainerLowest, MaterialTheme.colorScheme.secondary, .035f)
+                    else MaterialTheme.colorScheme.surfaceContainerLowest,
             ),
             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 14.dp, bottom = 14.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 MindropIdeaIcon(
                     icon = idea.icon,
                     customIconPath = idea.customIconPath,
                     contentDescription = stringResource(R.string.idea_icon_content_description),
+                    size = 40.dp,
                 )
 
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = idea.title,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Medium,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -121,7 +124,7 @@ fun IdeaCard(
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFFFFBF8)
+@Preview(showBackground = true, backgroundColor = 0xFF0D0F13)
 @Composable
 private fun IdeaCardPreview() {
     MindropTheme {

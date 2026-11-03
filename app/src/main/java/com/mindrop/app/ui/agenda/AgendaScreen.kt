@@ -21,6 +21,7 @@ import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import com.mindrop.app.notifications.puedeNotificar
+import com.mindrop.app.ui.components.MindropAddButton
 
 @Composable
 fun CampoFecha(fecha: String, cambiar: (String) -> Unit, habilitado: Boolean = true) {
@@ -65,7 +66,7 @@ fun AgendaScreen(vm: AgendaViewModel, ideas: List<IdeaEntity>, fechaSolicitada: 
     val eventosDia = remember(eventos, fecha) { eventos.filter { it.fecha == fecha } }
     val diasConEventos = remember(eventos, mes) { eventos.filter { it.fecha.startsWith(mes) }.map { LocalDate.parse(it.fecha).dayOfMonth }.toSet() }
     Scaffold(floatingActionButton = {
-        FloatingActionButton(onClick = { vm.error.value = null; editarId = 0 }, shape = FormaPixel) { Text("+ Evento") }
+        MindropAddButton("Nuevo evento") { vm.error.value = null; editarId = 0 }
     }) { espacio ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(espacio),
             contentPadding = PaddingValues(20.dp, 16.dp, 20.dp, 100.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

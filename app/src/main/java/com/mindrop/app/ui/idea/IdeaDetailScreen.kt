@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -218,8 +219,8 @@ fun IdeaDetailScreen(
                 },
                 actions = {
                     BanderaPrioridad(uiState.idea?.esImportante == true, onToggleImportant, uiState.idea != null && !isBusy)
-                    TextButton(onClick = onRecordatorio, enabled = uiState.idea != null && !isBusy) {
-                        Text("Recordatorio")
+                    IconButton(onClick = onRecordatorio, enabled = uiState.idea != null && !isBusy) {
+                        Icon(painterResource(R.drawable.ic_calendar), contentDescription = "Recordatorio")
                     }
                     IconButton(
                         onClick = onEdit,
@@ -353,30 +354,25 @@ private fun IdeaHeader(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        MindropIdeaIcon(
-            icon = idea.icon,
-            customIconPath = idea.customIconPath,
-            contentDescription = stringResource(R.string.idea_icon_content_description),
-            size = 88.dp,
-        )
-        Text(
-            text = idea.title,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Normal,
-            textAlign = TextAlign.Center,
-        )
-        if (idea.shortDescription.isNotBlank()) {
-            Text(
-                text = idea.shortDescription,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.Top) {
+            MindropIdeaIcon(
+                icon = idea.icon,
+                customIconPath = idea.customIconPath,
+                contentDescription = stringResource(R.string.idea_icon_content_description),
+                size = 64.dp,
             )
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(text = idea.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Medium)
+                if (idea.shortDescription.isNotBlank()) {
+                    Text(text = idea.shortDescription, style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         }
-        Button(
+        OutlinedButton(
             onClick = onToggleCompleted,
             modifier = Modifier.fillMaxWidth(),
             enabled = !isUpdatingCompletion && !isDeleting,
@@ -386,7 +382,7 @@ private fun IdeaHeader(
                     modifier = Modifier
                         .padding(end = 8.dp)
                         .size(18.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
+                    color = MaterialTheme.colorScheme.primary,
                     strokeWidth = 2.dp,
                 )
             }

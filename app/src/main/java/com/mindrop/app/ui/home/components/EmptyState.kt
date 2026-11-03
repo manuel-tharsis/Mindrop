@@ -36,14 +36,14 @@ fun EmptyState(
             .fillMaxWidth()
             .padding(
                 horizontal = 24.dp,
-                vertical = if (compact) 20.dp else 44.dp,
+                vertical = if (compact) 20.dp else 36.dp,
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Box(
             modifier = Modifier
-                .size(if (compact) 48.dp else 64.dp)
+                .size(if (compact) 44.dp else 56.dp)
                 .clip(CircleShape)
                 .background(
                     if (folderStyle) {
@@ -74,7 +74,7 @@ fun EmptyState(
             } else {
                 MaterialTheme.typography.titleMedium
             },
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Medium,
             textAlign = TextAlign.Center,
         )
         Text(
@@ -86,7 +86,7 @@ fun EmptyState(
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFFFFBF8)
+@Preview(showBackground = true, backgroundColor = 0xFF0D0F13)
 @Composable
 private fun EmptyStatePreview() {
     MindropTheme {

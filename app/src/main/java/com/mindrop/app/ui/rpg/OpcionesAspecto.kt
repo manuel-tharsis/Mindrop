@@ -23,7 +23,7 @@ import com.mindrop.app.ui.theme.coloresRpg
 @Composable
 fun PanelAjustes(content: @Composable ColumnScope.() -> Unit) {
     Surface(shape = FormaPixel, color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(18.dp), content = content)
+        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp), content = content)
     }
 }
 
@@ -54,7 +54,7 @@ private fun OpcionAspecto(opcion: Recompensa, seleccionada: Boolean, permitida: 
     val acento = MaterialTheme.colorScheme.primary
     Card(modifier = modifier.clip(FormaPixel).selectable(selected = seleccionada, enabled = permitida,
         role = Role.RadioButton, onClick = { if (!seleccionada) elegir() }), shape = FormaPixel,
-        border = if (seleccionada) BorderStroke(2.dp, acento) else null,
+        border = if (seleccionada) BorderStroke(1.dp, acento.copy(alpha = .7f)) else null,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             when (opcion.categoria) {
@@ -72,7 +72,7 @@ private fun OpcionAspecto(opcion: Recompensa, seleccionada: Boolean, permitida: 
             Text(opcion.nombre, style = MaterialTheme.typography.titleMedium,
                 color = if (seleccionada) acento else MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
             if (opcion.categoria == "efecto") Text(opcion.detalle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(when { seleccionada -> "✓ Seleccionado"; permitida -> "Elegir"; else -> "Bloqueado" },
+            Text(when { seleccionada -> "Seleccionado"; permitida -> "Elegir"; else -> "Bloqueado" },
                 style = MaterialTheme.typography.labelMedium, color = if (seleccionada || permitida) acento else MaterialTheme.colorScheme.onSurfaceVariant)
             if (!permitida) {
                 val logro = catalogoLogros.first { it.clave == opcion.logro }

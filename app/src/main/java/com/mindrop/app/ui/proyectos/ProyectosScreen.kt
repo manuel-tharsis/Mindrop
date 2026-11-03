@@ -1,7 +1,5 @@
 package com.mindrop.app.ui.proyectos
 
-import com.mindrop.app.ui.icons.PackIcon as Icon
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,18 +7,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import com.mindrop.app.ui.icons.packPainterResource as painterResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.mindrop.app.R
-import com.mindrop.app.ui.rpg.FormaPixel
-import com.mindrop.app.ui.rpg.marcoRpg
-import com.mindrop.app.ui.rpg.IconoRpg
 import com.mindrop.app.ui.home.components.EmptyState
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.Alignment
+import com.mindrop.app.ui.components.MindropAddButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,11 +44,11 @@ fun ProyectosRoute(vm: ProyectosViewModel, pdf: ExportarPdfViewModel? = null, ab
         if (nombre != nombreInicial) descartar = true else editarId = null
     }
     Scaffold(
-        topBar = { MediumTopAppBar(title = { Text("Proyectos", style = MaterialTheme.typography.headlineMedium) }) },
+        topBar = { TopAppBar(title = { Text("Proyectos", style = MaterialTheme.typography.headlineMedium) }) },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
+            MindropAddButton("Nuevo proyecto", onClick = {
                 nombre = ""; nombreInicial = ""; vm.error.value = null; editarId = 0
-            }, shape = FormaPixel) { Text("＋ Nuevo proyecto", Modifier.padding(horizontal = 14.dp)) }
+            })
         },
     ) { espacio ->
         LazyColumn(Modifier.fillMaxSize().padding(espacio), contentPadding = PaddingValues(20.dp, 8.dp, 20.dp, 110.dp),
@@ -67,39 +59,12 @@ fun ProyectosRoute(vm: ProyectosViewModel, pdf: ExportarPdfViewModel? = null, ab
             }
             items(proyectos, key = { it.proyecto.id }) { resumen ->
                 val proyecto = resumen.proyecto
-                Card(onClick = { if (!exportacion.trabajando) abrir(proyecto.id) }, shape = FormaPixel,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                    modifier = Modifier.fillMaxWidth().marcoRpg(MaterialTheme.colorScheme.outlineVariant)) {
-                    Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        IconoRpg("proyecto", Modifier.size(38.dp))
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(proyecto.nombre, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            Text(if (resumen.numeroPaginas == 1) "1 página" else "${resumen.numeroPaginas} páginas",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        if (pdf != null) OutlinedIconButton(onClick = { pdf.preparar(proyecto.id) }, enabled = !operando && !exportacion.trabajando,
-                            shape = FormaPixel, modifier = Modifier.size(width = 48.dp, height = 56.dp)) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(painterResource(R.drawable.ic_pdf_export), "Exportar ${proyecto.nombre} a PDF", modifier = Modifier.size(22.dp), tint = MaterialTheme.colorScheme.secondary)
-                                Text("PDF", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
-                            }
-                        }
-                        var menu by remember { mutableStateOf(false) }
-                        Box {
-                            IconButton(onClick = { menu = true }, enabled = !operando) {
-                                Icon(painterResource(R.drawable.ic_more_vert), contentDescription = "Opciones de ${proyecto.nombre}")
-                            }
-                            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                                DropdownMenuItem(text = { Text("Editar nombre") }, onClick = {
-                                    menu = false; vm.error.value = null; nombre = proyecto.nombre; nombreInicial = nombre; editarId = proyecto.id
-                                })
-                                DropdownMenuItem(text = { Text("Eliminar proyecto") }, onClick = {
-                                    menu = false; vm.error.value = null; eliminarId = proyecto.id
-                                })
-                            }
-                        }
-                    }
-                }
+                ProyectoCard(proyecto.nombre, resumen.numeroPaginas,
+                    abrir = { abrir(proyecto.id) },
+                    editar = { vm.error.value = null; nombre = proyecto.nombre; nombreInicial = nombre; editarId = proyecto.id },
+                    eliminar = { vm.error.value = null; eliminarId = proyecto.id },
+                    exportar = if (pdf != null) ({ pdf.preparar(proyecto.id) }) else null,
+                    habilitado = !operando, exportando = exportacion.trabajando)
             }
             if (editarId == null && eliminarId == null) error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
             exportacion.mensaje?.let { mensaje -> item {

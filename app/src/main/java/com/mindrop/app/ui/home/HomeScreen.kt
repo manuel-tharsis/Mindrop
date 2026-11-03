@@ -17,12 +17,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import com.mindrop.app.ui.icons.PackIcon as Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +29,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -66,6 +62,7 @@ import com.mindrop.app.ui.home.components.FolderCard
 import com.mindrop.app.ui.home.components.IdeaCard
 import com.mindrop.app.ui.theme.MindropTheme
 import com.mindrop.app.ui.rpg.EntradaPixel
+import com.mindrop.app.ui.components.MindropAddButton
 
 private sealed interface MoveRequest {
     val id: Long
@@ -262,7 +259,7 @@ fun HomeScreen(
         modifier = modifier,
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
         topBar = {
-            MediumTopAppBar(
+            TopAppBar(
                 title = {
                     Text(
                         text = uiState.currentFolder?.name
@@ -274,7 +271,7 @@ fun HomeScreen(
                                 },
                             ),
                         style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Normal,
+                        fontWeight = FontWeight.Medium,
                         maxLines = 1,
                         overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     )
@@ -307,34 +304,22 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddClick,
-                shape = CircleShape,
-                containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_add),
-                    contentDescription = stringResource(R.string.add_content_description),
-                    modifier = Modifier.size(56.dp),
-                )
-            }
+            MindropAddButton(stringResource(R.string.add_content_description), onAddClick)
         },
     ) { innerPadding ->
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 156.dp),
+            columns = GridCells.Adaptive(minSize = 148.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
             contentPadding = PaddingValues(
-                start = 16.dp,
+                start = 20.dp,
                 top = 8.dp,
-                end = 16.dp,
+                end = 20.dp,
                 bottom = 104.dp,
             ),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (uiState.folderId != null) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
@@ -346,11 +331,11 @@ fun HomeScreen(
             }
             item(span = { GridItemSpan(maxLineSpan) }) {
                 if (onGlobalSearch != null) {
-                    androidx.compose.material3.Surface(onClick = onGlobalSearch, shape = RoundedCornerShape(24.dp),
+                    androidx.compose.material3.Surface(onClick = onGlobalSearch, shape = MaterialTheme.shapes.large,
                         color = MaterialTheme.colorScheme.surfaceContainerLow) {
                         Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Icon(painterResource(R.drawable.ic_search), null)
-                            Text("Buscar ideas y páginas…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Icon(painterResource(R.drawable.ic_search), null, Modifier.size(22.dp))
+                            Text("Buscar ideas y páginas…", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 } else {
@@ -503,7 +488,7 @@ fun SearchField(
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(28.dp)
+    val shape = MaterialTheme.shapes.large
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
@@ -542,10 +527,11 @@ fun SectionTitle(
     )
 }
 
-@Preview(name = "Principal con contenido", showBackground = true, widthDp = 400, heightDp = 820)
+@Preview(name = "Principal con contenido", showBackground = true, backgroundColor = 0xFF0D0F13, widthDp = 400, heightDp = 820)
 @Preview(
     name = "Principal modo oscuro",
     showBackground = true,
+    backgroundColor = 0xFF0D0F13,
     widthDp = 400,
     heightDp = 820,
     uiMode = Configuration.UI_MODE_NIGHT_YES,
@@ -601,7 +587,7 @@ private fun HomeScreenPreview() {
     }
 }
 
-@Preview(name = "Principal vacía", showBackground = true, widthDp = 400, heightDp = 820)
+@Preview(name = "Principal vacía", showBackground = true, backgroundColor = 0xFF0D0F13, widthDp = 400, heightDp = 820)
 @Composable
 private fun EmptyHomeScreenPreview() {
     MindropTheme {
@@ -622,7 +608,7 @@ private fun EmptyHomeScreenPreview() {
     }
 }
 
-@Preview(name = "Carpeta anidada", showBackground = true, widthDp = 400, heightDp = 820)
+@Preview(name = "Carpeta anidada", showBackground = true, backgroundColor = 0xFF0D0F13, widthDp = 400, heightDp = 820)
 @Composable
 private fun NestedFolderScreenPreview() {
     MindropTheme {

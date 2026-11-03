@@ -26,7 +26,7 @@ import com.mindrop.app.ui.icons.ThemedIcon
 val LocalMovimiento = staticCompositionLocalOf { true }
 val LocalEfecto = staticCompositionLocalOf { "chispa" }
 val LocalDiseno = staticCompositionLocalOf { "clasico" }
-val FormaPixel = RoundedCornerShape(24.dp)
+val FormaPixel = RoundedCornerShape(20.dp)
 
 @Composable
 fun movimientoPermitido(): Boolean {
@@ -39,7 +39,7 @@ fun movimientoPermitido(): Boolean {
 fun Modifier.reboteRpg(interacciones: MutableInteractionSource): Modifier {
     val pulsado by interacciones.collectIsPressedAsState()
     val movimiento = movimientoPermitido()
-    val escala by animateFloatAsState(if (pulsado && movimiento) .97f else 1f, tween(if (movimiento) 90 else 0), label = "Pulsación")
+    val escala by animateFloatAsState(if (pulsado && movimiento) .99f else 1f, tween(if (movimiento) 100 else 0), label = "Pulsación")
     return graphicsLayer { scaleX = escala; scaleY = escala }
 }
 
@@ -60,11 +60,11 @@ fun EntradaPixel(clave: Any, modifier: Modifier = Modifier, contenido: @Composab
     val permitido = movimientoPermitido()
     val progreso = remember(clave) { Animatable(if (permitido) 0f else 1f) }
     LaunchedEffect(clave, permitido) {
-        if (permitido) progreso.animateTo(1f, tween(240)) else progreso.snapTo(1f)
+        if (permitido) progreso.animateTo(1f, tween(180)) else progreso.snapTo(1f)
     }
     Box(modifier.graphicsLayer {
         alpha = progreso.value
-        translationY = (1f - progreso.value) * 12.dp.toPx()
+        translationY = (1f - progreso.value) * 4.dp.toPx()
     }) { contenido() }
 }
 

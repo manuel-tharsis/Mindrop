@@ -31,6 +31,7 @@ import com.mindrop.app.ui.rpg.LocalMovimiento
 import com.mindrop.app.ui.rpg.MuestraEfecto
 import com.mindrop.app.ui.rpg.OpcionesAspecto
 import com.mindrop.app.ui.theme.MindropTheme
+import com.mindrop.app.ui.navigation.MindropNavigationBar
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -72,6 +73,19 @@ class IconPackRenderTest {
 
     @Test fun inicioRealConJerarquiaYPrioridad() { inicio(390, 844, 1f, "inicio-basico") }
     @Test fun inicioRealEstrechoConTextoGrande() { inicio(320, 740, 1.3f, "inicio-estrecho") }
+    @Test fun inicioEnMovilCompactoMantieneCarpetasEnDosColumnas() { inicio(360, 780, 1f, "inicio-compacto") }
+    @Test fun inicioVacioConCompletadasSigueSiendoAccesible() {
+        capturar("inicio-vacio") {
+            Column(Modifier.fillMaxSize()) {
+                Box(Modifier.weight(1f)) {
+                    HomeScreen(HomeUiState(), onSearchQueryChange = {}, onFolderClick = {}, onIdeaClick = {},
+                        onEditFolder = {}, onMoveFolder = {}, onDeleteFolder = {}, onMoveIdea = {}, onBack = {},
+                        onBreadcrumbClick = {}, onAddClick = {}, onCompletedClick = {})
+                }
+                MindropNavigationBar("home") { }
+            }
+        }
+    }
 
     @Test fun materialNoRepintaLosColoresDelArchivoAprobado() {
         capturar("fidelidad-icono", verificar = { pixels ->
@@ -115,6 +129,8 @@ class IconPackRenderTest {
 
     private fun inicio(width: Int, height: Int, fontScale: Float, name: String) {
         capturar(name, width, height, fontScale) {
+            Column(Modifier.fillMaxSize()) {
+            Box(Modifier.weight(1f)) {
             HomeScreen(HomeUiState(hasAnyContent = true, completedIdeaCount = 2,
                 folders = listOf(FolderSummary(FolderEntity(1, "Programación", "folder"), 7, 1), FolderSummary(FolderEntity(2, "Inventos", "folder"), 4, 0)),
                 ideas = listOf(IdeaEntity(1, "BioGestor", "Organizar el trabajo del laboratorio", "", "brain", esImportante = true),
@@ -123,6 +139,9 @@ class IconPackRenderTest {
                 onSearchQueryChange = {}, onFolderClick = {}, onIdeaClick = {}, onEditFolder = {},
                 onMoveFolder = {}, onDeleteFolder = {}, onMoveIdea = {}, onBack = {},
                 onBreadcrumbClick = {}, onAddClick = {}, onCompletedClick = {})
+            }
+            MindropNavigationBar("home") { }
+            }
         }
     }
 

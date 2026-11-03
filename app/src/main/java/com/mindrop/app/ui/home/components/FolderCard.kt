@@ -73,18 +73,18 @@ fun FolderCard(
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(38.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(androidx.compose.ui.graphics.Color.Transparent),
                 contentAlignment = Alignment.Center,
             ) {
-                IconoRpg(tipo = "carpeta", abierto = abriendo)
+                IconoRpg(tipo = "carpeta", modifier = Modifier.size(38.dp), abierto = abriendo)
                 if (folderSummary.folder.icon.isNotBlank() && folderSummary.folder.icon != "folder") {
                     Icon(
                         painterResource(mindropIcon(folderSummary.folder.icon).drawableRes),
@@ -101,7 +101,7 @@ fun FolderCard(
                 Text(
                     text = folderSummary.folder.name,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Medium,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -120,7 +120,7 @@ fun FolderCard(
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFFFFBF8)
+@Preview(showBackground = true, backgroundColor = 0xFF0D0F13)
 @Composable
 private fun FolderCardPreview() {
     MindropTheme {

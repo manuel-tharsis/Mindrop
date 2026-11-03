@@ -38,20 +38,20 @@ fun CompletedIdeasCard(
     ElevatedCard(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         ),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 16.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(40.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(completedGreen.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center,
@@ -63,7 +63,7 @@ fun CompletedIdeasCard(
                     text = stringResource(R.string.completed_ideas_title),
                     color = completedGreen,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Medium,
                 )
                 Text(
                     text = pluralStringResource(R.plurals.idea_count, ideaCount, ideaCount),
@@ -75,7 +75,7 @@ fun CompletedIdeasCard(
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFFFFBF8)
+@Preview(showBackground = true, backgroundColor = 0xFF0D0F13)
 @Composable
 private fun CompletedIdeasCardPreview() {
     MindropTheme {

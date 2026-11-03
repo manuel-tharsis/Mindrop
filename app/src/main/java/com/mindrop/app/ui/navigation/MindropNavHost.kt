@@ -1,7 +1,5 @@
 package com.mindrop.app.ui.navigation
 
-import com.mindrop.app.ui.icons.PackIcon as Icon
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.*
@@ -9,8 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import com.mindrop.app.ui.icons.packPainterResource as painterResource
-import com.mindrop.app.R
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.ViewModel
@@ -355,20 +351,11 @@ fun MindropNavHost(
     }
     SnackbarHost(avisos, Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp)
         .then(if (principal) Modifier else Modifier.navigationBarsPadding()))
-    if (principal) NavigationBar(containerColor = MaterialTheme.colorScheme.background, tonalElevation = 0.dp) {
-        listOf("home" to "Inicio", "proyectos" to "Proyectos", "agenda" to "Agenda", "logros" to "Logros", "ajustes" to "Ajustes").forEachIndexed { indice, (destino, nombre) ->
-            NavigationBarItem(selected = if (destino == "home") ruta in listOf("home", "completed", "browse/{folderId}") else ruta == destino,
-                colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant, unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant),
-                onClick = { navController.navigate(destino) {
-                    popUpTo("home") { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                } }, icon = { Icon(painterResource(listOf(R.drawable.ic_idea, R.drawable.ic_project,
-                    R.drawable.ic_calendar, R.drawable.ic_trophy, R.drawable.ic_settings)[indice]), contentDescription = null,
-                    modifier = Modifier.size(24.dp)) }, label = { Text(nombre, maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, style = MaterialTheme.typography.labelMedium) })
+    if (principal) MindropNavigationBar(ruta) { destino ->
+        navController.navigate(destino) {
+            popUpTo("home") { saveState = true }
+            launchSingleTop = true
+            restoreState = true
         }
     }
     }
