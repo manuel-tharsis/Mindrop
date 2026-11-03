@@ -20,6 +20,31 @@ import org.robolectric.annotation.Config
 @Config(sdk = [36])
 class NavigationBackStackTest {
     @Test
+    fun widgetAbreFormularioYVuelveALaAgendaSinDuplicarElBorrador() {
+        val navController = folderNavController()
+        navController.navigate("browse/12")
+        abrirNuevoEventoDesdeWidget(navController)
+        assertEquals("agenda/nuevo", navController.currentDestination?.route)
+        val borrador = navController.currentBackStackEntry
+        abrirNuevoEventoDesdeWidget(navController)
+        org.junit.Assert.assertSame(borrador, navController.currentBackStackEntry)
+        assertTrue(navController.popBackStack())
+        assertEquals("agenda", navController.currentDestination?.route)
+        assertTrue(navController.popBackStack())
+        assertEquals("browse/{folderId}", navController.currentDestination?.route)
+    }
+
+    @Test
+    fun formularioAbiertoDesdeWidgetConservaSuDestinoAlRestaurar() {
+        val original = folderNavController()
+        abrirNuevoEventoDesdeWidget(original)
+        val restored = folderNavController(original.saveState())
+        assertEquals("agenda/nuevo", restored.currentDestination?.route)
+        assertTrue(restored.popBackStack())
+        assertEquals("agenda", restored.currentDestination?.route)
+    }
+
+    @Test
     fun deepFolderStackCanReturnToAnExactAncestor() {
         val navController = folderNavController()
         navController.navigate("browse/1")
@@ -85,6 +110,8 @@ class NavigationBackStackTest {
             if (savedState != null) restoreState(savedState)
             graph = createGraph(startDestination = "home") {
                 composable("home") {}
+                composable("agenda") {}
+                composable("agenda/nuevo") {}
                 composable("completed") {}
                 composable(
                     route = "browse/{folderId}",

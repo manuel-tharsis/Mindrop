@@ -3,7 +3,10 @@ package com.mindrop.app.ui.agenda
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.BackHandler
@@ -19,6 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import com.mindrop.app.data.local.entity.*
 import com.mindrop.app.ui.rpg.*
 import java.time.*
@@ -49,7 +55,8 @@ fun CampoHora(minuto: Int?, cambiar: (Int?) -> Unit, habilitado: Boolean = true)
 }
 
 @Composable
-fun AgendaScreen(vm: AgendaViewModel, ideas: List<IdeaEntity>, abrirIdea: (Long) -> Unit) {
+fun AgendaScreen(vm: AgendaViewModel, ideas: List<IdeaEntity>, fechaSolicitada: String? = null,
+    consumirFecha: () -> Unit = {}, abrirIdea: (Long) -> Unit) {
     val eventos by vm.eventos.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
     val guardando by vm.guardando.collectAsStateWithLifecycle()
@@ -57,7 +64,13 @@ fun AgendaScreen(vm: AgendaViewModel, ideas: List<IdeaEntity>, abrirIdea: (Long)
     var mes by rememberSaveable { mutableStateOf(YearMonth.now().toString()) }
     var editarId by rememberSaveable { mutableStateOf<Long?>(null) }
     var borrarId by rememberSaveable { mutableStateOf<Long?>(null) }
-    LaunchedEffect(vm) { vm.guardados.collect { editarId = null; borrarId = null } }
+    LaunchedEffect(vm) { vm.guardados.collect { guardada ->
+        editarId = null; borrarId = null
+        if (guardada != null) { fecha = guardada; mes = YearMonth.from(LocalDate.parse(guardada)).toString() }
+    } }
+    LaunchedEffect(fechaSolicitada) {
+        fechaSolicitada?.let { fecha = it; mes = YearMonth.from(LocalDate.parse(it)).toString(); consumirFecha() }
+    }
     val mesActual = YearMonth.parse(mes)
     val eventosDia = remember(eventos, fecha) { eventos.filter { it.fecha == fecha } }
     val diasConEventos = remember(eventos, mes) { eventos.filter { it.fecha.startsWith(mes) }.map { LocalDate.parse(it.fecha).dayOfMonth }.toSet() }
@@ -131,28 +144,59 @@ fun AgendaScreen(vm: AgendaViewModel, ideas: List<IdeaEntity>, abrirIdea: (Long)
 }
 
 @Composable
-private fun EditorEvento(id: Long, original: EventoAgenda?, fechaInicial: String, ideas: List<IdeaEntity>, error: String?,
-    guardando: Boolean, guardar: (EventoAgenda) -> Unit, cancelar: () -> Unit) {
-    var titulo by rememberSaveable(id) { mutableStateOf(original?.titulo.orEmpty()) }
-    var descripcion by rememberSaveable(id) { mutableStateOf(original?.descripcion.orEmpty()) }
-    var fecha by rememberSaveable(id) { mutableStateOf(original?.fecha ?: fechaInicial) }
-    var minuto by rememberSaveable(id) { mutableStateOf(original?.minutoDelDia) }
-    var ideaId by rememberSaveable(id) { mutableStateOf(original?.ideaId) }
-    var antes by rememberSaveable(id) { mutableStateOf(original?.minutosAntes) }
+internal fun EditorEvento(id: Long, original: EventoAgenda?, fechaInicial: String, ideas: List<IdeaEntity>, error: String?,
+    guardando: Boolean, guardar: (EventoAgenda) -> Unit, cancelar: () -> Unit, eventoInicial: EventoAgenda? = null) {
+    val base = original ?: eventoInicial ?: EventoAgenda(0, "", fecha = fechaInicial)
+    var titulo by rememberSaveable(id) { mutableStateOf(base.titulo) }
+    var descripcion by rememberSaveable(id) { mutableStateOf(base.descripcion) }
+    var fecha by rememberSaveable(id) { mutableStateOf(base.fecha) }
+    var minuto by rememberSaveable(id) { mutableStateOf(base.minutoDelDia) }
+    var ideaId by rememberSaveable(id) { mutableStateOf(base.ideaId) }
+    var antes by rememberSaveable(id) { mutableStateOf(base.minutosAntes) }
     var descartar by rememberSaveable { mutableStateOf(false) }
     val contexto = LocalContext.current
-    val permiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    var notificacionesActivas by remember { mutableStateOf(puedeNotificar(contexto)) }
+    var guardarTrasPermiso by rememberSaveable { mutableStateOf(false) }
+    var permisoRechazado by rememberSaveable { mutableStateOf(false) }
+    val actual = EventoAgenda(id, titulo, descripcion, fecha, minuto, ideaId, antes)
+    val guardarActual by rememberUpdatedState { guardar(actual) }
+    val permiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
+        notificacionesActivas = puedeNotificar(contexto)
+        permisoRechazado = !concedido
+        if (concedido && notificacionesActivas && guardarTrasPermiso) guardarActual()
+        guardarTrasPermiso = false
+    }
+    LifecycleResumeEffect(contexto) {
+        notificacionesActivas = puedeNotificar(contexto)
+        onPauseOrDispose { }
+    }
+    fun activarAvisos(alGuardar: Boolean = false) {
+        if (!permisoRechazado && Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(contexto,
+                Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            guardarTrasPermiso = alGuardar
+            permiso.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            val ajustes = if (Build.VERSION.SDK_INT >= 26) {
+                val canalBloqueado = contexto.getSystemService(android.app.NotificationManager::class.java)
+                    .getNotificationChannel("mindrop_local")?.importance == android.app.NotificationManager.IMPORTANCE_NONE
+                if (canalBloqueado) Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, contexto.packageName).putExtra(Settings.EXTRA_CHANNEL_ID, "mindrop_local")
+                else Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, contexto.packageName)
+            } else Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                "package:${contexto.packageName}".toUri())
+            contexto.startActivity(ajustes)
+        }
+    }
     fun salir() {
         if (guardando) return
-        val actual = EventoAgenda(id, titulo, descripcion, fecha, minuto, ideaId, antes)
-        if (actual != (original ?: EventoAgenda(0, "", fecha = fechaInicial))) descartar = true else cancelar()
+        if (actual != base) descartar = true else cancelar()
     }
     Dialog(onDismissRequest = ::salir, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(Modifier.fillMaxSize()) {
             BackHandler(onBack = ::salir)
-            LazyColumn(Modifier.fillMaxSize().imePadding(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            LazyColumn(Modifier.fillMaxSize().safeDrawingPadding().imePadding(), contentPadding = PaddingValues(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 item { Text(if (id == 0L) "Nuevo evento" else "Editar evento", style = MaterialTheme.typography.headlineSmall) }
-                item { OutlinedTextField(titulo, { titulo = it }, label = { Text("Título") }, enabled = !guardando, modifier = Modifier.fillMaxWidth()) }
+                item { OutlinedTextField(titulo, { titulo = it }, label = { Text("Título") }, singleLine = true, enabled = !guardando, modifier = Modifier.fillMaxWidth()) }
                 item { OutlinedTextField(descripcion, { descripcion = it }, label = { Text("Descripción (opcional)") }, minLines = 3, enabled = !guardando, modifier = Modifier.fillMaxWidth()) }
                 item { CampoFecha(fecha, { fecha = it }, !guardando) }
                 item { CampoHora(minuto, { minuto = it; if (it == null) antes = null }, !guardando) }
@@ -161,12 +205,18 @@ private fun EditorEvento(id: Long, original: EventoAgenda?, fechaInicial: String
                 item { SelectorSimple("Recordatorio", etiquetaRecordatorio(antes),
                     listOf(null, 0, 10, 30, 60, 1440).map { it to etiquetaRecordatorio(it) }, !guardando && minuto != null) {
                         antes = it
-                        if (it != null && Build.VERSION.SDK_INT >= 33 && !puedeNotificar(contexto)) permiso.launch(Manifest.permission.POST_NOTIFICATIONS)
                     } }
+                if (antes != null && !notificacionesActivas) item {
+                    Text("Las notificaciones están desactivadas. Actívalas para recibir el aviso o elige Sin recordatorio.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(enabled = !guardando, onClick = { activarAvisos() }) { Text("Activar notificaciones") }
+                }
                 item { Text("Los avisos son aproximados y requieren permitir notificaciones.", style = MaterialTheme.typography.bodySmall) }
                 error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
                 item { Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(enabled = !guardando, onClick = { guardar(EventoAgenda(id, titulo, descripcion, fecha, minuto, ideaId, antes)) }) { Text("Guardar") }
+                    Button(enabled = !guardando, onClick = {
+                        if (titulo.isNotBlank() && antes != null && !puedeNotificar(contexto)) activarAvisos(alGuardar = true) else guardar(actual)
+                    }) { Text("Guardar") }
                     OutlinedButton(enabled = !guardando, onClick = ::salir) { Text("Cancelar") }
                 } }
             }

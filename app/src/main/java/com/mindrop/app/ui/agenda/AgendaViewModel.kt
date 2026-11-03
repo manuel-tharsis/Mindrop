@@ -12,16 +12,16 @@ class AgendaViewModel(private val repositorio: RepositorioAgenda) : ViewModel() 
     val eventos = repositorio.observarEventos().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val error = MutableStateFlow<String?>(null)
     val guardando = MutableStateFlow(false)
-    private val canal = Channel<Unit>(Channel.BUFFERED)
+    private val canal = Channel<String?>(Channel.BUFFERED)
     val guardados = canal.receiveAsFlow()
-    fun guardar(evento: EventoAgenda) = ejecutar { repositorio.guardar(evento) }
-    fun eliminar(id: Long) = ejecutar { repositorio.eliminar(id) }
-    private fun ejecutar(accion: suspend () -> Unit) {
+    fun guardar(evento: EventoAgenda) = ejecutar { repositorio.guardar(evento); evento.fecha }
+    fun eliminar(id: Long) = ejecutar { repositorio.eliminar(id); null }
+    private fun ejecutar(accion: suspend () -> String?) {
         if (guardando.value) return
         guardando.value = true
         error.value = null
         viewModelScope.launch {
-            try { accion(); canal.send(Unit) }
+            try { canal.send(accion()) }
             catch (e: Exception) {
                 if (e is CancellationException) throw e
                 error.value = e.message ?: "No se pudo guardar."

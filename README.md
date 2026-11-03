@@ -1,6 +1,6 @@
 # Mindrop
 
-Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con logros y recompensas cosméticas. La versión 2.3.2 utiliza los archivos de los iconos aprobados, con una interfaz negra, paneles gris oscuro y selecciones resaltadas.
+Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con logros y recompensas cosméticas. La versión 2.4.0 añade un widget para crear eventos con recordatorio desde el escritorio del móvil.
 
 ## Funciones
 
@@ -26,6 +26,7 @@ Mindrop es una aplicación Android personal y completamente offline para guardar
 - Eliminar páginas con confirmación; un cuaderno siempre conserva una hoja vacía si se borra la última.
 - Consultar un calendario mensual y crear, editar o eliminar eventos, vinculados opcionalmente a ideas.
 - Programar recordatorios de eventos o ideas mediante notificaciones locales.
+- Crear un evento con recordatorio desde el widget del escritorio.
 - Activar el redescubrimiento periódico de ideas antiguas, con horario de silencio.
 - Conseguir logros persistentes y desbloquear temas, packs de iconos y efectos.
 - Elegir entre los packs Básico, Aventurero, Bosque, Arcano y Cyberpunk para categorías, navegación y acciones. Arcano adapta sus acentos al tema elegido.
@@ -35,6 +36,16 @@ Mindrop es una aplicación Android personal y completamente offline para guardar
 - Exportar y restaurar copias locales del contenido, el progreso y los iconos desde Ajustes.
 
 Los avisos son aproximados: Android puede retrasarlos por ahorro de batería. Para recibirlos hay que permitir las notificaciones. El redescubrimiento viene desactivado. La racha cuenta días con cambios reales de contenido; abrir la aplicación no cuenta.
+
+## Widget de agenda
+
+Mantén pulsado un espacio vacío del escritorio del móvil, entra en **Widgets** y añade **Mindrop · Nuevo evento**. Puedes ensancharlo horizontalmente según tu lanzador.
+
+Al pulsarlo se abre directamente un nuevo evento en la agenda local de Mindrop. Escribe el título, ajusta fecha y hora y pulsa **Guardar**. Por defecto se propone la próxima hora completa y un aviso a la hora del evento; puedes elegir otro adelanto o **Sin recordatorio**. El evento aparece en el día elegido de la agenda.
+
+Si Android solicita permiso para notificar, concédelo para recibir el aviso. Si lo has desactivado, el formulario permite abrir sus ajustes. Un evento con aviso no se guarda silenciosamente si las notificaciones están bloqueadas; también puedes guardarlo eligiendo **Sin recordatorio**. Los cambios del formulario se conservan al girar el móvil y salir solicita confirmación si has escrito algo.
+
+El widget es un acceso rápido al formulario, no un calendario adicional. Usa los iconos Básico aprobados, no hace consultas periódicas y no añade permisos de calendario, almacenamiento o alarmas exactas. Los avisos son notificaciones normales, sujetos al ahorro de batería y a los ajustes de sonido del teléfono.
 
 ## Copias locales
 
@@ -100,7 +111,7 @@ En macOS o Linux:
 ./gradlew exportReleaseApk
 ```
 
-La APK instalable se genera en `app/build/releases/Mindrop-v2.3.2.apk`.
+La APK instalable se genera en `app/build/releases/Mindrop-v2.4.0.apk`.
 
 Mindrop no solicita el permiso `INTERNET` y no utiliza cuentas, servidores, analíticas ni servicios externos.
 
@@ -117,5 +128,7 @@ La migración de imágenes y la exportación PDF de 2.2.0 se describen en [docs/
 Los packs 2D y las comprobaciones visuales de 2.3.0 se describen en [docs/DESARROLLO_V2_3.md](docs/DESARROLLO_V2_3.md).
 
 Los originales y la preparación de los iconos de 2.3.2 están en [artwork/icon-packs/README.md](artwork/icon-packs/README.md).
+
+El widget de agenda y sus comprobaciones se describen en [docs/DESARROLLO_V2_4.md](docs/DESARROLLO_V2_4.md).
 
 Comprobaciones locales: `./gradlew assembleDebug test lint`. Los tests instrumentados se ejecutan con `./gradlew connectedDebugAndroidTest` en un dispositivo/emulador conectado.

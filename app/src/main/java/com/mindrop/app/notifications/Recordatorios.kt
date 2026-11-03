@@ -82,9 +82,13 @@ class ProgramadorRecordatorios(private val contexto: Context, private val db: Mi
     }
 }
 
-fun puedeNotificar(contexto: Context): Boolean =
-    (Build.VERSION.SDK_INT < 33 || ContextCompat.checkSelfPermission(contexto, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) &&
-        NotificationManagerCompat.from(contexto).areNotificationsEnabled()
+fun puedeNotificar(contexto: Context): Boolean {
+    if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(contexto,
+            Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false
+    if (!NotificationManagerCompat.from(contexto).areNotificationsEnabled()) return false
+    return Build.VERSION.SDK_INT < 26 || contexto.getSystemService(NotificationManager::class.java)
+        .getNotificationChannel("mindrop_local")?.importance != NotificationManager.IMPORTANCE_NONE
+}
 
 fun publicarAviso(contexto: Context, etiqueta: String, numero: Int, titulo: String, texto: String, ruta: String): Boolean {
     if (!puedeNotificar(contexto)) return false
@@ -99,6 +103,7 @@ fun publicarAviso(contexto: Context, etiqueta: String, numero: Int, titulo: Stri
     try {
         NotificationManagerCompat.from(contexto).notify(etiqueta, numero,
             NotificationCompat.Builder(contexto, "mindrop_local").setSmallIcon(R.drawable.ic_idea)
+                .setDefaults(NotificationCompat.DEFAULT_SOUND)
                 .setContentTitle(titulo).setContentText(texto).setStyle(NotificationCompat.BigTextStyle().bigText(texto))
                 .setContentIntent(pendiente).setAutoCancel(true).build())
     } catch (_: SecurityException) { return false }

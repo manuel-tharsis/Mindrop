@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="widget_corner_radius">24dp</dimen>
+    <string name="widget_agenda_label">Mindrop · Nuevo evento</string>
+    <string name="widget_agenda_title">Nuevo evento</string>
+    <string name="widget_agenda_subtitle">Mindrop · con recordatorio</string>
+    <string name="widget_agenda_description">Crear un evento con recordatorio en la agenda de Mindrop</string>
+</resources>

@@ -2,6 +2,7 @@ package com.mindrop.app.notifications
 
 import android.Manifest
 import android.app.NotificationManager
+import android.app.NotificationChannel
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.*
@@ -26,6 +27,36 @@ class RecordatoriosTest {
         WorkManagerTestInitHelper.initializeTestWorkManager(app)
     }
     @After fun cerrar() { WorkManager.getInstance(app).cancelAllWork(); app.database.close() }
+
+    @Test fun eventoConAvisoNotificaUnaVezYAbreLaAgenda() = runBlocking {
+        val evento = app.agenda.guardar(EventoAgenda(titulo = "Revisar BioGestor", descripcion = "Preparar la reunión",
+            fecha = "2099-11-15", minutoDelDia = 600, minutosAntes = 0))
+        val aviso = app.database.daoRpg().recordatorioEvento(evento)!!
+        app.database.daoRpg().actualizarRecordatorio(aviso.copy(fechaHora = LocalDateTime.now().minusMinutes(1).toString()))
+        repeat(2) {
+            TestListenableWorkerBuilder<TrabajadorAviso>(app)
+                .setInputData(workDataOf("id" to aviso.id, "revision" to aviso.revision)).build().doWork()
+        }
+        val gestor = Shadows.shadowOf(app.getSystemService(NotificationManager::class.java))
+        val notificacion = gestor.allNotifications.single()
+        assertEquals("Revisar BioGestor", notificacion.extras.getString("android.title"))
+        assertEquals("Preparar la reunión", notificacion.extras.getString("android.text"))
+        assertEquals("agenda", Shadows.shadowOf(notificacion.contentIntent).savedIntent.getStringExtra("destino_local"))
+        assertTrue(app.database.daoRpg().recordatorio(aviso.id)!!.enviado)
+    }
+
+    @Test fun canalBloqueadoNoDescartaUnAvisoSinEnviarlo() = runBlocking {
+        app.getSystemService(NotificationManager::class.java).createNotificationChannel(
+            NotificationChannel("mindrop_local", "Recordatorios de Mindrop", NotificationManager.IMPORTANCE_NONE))
+        assertFalse(puedeNotificar(app))
+        val evento = app.agenda.guardar(EventoAgenda(titulo = "Revisar", fecha = "2099-11-15", minutoDelDia = 600, minutosAntes = 0))
+        val aviso = app.database.daoRpg().recordatorioEvento(evento)!!
+        app.database.daoRpg().actualizarRecordatorio(aviso.copy(fechaHora = LocalDateTime.now().minusMinutes(1).toString()))
+        TestListenableWorkerBuilder<TrabajadorAviso>(app)
+            .setInputData(workDataOf("id" to aviso.id, "revision" to aviso.revision)).build().doWork()
+        assertFalse(app.database.daoRpg().recordatorio(aviso.id)!!.enviado)
+        assertTrue(Shadows.shadowOf(app.getSystemService(NotificationManager::class.java)).allNotifications.isEmpty())
+    }
 
     @Test fun avisoRepetidoSoloNotificaUnaVezYAbreLaIdea() = runBlocking {
         val idIdea = app.ideaRepository.insert(IdeaEntity(title = "BioGestor", shortDescription = "", fullDescription = "", icon = "idea"))

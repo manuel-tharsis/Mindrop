@@ -48,8 +48,16 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mindrop.app.ui.busqueda.*
 import com.mindrop.app.ui.copias.*
+import com.mindrop.app.widget.AgendaWidget
 
 private const val ROOT_FOLDER_ID = -1L
+
+internal fun abrirNuevoEventoDesdeWidget(navController: NavHostController) {
+    // Una segunda pulsación mantiene el borrador que ya está abierto.
+    if (navController.currentDestination?.route == AgendaWidget.DESTINO_NUEVO_EVENTO) return
+    navController.navigate("agenda") { launchSingleTop = true }
+    navController.navigate(AgendaWidget.DESTINO_NUEVO_EVENTO) { launchSingleTop = true }
+}
 
 private object Destination {
     const val HOME = "home"
@@ -116,6 +124,7 @@ fun MindropNavHost(
     LaunchedEffect(destinoNotificacion) {
         destinoNotificacion?.let { destino ->
             when {
+                destino == AgendaWidget.DESTINO_NUEVO_EVENTO -> abrirNuevoEventoDesdeWidget(navController)
                 destino == "agenda" -> navController.navigate("agenda") { launchSingleTop = true }
                 destino.startsWith("idea/") -> destino.substringAfter("idea/").toLongOrNull()?.takeIf { it > 0 }?.let {
                     navController.navigate(Destination.ideaDetail(it)) { launchSingleTop = true }
@@ -161,10 +170,23 @@ fun MindropNavHost(
             val vm: CuadernoViewModel = viewModel(factory = factory)
             CuadernoRoute(vm, preferencias) { navController.popBackStack() }
         }
-        composable("agenda") {
+        composable("agenda") { entradaAgenda ->
             val ideas by rpg.ideas.collectAsStateWithLifecycle()
             val vm: AgendaViewModel = viewModel(factory = remember(app) { fabricaRpg { AgendaViewModel(app.agenda) } })
-            AgendaScreen(vm, ideas) { navController.navigate(Destination.ideaDetail(it)) }
+            val fechaGuardada by entradaAgenda.savedStateHandle
+                .getStateFlow<String?>(FECHA_EVENTO_GUARDADO, null).collectAsStateWithLifecycle()
+            AgendaScreen(vm, ideas, fechaSolicitada = fechaGuardada,
+                consumirFecha = { entradaAgenda.savedStateHandle[FECHA_EVENTO_GUARDADO] = null }) {
+                navController.navigate(Destination.ideaDetail(it))
+            }
+        }
+        composable(AgendaWidget.DESTINO_NUEVO_EVENTO) {
+            val ideas by rpg.ideas.collectAsStateWithLifecycle()
+            val vm: AgendaViewModel = viewModel(factory = remember(app) { fabricaRpg { AgendaViewModel(app.agenda) } })
+            NuevoEventoRoute(vm, ideas, onGuardado = { fecha ->
+                navController.getBackStackEntry("agenda").savedStateHandle[FECHA_EVENTO_GUARDADO] = fecha
+                navController.popBackStack()
+            }, onCancelar = { navController.popBackStack() })
         }
         composable("logros") { PantallaLogros(rpg) }
         composable("ajustes") { PantallaAjustes(rpg) { OpcionesCopias(copiasVm) } }
