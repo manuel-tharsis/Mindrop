@@ -35,6 +35,7 @@ data class IdeaDetailUiState(
 
 sealed interface IdeaDetailEvent {
     data object Deleted : IdeaDetailEvent
+    data object ActionConfirmed : IdeaDetailEvent
 }
 
 class IdeaDetailViewModel(
@@ -122,6 +123,7 @@ class IdeaDetailViewModel(
                         validatingSuggestionId = null,
                     )
                 }
+                eventChannel.trySend(IdeaDetailEvent.ActionConfirmed)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
                 _uiState.update {
@@ -189,6 +191,7 @@ class IdeaDetailViewModel(
                     "La idea ya no existe."
                 }
                 _uiState.update { it.copy(isUpdatingCompletion = false) }
+                if (!idea.isCompleted) eventChannel.trySend(IdeaDetailEvent.ActionConfirmed)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
                 _uiState.update {

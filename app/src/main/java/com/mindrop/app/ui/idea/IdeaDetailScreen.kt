@@ -61,6 +61,10 @@ import com.mindrop.app.ui.icons.MindropIdeaIcon
 import com.mindrop.app.ui.theme.MindropTheme
 import com.mindrop.app.ui.rpg.DestelloPixel
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalView
+import com.mindrop.app.ui.motion.confirmarAccion
+import com.mindrop.app.ui.motion.ideaSharedElement
+import com.mindrop.app.ui.motion.IdeaSharedPart
 
 @Composable
 fun IdeaDetailRoute(
@@ -70,6 +74,7 @@ fun IdeaDetailRoute(
     onRecordatorio: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val view = LocalView.current
     var showDeleteConfirmation by rememberSaveable { mutableStateOf(false) }
     var suggestionToDelete by rememberSaveable { mutableStateOf<Long?>(null) }
     var celebracion by remember { mutableStateOf(false) }
@@ -91,7 +96,10 @@ fun IdeaDetailRoute(
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
-            if (event == IdeaDetailEvent.Deleted) onBack()
+            when (event) {
+                IdeaDetailEvent.Deleted -> onBack()
+                IdeaDetailEvent.ActionConfirmed -> confirmarAccion(view)
+            }
         }
     }
 
@@ -363,9 +371,11 @@ private fun IdeaHeader(
                 customIconPath = idea.customIconPath,
                 contentDescription = stringResource(R.string.idea_icon_content_description),
                 size = 64.dp,
+                modifier = Modifier.ideaSharedElement(idea.id, IdeaSharedPart.Icon),
             )
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(text = idea.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Medium)
+                Text(text = idea.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Medium,
+                    modifier = Modifier.ideaSharedElement(idea.id, IdeaSharedPart.Title))
                 if (idea.shortDescription.isNotBlank()) {
                     Text(text = idea.shortDescription, style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)

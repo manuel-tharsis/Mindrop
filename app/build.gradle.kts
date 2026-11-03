@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-val releaseVersionName = "2.5.0"
+val releaseVersionName = "2.6.0"
 val releaseSigningPropertiesFile = rootProject.file("keystore.properties")
 val releaseSigningProperties = Properties().apply {
     if (releaseSigningPropertiesFile.isFile) {
@@ -23,7 +23,7 @@ android {
         applicationId = "com.mindrop.app"
         minSdk = 23
         targetSdk = 36
-        versionCode = 13
+        versionCode = 14
         versionName = releaseVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -112,6 +112,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.animation)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     debugImplementation(libs.androidx.compose.ui.tooling)

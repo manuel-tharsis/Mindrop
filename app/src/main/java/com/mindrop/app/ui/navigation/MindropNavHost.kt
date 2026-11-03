@@ -45,8 +45,18 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mindrop.app.ui.busqueda.*
 import com.mindrop.app.ui.copias.*
 import com.mindrop.app.widget.AgendaWidget
+import com.mindrop.app.shortcuts.AccesosRapidos
+import com.mindrop.app.ui.motion.LocalIdeaSharedScope
+import com.mindrop.app.ui.motion.LocalIdeaVisibilityScope
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 
 private const val ROOT_FOLDER_ID = -1L
+
+internal fun abrirNuevaIdeaDesdeAcceso(navController: NavHostController) {
+    if (navController.currentDestination?.route == Destination.NEW_IDEA) return
+    navController.navigate(Destination.newIdea(null)) { launchSingleTop = true }
+}
 
 internal fun abrirNuevoEventoDesdeWidget(navController: NavHostController) {
     // Una segunda pulsación mantiene el borrador que ya está abierto.
@@ -79,6 +89,7 @@ private object Destination {
     fun editFolder(folderId: Long) = "folders/$folderId/edit"
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun MindropNavHost(
     folderRepository: FolderRepository,
@@ -120,6 +131,7 @@ fun MindropNavHost(
     LaunchedEffect(destinoNotificacion) {
         destinoNotificacion?.let { destino ->
             when {
+                destino == AccesosRapidos.NUEVA_IDEA -> abrirNuevaIdeaDesdeAcceso(navController)
                 destino == AgendaWidget.DESTINO_NUEVO_EVENTO -> abrirNuevoEventoDesdeWidget(navController)
                 destino == "agenda" -> navController.navigate("agenda") { launchSingleTop = true }
                 destino.startsWith("idea/") -> destino.substringAfter("idea/").toLongOrNull()?.takeIf { it > 0 }?.let {
@@ -136,17 +148,26 @@ fun MindropNavHost(
     Column(Modifier.fillMaxSize()) {
     Box(Modifier.weight(1f)) {
 
+    SharedTransitionLayout(Modifier.fillMaxSize()) {
+    CompositionLocalProvider(LocalIdeaSharedScope provides this) {
+    val animar = movimientoPermitido()
     NavHost(
         navController = navController,
         startDestination = Destination.HOME,
+        enterTransition = { if (animar) fadeIn(tween(220)) else EnterTransition.None },
+        exitTransition = { if (animar) fadeOut(tween(220)) else ExitTransition.None },
+        popEnterTransition = { if (animar) fadeIn(tween(220)) else EnterTransition.None },
+        popExitTransition = { if (animar) fadeOut(tween(220)) else ExitTransition.None },
     ) {
         composable("buscar") {
             val vm: BusquedaViewModel = viewModel(factory = remember(app) { viewModelFactory {
                 initializer { BusquedaViewModel(app.folderRepository, app.ideaRepository, app.proyectos, createSavedStateHandle()) }
             } })
+            CompositionLocalProvider(LocalIdeaVisibilityScope provides this@composable) {
             BusquedaScreen(vm, volver = { navController.popBackStack() },
                 abrirIdea = { navController.navigate(Destination.ideaDetail(it)) },
                 abrirPagina = { proyecto, pagina -> navController.navigate("proyectos/$proyecto/cuaderno?pagina=$pagina") })
+            }
         }
         composable("proyectos") {
             val vm: ProyectosViewModel = viewModel(factory = remember(app) { fabricaRpg { ProyectosViewModel(app.proyectos) } })
@@ -191,18 +212,21 @@ fun MindropNavHost(
             DialogoRecordatorio(id, app, salir = { navController.popBackStack() })
         }
         composable(route = Destination.HOME) {
+            CompositionLocalProvider(LocalIdeaVisibilityScope provides this@composable) {
             FolderBrowserDestination(
                 folderId = null,
                 navController = navController,
                 folderRepository = folderRepository,
                 ideaRepository = ideaRepository,
             )
+            }
         }
         composable(route = Destination.COMPLETED) {
             val factory = remember(ideaRepository) {
                 CompletedIdeasViewModel.factory(ideaRepository)
             }
             val viewModel: CompletedIdeasViewModel = viewModel(factory = factory)
+            CompositionLocalProvider(LocalIdeaVisibilityScope provides this@composable) {
             CompletedIdeasRoute(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() },
@@ -210,18 +234,21 @@ fun MindropNavHost(
                     navController.navigate(Destination.ideaDetail(ideaId))
                 },
             )
+            }
         }
         composable(
             route = Destination.BROWSE_FOLDER,
             arguments = listOf(navArgument("folderId") { type = NavType.LongType }),
         ) { backStackEntry ->
             val folderId = backStackEntry.arguments?.getLong("folderId") ?: return@composable
+            CompositionLocalProvider(LocalIdeaVisibilityScope provides this@composable) {
             FolderBrowserDestination(
                 folderId = folderId,
                 navController = navController,
                 folderRepository = folderRepository,
                 ideaRepository = ideaRepository,
             )
+            }
         }
         composable(
             route = Destination.NEW_IDEA,
@@ -270,6 +297,7 @@ fun MindropNavHost(
                 )
             }
             val viewModel: IdeaDetailViewModel = viewModel(factory = factory)
+            CompositionLocalProvider(LocalIdeaVisibilityScope provides this@composable) {
             IdeaDetailRoute(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() },
@@ -278,6 +306,7 @@ fun MindropNavHost(
                 },
                 onRecordatorio = { navController.navigate("ideas/$ideaId/recordatorio") },
             )
+            }
         }
         composable(
             route = Destination.EDIT_IDEA,
@@ -347,6 +376,8 @@ fun MindropNavHost(
                 onFinished = { navController.popBackStack() },
             )
         }
+    }
+    }
     }
     }
     SnackbarHost(avisos, Modifier.align(Alignment.CenterHorizontally).padding(horizontal = 16.dp)

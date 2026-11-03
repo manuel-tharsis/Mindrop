@@ -46,6 +46,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalView
+import com.mindrop.app.ui.motion.confirmarAccion
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.mindrop.app.ui.icons.packPainterResource as painterResource
@@ -73,6 +75,7 @@ fun IdeaEditorRoute(
     onFinished: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val view = LocalView.current
     var showDiscardDialog by rememberSaveable { mutableStateOf(false) }
     var suggestionToDelete by rememberSaveable { mutableStateOf<Long?>(null) }
     var draftSuggestionToDelete by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -96,7 +99,10 @@ fun IdeaEditorRoute(
     BackHandler(onBack = ::requestExit)
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
-            if (event == EditorEvent.Saved) onFinished()
+            when (event) {
+                EditorEvent.Saved -> onFinished()
+                EditorEvent.SuggestionValidated -> confirmarAccion(view)
+            }
         }
     }
 

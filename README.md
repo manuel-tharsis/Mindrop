@@ -1,6 +1,6 @@
 # Mindrop
 
-Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con logros y recompensas cosméticas. La versión 2.5.0 presenta una interfaz más sobria: fondos carbón, tarjetas discretas, tipografía clara y menos énfasis visual en los elementos RPG. Conserva los packs de iconos y todas las funciones existentes.
+Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con logros y recompensas cosméticas. La versión 2.6.0 incorpora transiciones al abrir ideas, una confirmación táctil discreta y accesos rápidos desde el icono del escritorio. Conserva la interfaz sobria, los packs de iconos y la compatibilidad con Android 6.0 o posterior.
 
 ## Funciones
 
@@ -36,6 +36,12 @@ Mindrop es una aplicación Android personal y completamente offline para guardar
 - Exportar y restaurar copias locales del contenido, el progreso y los iconos desde Ajustes.
 
 Los avisos son aproximados: Android puede retrasarlos por ahorro de batería. Para recibirlos hay que permitir las notificaciones. El redescubrimiento viene desactivado. La racha cuenta días con cambios reales de contenido; abrir la aplicación no cuenta.
+
+## Accesos rápidos y movimiento
+
+Después de abrir Mindrop una vez, mantén pulsado su icono en un escritorio compatible para ver **Nueva idea** y **Nuevo evento**. Requieren Android 7.1 o posterior. Abren los formularios existentes y conservan un borrador que ya esté abierto. En Android 6 siguen disponibles las acciones dentro de la app y el widget.
+
+Al abrir y cerrar una idea, su icono y título acompañan la transición. Se desactiva con **Reducir movimiento** en Ajustes o al desactivar las animaciones del sistema. Validar una sugerencia o marcar una idea como completada produce una respuesta táctil breve tras guardarse; respeta los ajustes hápticos del teléfono y no requiere permisos nuevos.
 
 ## Widget de agenda
 
@@ -111,13 +117,13 @@ En macOS o Linux:
 ./gradlew exportReleaseApk
 ```
 
-La APK instalable se genera en `app/build/releases/Mindrop-v2.5.0.apk`.
+La APK instalable se genera en `app/build/releases/Mindrop-v2.6.0.apk`.
 
 Mindrop no solicita el permiso `INTERNET` y no utiliza cuentas, servidores, analíticas ni servicios externos.
 
 ## Desarrollo
 
-La arquitectura y las reglas de persistencia se describen en [docs/ARQUITECTURA_V2.md](docs/ARQUITECTURA_V2.md). La memoria de fases, validaciones y limitaciones está en [docs/DESARROLLO_V2.md](docs/DESARROLLO_V2.md).
+La arquitectura y las reglas de persistencia se describen en [docs/ARQUITECTURA_V2.md](docs/ARQUITECTURA_V2.md). La memoria de fases, validaciones y limitaciones está en [docs/DESARROLLO_V2.md](docs/DESARROLLO_V2.md). Los cambios de esta versión se describen en [docs/DESARROLLO_V2_6.md](docs/DESARROLLO_V2_6.md).
 
 Los cambios de prioridad y cuadernos están documentados en [docs/DESARROLLO_V2_1.md](docs/DESARROLLO_V2_1.md).
 

@@ -31,6 +31,8 @@ import com.mindrop.app.ui.rpg.reboteRpg
 import com.mindrop.app.ui.idea.BanderaPrioridad
 import androidx.compose.runtime.remember
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import com.mindrop.app.ui.motion.ideaSharedElement
+import com.mindrop.app.ui.motion.IdeaSharedPart
 
 @Composable
 fun IdeaCard(
@@ -95,11 +97,13 @@ fun IdeaCard(
                     customIconPath = idea.customIconPath,
                     contentDescription = stringResource(R.string.idea_icon_content_description),
                     size = 40.dp,
+                    modifier = Modifier.ideaSharedElement(idea.id, IdeaSharedPart.Icon),
                 )
 
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = idea.title,
+                        modifier = Modifier.ideaSharedElement(idea.id, IdeaSharedPart.Title),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium,
                         maxLines = 2,

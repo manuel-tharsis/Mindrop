@@ -15,6 +15,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 
 class MindropApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        ambito.launch { com.mindrop.app.shortcuts.AccesosRapidos.registrar(applicationContext) }
+    }
+
     val borrados = com.mindrop.app.data.repository.BorradosRecuperables()
     val imagenesCuaderno by lazy { com.mindrop.app.data.cuaderno.AlmacenImagenesCuaderno(applicationContext) }
     val proyectos by lazy { RepositorioProyectos(database, borrados, imagenesCuaderno) }

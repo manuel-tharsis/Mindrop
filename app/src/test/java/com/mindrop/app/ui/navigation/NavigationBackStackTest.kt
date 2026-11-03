@@ -20,6 +20,29 @@ import org.robolectric.annotation.Config
 @Config(sdk = [36])
 class NavigationBackStackTest {
     @Test
+    fun accesoNuevaIdeaConservaElBorradorYVuelveAlContextoAnterior() {
+        val nav = folderNavController()
+        nav.navigate("browse/12")
+        abrirNuevaIdeaDesdeAcceso(nav)
+        assertEquals("ideas/new?folderId={folderId}", nav.currentDestination?.route)
+        assertEquals(-1L, nav.currentBackStackEntry?.arguments?.getLong("folderId"))
+        val borrador = nav.currentBackStackEntry
+        abrirNuevaIdeaDesdeAcceso(nav)
+        org.junit.Assert.assertSame(borrador, nav.currentBackStackEntry)
+        assertTrue(nav.popBackStack())
+        assertEquals(12L, nav.currentBackStackEntry?.arguments?.getLong("folderId"))
+    }
+
+    @Test
+    fun nuevaIdeaDesdeAccesoConservaSuPilaAlRestaurar() {
+        val original = folderNavController()
+        abrirNuevaIdeaDesdeAcceso(original)
+        val restaurado = folderNavController(original.saveState())
+        assertEquals("ideas/new?folderId={folderId}", restaurado.currentDestination?.route)
+        assertTrue(restaurado.popBackStack())
+        assertEquals("home", restaurado.currentDestination?.route)
+    }
+    @Test
     fun widgetAbreFormularioYVuelveALaAgendaSinDuplicarElBorrador() {
         val navController = folderNavController()
         navController.navigate("browse/12")
@@ -112,6 +135,9 @@ class NavigationBackStackTest {
                 composable("home") {}
                 composable("agenda") {}
                 composable("agenda/nuevo") {}
+                composable("ideas/new?folderId={folderId}", arguments = listOf(
+                    navArgument("folderId") { type = NavType.LongType; defaultValue = -1L },
+                )) {}
                 composable("completed") {}
                 composable(
                     route = "browse/{folderId}",

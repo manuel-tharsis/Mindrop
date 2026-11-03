@@ -200,6 +200,7 @@ class IdeaEditorViewModel(
                         validatingSuggestionId = null,
                     )
                 }
+                eventChannel.trySend(EditorEvent.SuggestionValidated)
             } catch (error: Exception) {
                 if (error is CancellationException) throw error
                 _uiState.update {
