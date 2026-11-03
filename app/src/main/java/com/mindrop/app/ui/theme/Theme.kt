@@ -40,8 +40,9 @@ private val tipografia = Typography().let { base ->
         titleLarge = base.titleLarge.copy(fontSize = 20.sp, fontWeight = FontWeight.Medium, lineHeight = 28.sp),
         titleMedium = base.titleMedium.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium, lineHeight = 22.sp, letterSpacing = 0.sp),
         titleSmall = base.titleSmall.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium, lineHeight = 20.sp),
-        bodyLarge = base.bodyLarge.copy(lineHeight = 24.sp),
+        bodyLarge = base.bodyLarge.copy(fontSize = 16.sp, lineHeight = 25.sp, letterSpacing = 0.sp),
         bodyMedium = base.bodyMedium.copy(lineHeight = 21.sp, letterSpacing = 0.sp),
+        labelMedium = base.labelMedium.copy(fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.1.sp),
         labelLarge = base.labelLarge.copy(fontSize = 13.sp, lineHeight = 18.sp),
     )
 }

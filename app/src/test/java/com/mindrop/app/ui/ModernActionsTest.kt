@@ -55,4 +55,39 @@ class ModernActionsTest {
         compose.onNodeWithText("Logros").assertIsDisplayed()
         compose.onNodeWithText("Ajustes").assertIsDisplayed()
     }
+
+    @Test fun detalleAgrupaAccionesSinPerderSusCallbacks() {
+        var editado = false; var eliminado = false; var recordatorio = false
+        controller.get().setContent { MindropTheme {
+            com.mindrop.app.ui.idea.IdeaDetailScreen(
+                com.mindrop.app.ui.idea.IdeaDetailUiState(isLoading = false,
+                    idea = com.mindrop.app.data.local.entity.IdeaEntity(id = 3, title = "BioGestor", shortDescription = "", fullDescription = "Texto", icon = "idea")),
+                onBack = {}, onEdit = { editado = true }, onDelete = { eliminado = true },
+                onToggleCompleted = {}, onValidateSuggestion = {}, onDeleteSuggestion = {},
+                onRecordatorio = { recordatorio = true })
+        } }
+        compose.onNodeWithContentDescription("Editar idea").performClick()
+        assertTrue(editado)
+        compose.onNodeWithText("Recordatorio").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Opciones de la idea").performClick()
+        compose.onNodeWithText("Recordatorio").performClick()
+        assertTrue(recordatorio)
+        compose.onNodeWithContentDescription("Opciones de la idea").performClick()
+        compose.onNodeWithText("Eliminar idea").performClick()
+        assertTrue(eliminado)
+        compose.onNodeWithText("Descripción", substring = false).assertIsDisplayed()
+    }
+
+    @Test fun tarjetaSinBanderaGrisConservaLaAccionDePrioridadEnMenu() {
+        var importante = false
+        controller.get().setContent { MindropTheme {
+            com.mindrop.app.ui.home.components.IdeaCard(
+                com.mindrop.app.data.local.entity.IdeaEntity(id = 3, title = "BioGestor", shortDescription = "", fullDescription = "", icon = "idea"),
+                onClick = {}, onMoveClick = {}, onToggleImportant = { importante = true })
+        } }
+        compose.onNodeWithContentDescription("Marcar como importante").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Más acciones").performClick()
+        compose.onNodeWithText("Marcar como importante").performClick()
+        assertTrue(importante)
+    }
 }

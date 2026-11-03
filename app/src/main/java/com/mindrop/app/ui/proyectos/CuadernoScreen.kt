@@ -129,7 +129,7 @@ fun CuadernoScreen(
                         estado.paginas.getOrNull(pagina)?.let { seleccionar(it.id) }
                     }
                 }
-                Column(Modifier.fillMaxSize().padding(espacio).imePadding().padding(horizontal = 16.dp, vertical = 8.dp),
+                Column(Modifier.fillMaxSize().padding(espacio).imePadding().padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text("${pager.currentPage + 1} / ${estado.paginas.size}", style = MaterialTheme.typography.labelMedium,
@@ -138,13 +138,13 @@ fun CuadernoScreen(
                             if (estado.editando) "Terminar edición" else "Editar página", !estado.operando) {
                             if (estado.editando) terminarEdicion() else editar(true)
                         }
-                        AccionCuaderno(R.drawable.ic_page_add, "Añadir página", !estado.operando, MaterialTheme.colorScheme.secondary) {
+                        AccionCuaderno(R.drawable.ic_page_add, "Añadir página", !estado.operando, MaterialTheme.colorScheme.primary) {
                             terminarEdicion(); anadir()
                         }
                         AccionCuaderno(R.drawable.ic_image_add, "Añadir imagen", !estado.operando) {
                             terminarEdicion(); estado.paginaActualId?.let(anadirFoto)
                         }
-                        AccionCuaderno(R.drawable.ic_draw_note, "Dibujar nota", !estado.operando, MaterialTheme.colorScheme.tertiary) {
+                        AccionCuaderno(R.drawable.ic_draw_note, "Dibujar nota", !estado.operando, MaterialTheme.colorScheme.primary) {
                             terminarEdicion(); estado.paginaActualId?.let(dibujar)
                         }
                     }
@@ -232,7 +232,7 @@ private fun HojaCuaderno(pagina: PaginaProyecto, numero: Int, editando: Boolean,
         unfocusedBorderColor = secundario.copy(alpha = .6f), focusedLabelColor = tinta, unfocusedLabelColor = tinta)
     LazyColumn(modifier = Modifier.fillMaxSize().testTag("hoja_cuaderno_$numero").background(papel, RoundedCornerShape(6.dp, 18.dp, 18.dp, 6.dp))
         .border(1.dp, secundario.copy(alpha = .25f), RoundedCornerShape(6.dp, 18.dp, 18.dp, 6.dp)),
-        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 28.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { Text("PÁGINA $numero", style = MaterialTheme.typography.labelMedium, color = secundario) }
         if (editando) {
             item { OutlinedTextField(pagina.titulo, { titulo(pagina.id, it) }, modifier = Modifier.fillMaxWidth(), enabled = habilitada,

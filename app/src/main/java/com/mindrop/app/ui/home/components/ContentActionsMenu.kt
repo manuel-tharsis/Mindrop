@@ -23,13 +23,15 @@ fun ContentActionsMenu(
     onMoveClick: () -> Unit,
     modifier: Modifier = Modifier,
     onEditClick: (() -> Unit)? = null,
+    onPriorityClick: (() -> Unit)? = null,
+    important: Boolean = false,
     onDeleteClick: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     IconButton(
         onClick = { expanded = true },
-        modifier = modifier.size(32.dp),
+        modifier = modifier.size(48.dp),
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_more_vert),
@@ -41,6 +43,10 @@ fun ContentActionsMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
+            if (onPriorityClick != null) {
+                DropdownMenuItem(text = { Text(stringResource(if (important) R.string.quitar_importancia else R.string.marcar_importancia)) },
+                    onClick = { expanded = false; onPriorityClick() })
+            }
             if (onEditClick != null) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.edit)) },

@@ -119,9 +119,10 @@ fun IdeaCard(
                         )
                     }
                 }
-                BanderaPrioridad(idea.esImportante, cambiar = { onToggleImportant?.invoke() }, habilitada = onToggleImportant != null)
+                if (idea.esImportante) BanderaPrioridad(idea.esImportante, cambiar = { onToggleImportant?.invoke() }, habilitada = onToggleImportant != null)
                 if (onMoveClick != null) {
-                    ContentActionsMenu(onMoveClick = onMoveClick)
+                    ContentActionsMenu(onMoveClick = onMoveClick,
+                        onPriorityClick = onToggleImportant, important = idea.esImportante)
                 }
             }
         }

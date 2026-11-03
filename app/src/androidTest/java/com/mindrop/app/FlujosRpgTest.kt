@@ -36,7 +36,8 @@ class FlujosRpgTest {
         compose.waitForIdle()
         compose.onNodeWithContentDescription("Página 3 de 3").assertExists()
         compose.onNodeWithTag("paginas_idea").performTouchInput { swipeRight() }
-        compose.onNodeWithText("Actualización 1").assertIsDisplayed()
+        compose.onAllNodesWithText("Actualización 1").onFirst().assertIsDisplayed()
+        compose.onNodeWithText("Añadir control de horas").assertIsDisplayed()
         compose.onNodeWithTag("paginas_idea").performTouchInput { swipeRight() }
         compose.onNodeWithText("Aplicación principal de gestión.").assertIsDisplayed()
     }

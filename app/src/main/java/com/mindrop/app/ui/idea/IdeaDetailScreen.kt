@@ -18,6 +18,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
@@ -226,10 +228,6 @@ fun IdeaDetailScreen(
                     }
                 },
                 actions = {
-                    BanderaPrioridad(uiState.idea?.esImportante == true, onToggleImportant, uiState.idea != null && !isBusy)
-                    IconButton(onClick = onRecordatorio, enabled = uiState.idea != null && !isBusy) {
-                        Icon(painterResource(R.drawable.ic_calendar), contentDescription = "Recordatorio")
-                    }
                     IconButton(
                         onClick = onEdit,
                         enabled = uiState.idea != null && !isBusy,
@@ -239,17 +237,15 @@ fun IdeaDetailScreen(
                             contentDescription = stringResource(R.string.edit_idea),
                         )
                     }
-                    IconButton(
-                        onClick = onDelete,
-                        enabled = uiState.idea != null && !isBusy,
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_delete),
-                            contentDescription = stringResource(
-                                R.string.delete_idea_content_description,
-                            ),
-                            tint = MaterialTheme.colorScheme.error,
-                        )
+                    var menuAbierto by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(onClick = { menuAbierto = true }, enabled = uiState.idea != null && !isBusy) {
+                            Icon(painterResource(R.drawable.ic_more_vert), "Opciones de la idea")
+                        }
+                        DropdownMenu(expanded = menuAbierto, onDismissRequest = { menuAbierto = false }) {
+                            DropdownMenuItem(text = { Text("Recordatorio") }, onClick = { menuAbierto = false; onRecordatorio() })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.delete_idea_content_description)) }, onClick = { menuAbierto = false; onDelete() })
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -263,6 +259,7 @@ fun IdeaDetailScreen(
             uiState.idea != null -> IdeaDetailContent(
                 uiState = uiState,
                 onToggleCompleted = onToggleCompleted,
+                onToggleImportant = onToggleImportant,
                 onValidateSuggestion = onValidateSuggestion,
                 onDeleteSuggestion = onDeleteSuggestion,
                 modifier = Modifier.padding(innerPadding),
@@ -295,6 +292,7 @@ private fun LoadingDetail(modifier: Modifier = Modifier) {
 private fun IdeaDetailContent(
     uiState: IdeaDetailUiState,
     onToggleCompleted: () -> Unit,
+    onToggleImportant: () -> Unit,
     onValidateSuggestion: (Long) -> Unit,
     onDeleteSuggestion: (Long) -> Unit,
     modifier: Modifier = Modifier,
@@ -322,6 +320,7 @@ private fun IdeaDetailContent(
             isDeleting = uiState.isDeleting,
             errorMessage = uiState.errorMessage,
             onToggleCompleted = onToggleCompleted,
+            onToggleImportant = onToggleImportant,
         )
         HorizontalPager(
             state = pagerState,
@@ -342,6 +341,17 @@ private fun IdeaDetailContent(
                 null -> Unit
             }
         }
+        Text(
+            text = when (val page = pages.getOrNull(pagerState.currentPage)) {
+                IdeaDetailPage.Description -> "Descripción"
+                is IdeaDetailPage.Update -> "Actualización ${page.value.updateNumber}"
+                else -> "Sugerencias"
+            },
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         PagerIndicator(
             pageCount = pages.size,
             currentPage = pagerState.currentPage,
@@ -357,6 +367,7 @@ private fun IdeaHeader(
     isDeleting: Boolean,
     errorMessage: String?,
     onToggleCompleted: () -> Unit,
+    onToggleImportant: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -381,6 +392,7 @@ private fun IdeaHeader(
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+            BanderaPrioridad(idea.esImportante, onToggleImportant, !isUpdatingCompletion && !isDeleting)
         }
         OutlinedButton(
             onClick = onToggleCompleted,
