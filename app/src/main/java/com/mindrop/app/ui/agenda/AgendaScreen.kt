@@ -2,13 +2,6 @@ package com.mindrop.app.ui.agenda
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
-import android.Manifest
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
-import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,9 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.compose.LifecycleResumeEffect
-import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
 import com.mindrop.app.data.local.entity.*
 import com.mindrop.app.ui.rpg.*
 import java.time.*
@@ -155,38 +145,8 @@ internal fun EditorEvento(id: Long, original: EventoAgenda?, fechaInicial: Strin
     var antes by rememberSaveable(id) { mutableStateOf(base.minutosAntes) }
     var descartar by rememberSaveable { mutableStateOf(false) }
     val contexto = LocalContext.current
-    var notificacionesActivas by remember { mutableStateOf(puedeNotificar(contexto)) }
-    var guardarTrasPermiso by rememberSaveable { mutableStateOf(false) }
-    var permisoRechazado by rememberSaveable { mutableStateOf(false) }
     val actual = EventoAgenda(id, titulo, descripcion, fecha, minuto, ideaId, antes)
-    val guardarActual by rememberUpdatedState { guardar(actual) }
-    val permiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
-        notificacionesActivas = puedeNotificar(contexto)
-        permisoRechazado = !concedido
-        if (concedido && notificacionesActivas && guardarTrasPermiso) guardarActual()
-        guardarTrasPermiso = false
-    }
-    LifecycleResumeEffect(contexto) {
-        notificacionesActivas = puedeNotificar(contexto)
-        onPauseOrDispose { }
-    }
-    fun activarAvisos(alGuardar: Boolean = false) {
-        if (!permisoRechazado && Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(contexto,
-                Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            guardarTrasPermiso = alGuardar
-            permiso.launch(Manifest.permission.POST_NOTIFICATIONS)
-        } else {
-            val ajustes = if (Build.VERSION.SDK_INT >= 26) {
-                val canalBloqueado = contexto.getSystemService(android.app.NotificationManager::class.java)
-                    .getNotificationChannel("mindrop_local")?.importance == android.app.NotificationManager.IMPORTANCE_NONE
-                if (canalBloqueado) Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-                    .putExtra(Settings.EXTRA_APP_PACKAGE, contexto.packageName).putExtra(Settings.EXTRA_CHANNEL_ID, "mindrop_local")
-                else Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, contexto.packageName)
-            } else Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                "package:${contexto.packageName}".toUri())
-            contexto.startActivity(ajustes)
-        }
-    }
+    val avisos = rememberPermisoAvisos { guardar(actual) }
     fun salir() {
         if (guardando) return
         if (actual != base) descartar = true else cancelar()
@@ -206,16 +166,16 @@ internal fun EditorEvento(id: Long, original: EventoAgenda?, fechaInicial: Strin
                     listOf(null, 0, 10, 30, 60, 1440).map { it to etiquetaRecordatorio(it) }, !guardando && minuto != null) {
                         antes = it
                     } }
-                if (antes != null && !notificacionesActivas) item {
+                if (antes != null && !avisos.disponibles) item {
                     Text("Las notificaciones están desactivadas. Actívalas para recibir el aviso o elige Sin recordatorio.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    TextButton(enabled = !guardando, onClick = { activarAvisos() }) { Text("Activar notificaciones") }
+                    TextButton(enabled = !guardando, onClick = { avisos.solicitar(false) }) { Text("Activar notificaciones") }
                 }
                 item { Text("Los avisos son aproximados y requieren permitir notificaciones.", style = MaterialTheme.typography.bodySmall) }
                 error?.let { item { Text(it, color = MaterialTheme.colorScheme.error) } }
                 item { Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(enabled = !guardando, onClick = {
-                        if (titulo.isNotBlank() && antes != null && !puedeNotificar(contexto)) activarAvisos(alGuardar = true) else guardar(actual)
+                        if (titulo.isNotBlank() && antes != null && !puedeNotificar(contexto)) avisos.solicitar(true) else guardar(actual)
                     }) { Text("Guardar") }
                     OutlinedButton(enabled = !guardando, onClick = ::salir) { Text("Cancelar") }
                 } }

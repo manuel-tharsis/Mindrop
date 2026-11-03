@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.widget.FrameLayout
 import androidx.test.core.app.ApplicationProvider
-import com.mindrop.app.MainActivity
 import com.mindrop.app.R
 import org.junit.Assert.*
 import org.junit.Test
@@ -22,8 +21,8 @@ class AgendaWidgetTest {
         val view = AgendaWidget.vistas(context).apply(context, FrameLayout(context))
         assertTrue(view.findViewById<android.view.View>(R.id.widget_nuevo_evento).performClick())
         val intent = shadowOf(context as android.app.Application).nextStartedActivity
-        assertEquals(ComponentName(context, MainActivity::class.java), intent.component)
-        assertEquals(AgendaWidget.DESTINO_NUEVO_EVENTO, intent.getStringExtra("destino_local"))
+        assertEquals(ComponentName(context, EventoRapidoActivity::class.java), intent.component)
+        assertNull(intent.getStringExtra("destino_local"))
         assertEquals("mindrop://widget/agenda/nuevo", intent.dataString)
         assertTrue(intent.flags and Intent.FLAG_ACTIVITY_SINGLE_TOP != 0)
         assertTrue(intent.flags and Intent.FLAG_ACTIVITY_CLEAR_TOP != 0)
@@ -46,5 +45,6 @@ class AgendaWidgetTest {
         assertFalse(permissions.contains("android.permission.INTERNET"))
         assertFalse(permissions.contains("android.permission.WRITE_CALENDAR"))
         assertFalse(permissions.contains("android.permission.SCHEDULE_EXACT_ALARM"))
+        assertFalse(permissions.contains("android.permission.SYSTEM_ALERT_WINDOW"))
     }
 }

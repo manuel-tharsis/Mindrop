@@ -33,6 +33,14 @@
             </intent-filter>
         </receiver>
         <activity
+            android:name=".widget.EventoRapidoActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize|stateAlwaysVisible"
+            android:theme="@style/Theme.Mindrop.EventoRapido" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Mindrop">

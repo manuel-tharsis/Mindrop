@@ -20,12 +20,13 @@ import java.io.File
 class AgendaWidgetRenderTest {
     @Test fun widgetCompactoYAnchoUsanLosArchivosReales() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        listOf(260 to "widget-agenda", 340 to "widget-agenda-ancho").forEach { (ancho, nombre) ->
+        listOf(220 to "widget-agenda-estrecho", 300 to "widget-agenda", 380 to "widget-agenda-ancho").forEach { (ancho, nombre) ->
             val view = AgendaWidget.vistas(context).apply(context, FrameLayout(context))
             view.measure(View.MeasureSpec.makeMeasureSpec(ancho, View.MeasureSpec.EXACTLY),
-                View.MeasureSpec.makeMeasureSpec(110, View.MeasureSpec.EXACTLY))
-            view.layout(0, 0, ancho, 110)
-            val bitmap = Bitmap.createBitmap(ancho, 110, Bitmap.Config.ARGB_8888)
+                View.MeasureSpec.makeMeasureSpec(64, View.MeasureSpec.EXACTLY))
+            view.layout(0, 0, ancho, 64)
+            assertEquals(56, view.findViewById<View>(com.mindrop.app.R.id.widget_nuevo_evento).height)
+            val bitmap = Bitmap.createBitmap(ancho, 64, Bitmap.Config.ARGB_8888)
             view.draw(Canvas(bitmap))
             val archivo = File("build/reports/visual-qa/$nombre.png").apply { parentFile!!.mkdirs() }
             archivo.outputStream().use { assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) }

@@ -1,6 +1,6 @@
 # Mindrop
 
-Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con logros y recompensas cosméticas. La versión 2.4.0 añade un widget para crear eventos con recordatorio desde el escritorio del móvil.
+Mindrop es una aplicación Android personal y completamente offline para guardar ideas, organizarlas y llevar una agenda, con logros y recompensas cosméticas. La versión 2.4.1 ofrece una barra de escritorio para escribir rápidamente un evento con recordatorio.
 
 ## Funciones
 
@@ -41,11 +41,11 @@ Los avisos son aproximados: Android puede retrasarlos por ahorro de batería. Pa
 
 Mantén pulsado un espacio vacío del escritorio del móvil, entra en **Widgets** y añade **Mindrop · Nuevo evento**. Puedes ensancharlo horizontalmente según tu lanzador.
 
-Al pulsarlo se abre directamente un nuevo evento en la agenda local de Mindrop. Escribe el título, ajusta fecha y hora y pulsa **Guardar**. Por defecto se propone la próxima hora completa y un aviso a la hora del evento; puedes elegir otro adelanto o **Sin recordatorio**. El evento aparece en el día elegido de la agenda.
+La barra tiene un formato alargado, de 56 dp de alto, con el logo de Mindrop a la izquierda. Al tocarla aparece una entrada compacta con el nombre enfocado y el teclado abierto, sin abrir el formulario completo de la agenda. Escribe el nombre, ajusta fecha y hora y pulsa **Guardar**. Se guarda en la agenda local y se cierra la entrada rápida para volver al escritorio. Por defecto se propone la próxima hora completa y un aviso a la hora del evento; puedes elegir otro adelanto o **Sin recordatorio**.
 
 Si Android solicita permiso para notificar, concédelo para recibir el aviso. Si lo has desactivado, el formulario permite abrir sus ajustes. Un evento con aviso no se guarda silenciosamente si las notificaciones están bloqueadas; también puedes guardarlo eligiendo **Sin recordatorio**. Los cambios del formulario se conservan al girar el móvil y salir solicita confirmación si has escrito algo.
 
-El widget es un acceso rápido al formulario, no un calendario adicional. Usa los iconos Básico aprobados, no hace consultas periódicas y no añade permisos de calendario, almacenamiento o alarmas exactas. Los avisos son notificaciones normales, sujetos al ahorro de batería y a los ajustes de sonido del teléfono.
+Android no admite campos de texto editables dentro de widgets estándar: la escritura se realiza en una ventana compacta de la app que se abre al tocar la barra. No requiere permiso de superposición. La barra no hace consultas periódicas ni añade permisos de calendario, almacenamiento o alarmas exactas. Los avisos son notificaciones normales, sujetos al ahorro de batería y a los ajustes de sonido del teléfono. Los eventos pueden editarse después desde la agenda completa.
 
 ## Copias locales
 
@@ -111,7 +111,7 @@ En macOS o Linux:
 ./gradlew exportReleaseApk
 ```
 
-La APK instalable se genera en `app/build/releases/Mindrop-v2.4.0.apk`.
+La APK instalable se genera en `app/build/releases/Mindrop-v2.4.1.apk`.
 
 Mindrop no solicita el permiso `INTERNET` y no utiliza cuentas, servidores, analíticas ni servicios externos.
 
