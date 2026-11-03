@@ -70,7 +70,7 @@ internal fun EventoRapidoScreen(vm: AgendaViewModel, peticionFoco: Int, finaliza
                 Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 12.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AndroidView(factory = { contexto -> ImageView(contexto).apply {
-                        setImageResource(R.mipmap.ic_launcher_round); contentDescription = "Mindrop"
+                        setImageResource(R.mipmap.ic_launcher); contentDescription = "Mindrop"
                     } }, modifier = Modifier.size(34.dp))
                     BasicTextField(titulo, { titulo = it }, enabled = !guardando, singleLine = true,
                         textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color(0xFFF5F5F5)),

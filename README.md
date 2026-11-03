@@ -140,3 +140,7 @@ El widget de agenda y sus comprobaciones se describen en [docs/DESARROLLO_V2_4.m
 El refinamiento visual de 2.5.0 se describe en [docs/DESARROLLO_V2_5.md](docs/DESARROLLO_V2_5.md).
 
 Comprobaciones locales: `./gradlew assembleDebug test lint`. Los tests instrumentados se ejecutan con `./gradlew connectedDebugAndroidTest` en un dispositivo/emulador conectado.
+
+## Icono de la aplicación
+
+El icono oficial es el monograma MD con forma de gota, trazo fluido y unión de color ondulada. El original aprobado y el proceso de preparación para Android están en [artwork/branding](artwork/branding/README.md). Los packs de iconos internos se conservan.

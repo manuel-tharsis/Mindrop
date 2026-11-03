@@ -1,0 +1,16 @@
+{
+  "source": "mindrop-md-fluido.png",
+  "sha256": "ca8dfb1a3da87558ace6a8bbcc1d194690edc3ebb540c00f59d4f4b185274845",
+  "selection": "Design 2: fluid lettering with curved color boundary",
+  "crop": [
+    170,
+    117,
+    1064,
+    1162
+  ],
+  "adaptive_canvas_dp": 108,
+  "adaptive_mark_dp": 60,
+  "legacy_canvas_dp": 48,
+  "legacy_mark_dp": 44,
+  "processing": "Alpha bounding crop, proportional resize and transparent padding only; no redrawing or recoloring"
+}
